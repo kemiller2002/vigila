@@ -4,7 +4,7 @@
   "repository": "vigilia",
   "actor": "ros-bootstrap",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-09-17T23:35:33Z",
+  "updatedAt": "2026-09-17T23:37:13Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -37,6 +37,23 @@
         "EXE-20260917T233529973Z-9f8f0d28"
       ],
       "completedAt": "2026-09-17T23:35:33Z"
+    },
+    {
+      "id": "WI-0002",
+      "type": "mechanical",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "documentation",
+          "path": "AGENTS.md"
+        }
+      ],
+      "updatedAt": "2026-09-17T23:37:13Z",
+      "telemetryExecutionIds": [
+        "EXE-20260917T233713713Z-c3575f76"
+      ],
+      "completedAt": "2026-09-17T23:37:13Z"
     }
   ]
 }
