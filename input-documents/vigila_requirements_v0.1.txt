@@ -1,0 +1,849 @@
+Vigila Requirements v0.1
+
+0. GOVERNING PRINCIPLES
+
+1. Purpose
+- Vigila is the system of record for personal and business follow-ups, open loops, reminders, waiting items, and lightweight tasks.
+- Vigila is not a project-management system.
+- Vigila is not a replacement for ROS.
+- Engineering work may be promoted from Vigila into ROS when appropriate.
+- ROS work may generate human follow-up items in Vigila.
+
+2. Required engineering standards
+- Vigila must be developed according to ROS.
+- Vigila must follow SDE principles.
+- Vigila must use Limen for the browser/application boundary.
+- Application/domain code should be written in F# wherever technically practical.
+- HTML and CSS should remain native browser technologies.
+- JavaScript should be minimized and restricted to browser interoperability where Limen requires it.
+- Illegal domain states should be unrepresentable where practical.
+- State transitions must be explicit.
+- External effects must be explicit.
+- The domain model must not depend directly on GitHub APIs, browser APIs, or UI implementation details.
+
+3. Simplicity
+- Vigila must remain substantially simpler than ROS.
+- Do not add sprints, story points, backlogs, epics, estimates, dependency graphs, resource planning, or similar project-management concepts unless a demonstrated requirement later justifies them.
+- Features must justify their complexity.
+- The initial system should optimize for extremely fast capture and retrieval.
+
+1. CORE CONCEPT
+
+A Vigila item represents something that remains mentally or operationally open.
+
+Examples include:
+- Something the user needs to do.
+- Something the user is waiting for.
+- Something requiring follow-up.
+- Something that should be brought back to the user's attention later.
+- Something worth remembering until a condition or date occurs.
+- A lightweight action that does not justify becoming a ROS work item.
+
+Every item must have a unique persistent identifier.
+An item must survive application restarts and browser/device changes.
+
+2. FOLLOW-UP TYPES
+
+Vigila must distinguish at least these semantic types:
+
+Task
+Something the user needs to do.
+
+Example:
+Send accountant the cancelled generator check.
+
+Follow-up
+Something the user needs to revisit.
+
+Example:
+Check with GC about the generator statement.
+
+Waiting
+Something currently dependent on another person, organization, process, or event.
+
+Example:
+Waiting for CPA to respond.
+
+Reminder
+Something that needs to reappear at a particular time but may not require an action.
+
+Example:
+Cruise check-in opens today.
+
+The architecture should allow additional kinds later without redesigning the persistence model.
+
+3. ITEM STATE
+
+Initial states should be deliberately limited.
+
+Required states:
+Open
+Waiting
+Deferred
+Completed
+Cancelled
+
+Possible legal transitions include:
+
+Open -> Waiting
+Open -> Deferred
+Open -> Completed
+Open -> Cancelled
+
+Waiting -> Open
+Waiting -> Deferred
+Waiting -> Completed
+Waiting -> Cancelled
+
+Deferred -> Open
+Deferred -> Waiting
+Deferred -> Completed
+Deferred -> Cancelled
+
+Completed -> Open
+
+Cancelled -> Open
+
+State changes must occur through explicit domain transitions rather than arbitrary property mutation.
+Every state transition should be auditable.
+
+4. ITEM IDENTITY AND CORE FIELDS
+
+Each item should support:
+
+ID
+Title
+Description/details
+Kind
+Status
+Created date/time
+Created by
+Updated date/time
+Completed date/time
+Cancelled date/time
+Due date/time
+Follow-up date/time
+Next action
+Waiting on
+Tags
+Notes
+Source/context references
+History
+
+Only the minimum fields required to create an item should be mandatory.
+A title should normally be sufficient to create an item.
+This is important for conversational capture.
+
+5. TITLE
+
+Every item must have a concise human-readable title.
+
+Example:
+Check with accountant about generator documentation
+
+Titles must be editable.
+Changing a title must not change item identity.
+
+6. DESCRIPTION/DETAILS
+
+Items may contain longer contextual information.
+Descriptions should be optional.
+Descriptions may be edited as understanding improves.
+Descriptions should represent relatively stable context.
+Ongoing developments should normally be captured as notes rather than repeatedly rewriting the description.
+
+7. NOTES
+
+Notes are a first-class Vigila concept.
+An item may contain zero or more notes.
+
+Each note must contain:
+Note ID
+Item ID
+Text
+Created date/time
+Created by
+
+Notes should normally be append-only.
+Existing notes should not silently change.
+If note editing is supported later, edits must be auditable.
+The UI must display notes chronologically.
+Agents must be able to add notes.
+
+Example conversational command:
+Add a note to the accountant follow-up that he asked for the cancelled check.
+
+The agent should locate the appropriate item and append the note.
+
+8. NEXT ACTION
+
+Every active item may contain a NextAction.
+
+Example:
+Get written statement from GC.
+
+The next action represents the immediate thing required to move the item forward.
+The title describes the subject.
+The notes describe the history.
+The next action describes what happens next.
+The system should make the next action visible without requiring the user to open the entire item.
+
+9. DUE DATES
+
+Items may have a due date/time.
+
+A due date means:
+The underlying obligation should be completed by this time.
+
+Due dates must not be conflated with follow-up dates.
+An overdue item must remain visible until resolved.
+Vigila should make overdue items visually identifiable.
+
+10. FOLLOW-UP DATES
+
+Items may have a follow-up date/time.
+
+A follow-up date means:
+Bring this item back to my attention at this time.
+
+This may differ from the actual due date.
+
+Example:
+Contract due: September 30
+Follow up with client: September 22
+
+Changing the follow-up date should be easy.
+
+The user should be able to defer an item conversationally:
+Bring this back Friday.
+Remind me next month.
+Push this out two weeks.
+
+11. WAITING-ON
+
+Waiting items may identify what or whom they are waiting on.
+
+Examples:
+John Smith
+CPA
+Restaurant Show
+Insurance company
+Vendor
+GitHub Action
+
+The field should remain lightweight rather than requiring a separate contacts system.
+It may later become a structured reference.
+
+A waiting item may also have a follow-up date.
+
+Example:
+Waiting on: CPA
+Follow up: September 22
+
+12. TAGS
+
+Tags are required.
+Tags must be user-defined.
+An item may have zero or more tags.
+
+Examples:
+tax
+dad
+travel
+culinary
+sales
+client
+echelon
+chrona
+strata
+personal
+
+Tags should not initially have hierarchy.
+Tags should not behave like folders.
+The user should be able to add, remove, and rename tags.
+Agents should be able to assign tags while creating or updating an item.
+
+Example:
+Add a follow-up to check the NRA submission next month. Tag it sales and culinary.
+
+The system should support filtering by one or multiple tags.
+
+It should support intersection queries such as:
+Show me open items tagged culinary and sales.
+
+13. SOURCE/CONTEXT REFERENCES
+
+An item may contain one or more source references.
+
+Examples include:
+Chat conversation
+Email
+GitHub issue
+GitHub repository
+Website
+Document
+ROS work item
+Chrona entry
+External URL
+Free-form reference
+
+A reference should contain at least:
+Type
+Display name
+External identifier or URI
+
+Vigila must not require the source content to be copied into the item.
+The reference should allow the user or agent to return to the original context.
+
+14. HISTORY
+
+Vigila should maintain an audit history for meaningful item changes.
+
+History events should include things such as:
+Created
+Title changed
+Status changed
+Follow-up date changed
+Due date changed
+Waiting-on changed
+Next action changed
+Tag added
+Tag removed
+Note added
+Completed
+Reopened
+Cancelled
+
+Each history record should contain:
+Timestamp
+Actor
+Operation
+Relevant old/new values where appropriate
+
+Git history alone should not be the application's only semantic history mechanism.
+Git history may supplement application-level history.
+
+15. ACTOR
+
+Changes should identify their origin where possible.
+
+Example actors:
+Human
+ChatGPT
+Claude
+Automated process
+Integration
+
+An actor should preferably have both:
+Actor type
+Actor identifier/name
+
+This will become increasingly useful as agents add and modify Vigila items.
+
+16. UI: PRIMARY VIEWS
+
+The initial UI should have a deliberately small number of views.
+
+Now
+Shows actionable items that need attention now.
+
+Includes:
+- overdue items
+- due items
+- follow-ups that have reached their follow-up date
+- open items explicitly marked for current attention
+
+Waiting
+Shows everything currently blocked on someone or something else.
+
+Upcoming
+Shows future due dates and follow-up dates.
+
+Someday / Deferred
+Shows items intentionally put aside.
+
+Completed
+Shows completed items.
+
+Completed items should remain searchable.
+
+17. UI: ITEM PRESENTATION
+
+A list item should display enough information to make a decision without opening it.
+
+Potential display:
+
+[ ] Call accountant about generator
+    Next: Send cancelled check
+    Sep 22
+    tax · dad
+
+Waiting:
+
+(o) CPA response about generator
+    Waiting on: CPA
+    Follow up Sep 22
+    tax · dad
+
+The UI must not become visually dense by default.
+Detailed notes and history should be available when an item is opened.
+
+18. UI: QUICK COMPLETION
+
+Users must be able to complete an item directly from the primary list.
+Completion should require minimal interaction.
+Accidental completion should be recoverable through reopening.
+
+19. UI: FAST CAPTURE
+
+Creating an item must be extremely fast.
+The UI should support entering a title and saving immediately.
+Additional fields should be optional.
+The user should not have to complete a large form before capturing an idea.
+A quick-entry control should be available from the primary UI.
+
+20. SEARCH
+
+Search must include at minimum:
+Title
+Description
+Notes
+Tags
+Waiting-on
+Source names
+
+Search should work across active and completed items.
+The user should be able to limit search by status.
+
+21. FILTERING
+
+Filters should support at least:
+Status
+Kind
+Tag
+Due date
+Follow-up date
+Waiting-on
+Created date
+Completed date
+
+The UI should avoid exposing excessive filtering complexity until requested.
+Common filters may eventually become saved views.
+
+22. AGENT INTERFACE
+
+Agent interaction is a primary requirement, not an afterthought.
+Agents must interact with Vigila through defined operations rather than modifying persistence directly.
+
+Initial commands/capabilities should include:
+AddFollowUp
+GetFollowUp
+SearchFollowUps
+UpdateTitle
+UpdateDescription
+AddNote
+SetNextAction
+SetDueDate
+SetFollowUpDate
+SetWaitingOn
+SetKind
+AddTag
+RemoveTag
+SetStatus
+CompleteFollowUp
+CancelFollowUp
+ReopenFollowUp
+DeferFollowUp
+GetDueFollowUps
+GetWaitingFollowUps
+
+Agents must not be given unrestricted repository write access as the normal application API.
+
+23. NATURAL-LANGUAGE CAPTURE
+
+The architecture must make it easy for conversational agents to translate normal speech into Vigila operations.
+
+Examples:
+Remind me Friday to check whether John sent the contract.
+I'm waiting on the accountant for an answer about the generator. Bring it back next Tuesday.
+Add a note that she called today and said it will probably be ready next week.
+Mark the restaurant submission follow-up complete.
+Show me everything I'm waiting on related to travel.
+
+The agent should convert these requests into explicit Vigila commands.
+Vigila itself does not need to contain an LLM.
+
+24. AMBIGUITY HANDLING
+
+Agents should search before creating likely duplicate items.
+
+For example, if the user says:
+Add a note to the generator follow-up.
+
+the agent should search existing active items rather than automatically creating a new record.
+
+Where one clear match exists, it may update it.
+Where multiple materially plausible matches exist, the calling agent should expose the ambiguity.
+The core Vigila API should not perform probabilistic guessing.
+
+25. DUPLICATE HANDLING
+
+Vigila should tolerate similar items because legitimate duplicates can exist.
+It should not enforce unique titles.
+Agents may detect potential duplicates before creating new items.
+A future merge mechanism may be added, but is not required for the initial release.
+
+26. PERSISTENCE
+
+Initial persistence may use GitHub-backed storage.
+The persistence implementation must sit behind an abstraction.
+The domain must not know it is stored in GitHub.
+The persistence model should permit replacement with another backend later.
+
+27. REPOSITORY ORGANIZATION
+
+Vigila data should be segregated by organization/workspace where applicable.
+It should not assume a single Echelon Foundry repository or single application.
+
+Something conceptually like:
+
+/vigila/
+    /organizations/
+        /echelon-foundry/
+            /items/
+
+The final format should conform to the broader integration/storage patterns already being developed for the Echelon application family.
+
+28. RECORD FORMAT
+
+Persisted records should use a versioned schema.
+Every record should identify its schema version.
+
+Example:
+{
+  "schemaVersion": 1
+}
+
+Readers should not assume all persisted records use the latest schema.
+Migration and backward compatibility must be considered from the beginning.
+
+29. CONCURRENCY
+
+The system must assume that:
+- the user may have Vigila open in multiple browser sessions
+- multiple agents may interact with it
+- automated integrations may modify items
+
+Updates should therefore include version/concurrency checks.
+An outdated client must not silently overwrite newer changes.
+
+30. INTEGRATION ASSEMBLY
+
+Vigila should publish an integration assembly/package defining how other Echelon systems interact with it.
+
+That contract should contain:
+- identifiers
+- supported request types
+- response types
+- events where appropriate
+- serialization contracts
+- schema versions
+- validation rules
+
+Consumers should not reverse-engineer Vigila's internal persisted JSON.
+
+31. INTEGRATION BOUNDARIES
+
+Other applications should communicate through Vigila's supported integration contract.
+
+For example:
+Chrona -> Vigila
+Summa -> Vigila
+ROS -> Vigila
+Agent -> Vigila
+
+They should not write directly to Vigila's repository structures.
+
+32. ROS INTEGRATION
+
+Vigila and ROS must remain separate systems.
+A Vigila item may reference a ROS work item.
+Vigila should eventually support promotion of an item into ROS.
+
+Conceptually:
+Vigila item
+    ↓ Promote
+ROS work item created
+    ↓
+Vigila records ROS reference
+
+Promotion should not lose the original Vigila history.
+The Vigila item may then be completed or marked as transferred.
+
+ROS should eventually be able to generate a Vigila follow-up when engineering work requires human action outside the engineering workflow.
+
+33. EVENTS
+
+Useful domain events may include:
+FollowUpCreated
+FollowUpCompleted
+FollowUpReopened
+FollowUpBecameDue
+FollowUpReachedFollowUpDate
+FollowUpDeferred
+FollowUpSetWaiting
+NoteAdded
+TagAdded
+TagRemoved
+
+The initial application does not need a complex event-driven architecture.
+Domain events should exist only where they provide useful integration semantics.
+
+34. NOTIFICATIONS
+
+The first version does not need a complete notification platform.
+
+However, the architecture should permit future notification mechanisms such as:
+Browser notification
+Email
+Agent summary
+Daily digest
+Calendar integration
+
+The distinction between storing a follow-up date and delivering an external notification must remain explicit.
+
+35. DAILY REVIEW
+
+Vigila should support an easy daily-review experience.
+
+A future agent should be able to request:
+Give me everything I need to follow up on today.
+
+The API should make this deterministic rather than requiring an agent to retrieve the entire database and infer it.
+
+36. AGENT SUMMARIES
+
+The API should support efficient retrieval for agent summaries such as:
+What needs attention today?
+What am I waiting on?
+What is overdue?
+What changed recently?
+What open items relate to culinary?
+What hasn't been touched in 30 days?
+
+These should be possible without agents needing direct knowledge of storage internals.
+
+37. STALE ITEMS
+
+The system should eventually be able to identify items that have remained open without activity for a configurable period.
+
+For example:
+No notes
+No state changes
+No due date
+No follow-up date
+No updates for 30 days
+
+These should be surfaced during review rather than automatically deleted or completed.
+
+38. COMPLETION
+
+Completion must preserve:
+- notes
+- tags
+- history
+- sources
+- dates
+- previous status information
+
+Completing an item must not delete it.
+Completed records should remain searchable and referenceable.
+
+39. REOPENING
+
+Any completed or cancelled item should be capable of reopening unless doing so violates a later domain rule.
+Reopening must append to history rather than erase the prior completion.
+
+40. DELETION
+
+Hard deletion should not be a normal workflow.
+Cancellation or completion should usually be used instead.
+If permanent deletion exists, it should require an explicit administrative operation.
+This prevents accidental loss of useful follow-up history.
+
+41. DATA EXPORT
+
+Vigila data must not be trapped inside the application.
+The system should support export into a documented machine-readable format.
+The canonical record format may itself satisfy much of this requirement.
+A human-readable export should be possible later.
+
+42. ACCESSIBILITY
+
+The UI must be keyboard usable.
+Interactive controls must use proper semantic HTML.
+Text should not depend on color alone to communicate state.
+Focus states must be visible.
+The application should target normal modern accessibility expectations from the beginning rather than retrofitting them later.
+
+43. MOBILE USABILITY
+
+The UI must work well on a phone.
+Quick capture, completion, note entry, and review must not require desktop interaction.
+This matters particularly because conversational capture will often originate from mobile use.
+
+44. PERFORMANCE
+
+The interface should feel effectively immediate for normal use.
+The application should avoid loading unnecessary history and notes for every item on initial display.
+List views may use summaries while details are loaded when needed.
+Do not introduce caches, indexes, databases, or background services until actual scale requires them.
+
+45. OFFLINE BEHAVIOR
+
+Full offline synchronization is not required initially.
+The architecture should avoid making future offline support impossible.
+Failure to reach persistence must be clearly communicated.
+The application must not indicate that an item was saved if persistence failed.
+
+46. FAILURE HANDLING
+
+External failures must not silently lose user input.
+
+Examples include:
+GitHub unavailable
+Authorization expired
+Concurrency conflict
+Invalid transition
+Schema mismatch
+Network interruption
+
+The UI should preserve unsaved content where practical and present a recoverable state.
+
+47. AUTHENTICATION
+
+Initial authentication may use the broader GitHub authentication/token model being adopted across the Echelon application family.
+Authentication mechanics must remain outside the domain layer.
+Authorization should eventually allow different workspaces or organizations.
+
+48. AUTHORIZATION
+
+The architecture should support eventual permission levels such as:
+Read
+Create
+Update
+Complete
+Administer
+
+A complex role system is not required for the first release.
+
+49. TESTING
+
+Domain behavior must be heavily unit tested.
+
+Tests should cover:
+- all legal state transitions
+- illegal transitions
+- required-field validation
+- dates
+- note addition
+- tag operations
+- completion/reopening
+- serialization
+- schema compatibility
+- concurrency behavior
+
+Integration tests should cover GitHub persistence separately from the domain.
+Limen interaction should be tested according to Limen's established testing standards.
+
+50. DOCUMENTATION
+
+Documentation must serve both humans and agents.
+
+It should explain:
+- what Vigila is
+- what Vigila is not
+- domain terminology
+- states
+- legal transitions
+- agent operations
+- persistence contracts
+- integration assembly
+- examples
+- failure behavior
+
+Examples should include both F# usage and conversational-agent scenarios where appropriate.
+
+51. METRICS
+
+Do not turn Vigila into an analytics product.
+
+Basic operational metrics may eventually include:
+Open items
+Overdue items
+Waiting items
+Completed items
+Average age
+Items with no follow-up date
+Stale items
+
+Metrics should support review and system health rather than productivity surveillance.
+
+52. EXPLICIT NON-GOALS FOR THE INITIAL VERSION
+
+Vigila v1 should not attempt to provide:
+Project planning
+Kanban boards
+Gantt charts
+Sprint planning
+Story points
+Work estimation
+Resource allocation
+Complex dependencies
+Team performance measurement
+CRM functionality
+Contact management
+Document storage
+Email client functionality
+Calendar replacement
+ROS replacement
+Automated AI decision-making
+
+Integrations may reference or invoke those systems without reproducing them.
+
+INITIAL V1 SCOPE
+
+Create item
+Edit item
+Complete/reopen item
+Cancel item
+
+Task / Follow-up / Waiting / Reminder
+
+Title
+Description
+Next action
+Due date
+Follow-up date
+Waiting on
+
+Tags
+Append-only notes
+Source links
+History
+
+Now
+Waiting
+Upcoming
+Deferred
+Completed
+
+Search/filter
+
+Agent integration API
+
+GitHub persistence
+Integration assembly
+F# domain
+Limen UI
+ROS + SDE governed development

@@ -1,0 +1,453 @@
+Vigila Additional Requirements v0.4
+Third-Pass Requirements and Operational Refinements
+
+This document extends Vigila Requirements v0.2 and Vigila Additional Requirements v0.3.
+Where this document refines an earlier requirement, the newer requirement should take precedence.
+
+100. SIMPLE IMPORTANCE MARKER
+- An item may optionally be marked Important.
+- Important should be boolean in the initial model rather than a multi-level priority scale.
+- Importance must not change workflow state.
+- Importance should affect presentation/filtering only.
+- Important items should be filterable and optionally surfaced more prominently.
+- Avoid multi-level priority scoring unless later evidence justifies it.
+
+101. MANUAL ORDERING
+- Vigila may support optional manual ordering within a view.
+- Manual order must be presentation metadata rather than core workflow state.
+- Manual ordering must not alter due dates, follow-up dates, state, or importance.
+- If manual ordering is absent, deterministic default sorting rules apply.
+- Manual ordering should not break stable pagination or agent query behavior.
+Classification: Future UI enhancement.
+
+102. WAITING SINCE
+- A Waiting item must expose WaitingSince.
+- WaitingSince should be set when an item enters Waiting.
+- Leaving Waiting should preserve historical transition information.
+- Re-entering Waiting should establish a new current WaitingSince while retaining prior history.
+- WaitingSince must support deterministic queries such as items waiting more than N days.
+- WaitingSince should be part of v1.
+
+103. ESCALATION DATE
+- Vigila should eventually support an optional escalation date or escalation rule.
+- Escalation must not replace the normal follow-up date.
+- Escalation should represent a more serious next step, not merely another reminder.
+- Automatic escalation must not occur without an explicit configured rule.
+Classification: Future enhancement.
+
+104. OUTCOME / RESOLUTION NOTE
+- Completing or cancelling an item may include an optional resolution note.
+- Resolution notes must be preserved permanently with the item.
+- Resolution notes should be visible in completed-item detail.
+- Resolution notes should be searchable.
+- Resolution notes should be included in human-readable export.
+- Resolution note support should be part of v1.
+
+105. COMPLETION / RESOLUTION CLASSIFICATION
+Potential resolution classifications:
+- CompletedSuccessfully
+- Cancelled
+- Superseded
+- PromotedToRos
+- NoLongerRelevant
+- Other
+
+Requirements:
+- The core state model should remain simple.
+- Resolution classification should be optional metadata associated with closure.
+- Resolution classification must not replace state history.
+- Additional classifications may be introduced later without changing item identity.
+- Agents should only set a resolution classification when explicitly requested or deterministically implied.
+
+106. MULTIPLE WAITING ENTITIES
+- v1 may use a single free-text WaitingOn field for simplicity.
+- The persistence/integration model should avoid assumptions that permanently prevent a future list of waiting entities.
+- A future structured form may support person, organization, system, process, or event.
+- Structured contacts are explicitly not required in v1.
+
+107. ATTACHMENTS BY REFERENCE ONLY
+- Vigila must not become a document-storage system.
+- Items may reference external files/documents.
+- Supported references may include GitHub files, Google Drive documents, PDFs, emails, web pages, and other application records.
+- Vigila should store metadata/reference information, not file contents.
+- Attachment references should use the normal Source/Context reference model where possible.
+- A reference should include stable identity when available, not only a display URL.
+
+108. SAVED SEARCHES / SAVED VIEWS
+- Saved views should store query/filter definitions, not duplicate item data.
+- Saved views must update dynamically as item state changes.
+- Saved views should not become folders.
+- Saved views should be optional and removable.
+- Agent APIs should eventually be able to list or invoke saved views.
+Classification: Future enhancement.
+
+109. TAG METADATA
+- Tag identity should be conceptually separable from display text.
+- The implementation may initially store simple strings if migration is straightforward.
+- Future tag metadata may include stable TagId, display name, description, and archived state.
+- Tag metadata must not introduce a hierarchy by default.
+
+110. TAG RENAME AND ALIAS SAFETY
+- The design should allow a future tag rename operation to preserve semantic identity.
+- If stable TagIds are introduced, changing the display name should not change the tag identity.
+- Alias support may be added later.
+- Existing item history should remain understandable after a rename.
+- Tag rename should be explicit, not incidental string replacement.
+
+111. GLOBAL COMMAND PALETTE
+Potential commands:
+- create
+- search
+- add note
+- complete
+- snooze
+- open waiting
+- jump to item
+
+Requirements:
+- Command palette behavior must be additive, not required for basic UI use.
+- Commands must map to the same explicit domain operations used elsewhere.
+- Keyboard shortcuts should be discoverable and must not conflict with normal text entry.
+Classification: Future UI enhancement.
+
+112. CAPTURE AND CONTINUE
+- After a successful quick capture, the user should be able to immediately enter another item.
+- Focus should return to the capture control where appropriate.
+- Capture forms should clear only after successful persistence.
+- Failed capture must preserve entered text.
+- Capture and Continue must not accidentally duplicate the prior item.
+
+113. INBOX / UNPROCESSED VIEW
+- Vigila should support a derived Inbox view for items needing additional organization.
+- Inbox should not be a workflow state.
+- Inbox membership may be derived from missing tags, no due/follow-up date, no next action, or NeedsReview.
+- Exact Inbox criteria should be configurable or documented.
+- An item should leave Inbox automatically when criteria are satisfied.
+
+114. AGENT-CREATED ITEM REVIEW
+- An item may optionally be marked NeedsReview.
+- NeedsReview should be metadata, not a new workflow state.
+- Agents may set NeedsReview when instructed or when calling policy determines review is required.
+- NeedsReview should be visible/filterable.
+- Human review should be able to clear the flag explicitly.
+- The core domain must not manufacture confidence scores.
+
+115. AGENT UNCERTAINTY IS NOT DOMAIN STATE
+- Search/match operations may return ambiguity or uncertainty information.
+- Low confidence in an agent match should not silently alter permanent item state.
+- An agent must not persist a confidence score unless a defined feature explicitly requires it.
+- Ambiguity should generally be surfaced in the operation result.
+
+116. SEARCH RANKING
+Suggested ranking:
+1. exact ItemId match
+2. exact title match
+3. strong title match
+4. tag match
+5. WaitingOn match
+6. source/context match
+7. note content
+8. description content
+
+Requirements:
+- Ranking behavior should be documented.
+- Search results should indicate why an item matched where practical.
+- Search should avoid unpredictable ranking that changes without data changes.
+- Agent callers should be able to request exact-id lookup separately from fuzzy search.
+
+117. COMPACT SEARCH RESULT IDENTITY
+A compact result should include at least:
+- ItemId
+- title
+- state
+- kind
+- tags
+- due date
+- follow-up date
+- WaitingOn
+- LastActivityAt
+- version/concurrency token
+
+Requirements:
+- Search results should not include full notes/history by default.
+- Full detail should be retrieved separately.
+- Compact results must be stable and machine-readable.
+
+118. PAGINATION
+- List and search APIs must support pagination from the beginning.
+- Agent APIs must not assume the entire result set fits in one response.
+- Pagination should use deterministic ordering.
+- Cursor-based pagination should be preferred where it improves stability.
+- Page size limits should be documented.
+- Pagination tokens/cursors must not expose secrets.
+
+119. STABLE PAGINATION ORDER
+- Queries must have deterministic secondary sorting.
+- Cursor behavior must be defined for records created/changed while paging.
+- Agent callers should be able to safely continue traversal.
+- A snapshot-like query model may be considered later if concurrent change becomes a problem.
+
+120. READ MODELS SEPARATE FROM WRITE MODEL
+- Vigila should expose lightweight summary/read models for lists/search.
+- Item detail should provide richer data.
+- Full history/notes should not be loaded unnecessarily for every list.
+- Read models must be derived from canonical domain data.
+- Read optimization must not become a second source of truth.
+
+121. DERIVED STATE SHOULD NOT BE PERSISTED UNLESS NECESSARY
+Examples:
+- IsOverdue
+- IsDueToday
+- IsStale
+- IsFollowUpReady
+- DaysWaiting
+
+Requirements:
+- Derived values should be calculated using explicit clock/time-zone context.
+- Persisting a derived value requires a demonstrated need.
+- Derived values must not drift from canonical data.
+
+122. EXPLICIT CLOCK ABSTRACTION
+- Logic for today, overdue, snooze expiration, recurrence, staleness, and waiting age must not call ambient system time directly inside domain logic.
+- Tests must be able to inject a deterministic clock.
+- Clock use should be standardized across the application.
+
+123. AGENT TIME-ZONE CONTEXT
+- The effective user/workspace time zone should be available to calling agents.
+- Agents should resolve relative natural-language dates before calling domain operations.
+- The integration contract should not assume UTC means the user's local day.
+- Date-only values must remain date-only.
+
+124. WORKSPACE METADATA
+- Vigila should define a WorkspaceId or equivalent stable workspace identity.
+- The workspace may include a human-readable name.
+- Workspace identity should remain stable if repository location changes.
+- A repository may eventually host multiple Vigila workspaces if explicitly configured.
+- v1 may support one configured workspace while still defining the concept.
+
+125. REPOSITORY RELOCATION
+- Changing owner/repository/path affects future connection configuration only unless an explicit migration is performed.
+- Migration/copy between repositories is a separate operation.
+- The old repository must remain unchanged unless the user explicitly requests mutation.
+- Migration should validate target compatibility before copying.
+- Migration is not required in v1.
+
+126. READ-BEFORE-WRITE POLICY
+- Agent mutations against an existing item should include ExpectedVersion.
+- If the caller lacks current version information, it should retrieve the item first.
+- The integration contract should make read-before-write/concurrency expectations explicit.
+- Blind overwrite operations should not be part of the normal public API.
+
+127. ATOMIC COMPOSITE MUTATIONS
+Example:
+- add note
+- set Waiting
+- set WaitingOn
+- set follow-up date
+
+Requirements:
+- Vigila should support an explicit composite mutation mechanism where atomic behavior is needed.
+- Composite mutations must declare all intended changes.
+- Either all changes succeed or none should be treated as committed where technically feasible.
+- Composite mutation history should remain understandable.
+- Composite operations must honor ExpectedVersion and OperationId.
+- Composite operations should not become a loophole for unrestricted arbitrary mutation.
+
+128. COMMON DOMAIN COMMAND ENVELOPE
+All mutating integration commands should share a standard envelope containing:
+- OperationId
+- Actor
+- CreatedVia
+- ExpectedVersion where applicable
+- request timestamp/context where needed
+- command payload
+
+Requirements:
+- Command metadata should be consistent across operations.
+- The envelope must never include the GitHub token.
+- Actor and CreatedVia semantics must be documented.
+- OperationId idempotency behavior must be uniform.
+
+129. MACHINE-READABLE ERROR TAXONOMY
+Initial error categories:
+- NotFound
+- Conflict
+- InvalidTransition
+- Unauthorized
+- Forbidden
+- RepositoryUnavailable
+- RepositoryNotFound
+- BranchUnavailable
+- SchemaUnsupported
+- ValidationFailed
+- RateLimited
+- StorageCorrupt
+- OperationAlreadyProcessed
+- PersistenceFailed
+
+Requirements:
+- Agents must not need to parse human error text.
+- Each error may include a human-readable message in addition to the code.
+- Error codes should be stable across versions.
+- Sensitive values must not appear in errors.
+
+130. RETRYABILITY MARKER
+- Error responses should include a retryability classification where meaningful.
+- RateLimited may be retryable.
+- RepositoryUnavailable may be retryable.
+- InvalidTransition and ValidationFailed are not retryable without a request/state change.
+- Retry guidance must not encourage blind retries on conflicts.
+- Rate-limit responses may include retry-after information when safely available.
+
+131. USER HISTORY VERSUS DIAGNOSTIC LOGS
+- Item history should contain meaningful domain/user events.
+- Low-level GitHub retries, HTTP status codes, transport failures, and stack traces must not pollute user history.
+- Diagnostic logs should remain separate.
+- Diagnostic logging must never expose the GitHub token.
+- User history should remain understandable to humans.
+
+132. WORKSPACE VALIDATION OPERATION
+Conceptual operation:
+ValidateWorkspace
+
+Checks may include:
+- manifest presence
+- supported schema
+- malformed item files
+- duplicate IDs
+- broken internal item references
+- invalid tags
+- incompatible versions
+- unexpected file layout
+
+Requirements:
+- ValidateWorkspace must not mutate data.
+- Validation results must be machine-readable.
+- Validation should identify affected records sufficiently for repair.
+- Validation must never silently repair problems.
+
+133. REPAIR MUST BE EXPLICIT
+- Repair operations must state exactly what they intend to change.
+- Repair should support dry-run/preview where practical.
+- Repair must use normal concurrency and persistence safeguards.
+- Repair must be auditable.
+- Automatic silent repair is prohibited.
+
+134. HUMAN-READABLE EXPORT
+Potential formats:
+- plain text
+- Markdown
+
+An item export should be able to include:
+- title
+- state
+- dates
+- tags
+- WaitingOn
+- next action
+- description
+- notes
+- source references
+- resolution
+- history where requested
+
+Requirements:
+- Human-readable export must never include the GitHub token.
+- Export should make it easy to hand context to another person or agent.
+
+135. NO HIDDEN AUTOMATION
+- Vigila may surface recommendations.
+- Vigila may identify stale/overdue/waiting-too-long items.
+- Vigila must not automatically complete, cancel, reclassify, delete, or promote items without an explicit configured rule or authorized operation.
+- Default behavior should favor visibility over silent mutation.
+
+136. NOTIFICATION DEDUPLICATION
+- A single due/follow-up event should not produce repeated notifications unintentionally.
+- Notification identity/delivery state should be separate from item workflow state.
+- Re-notification policies, if supported, must be explicit.
+- Notification delivery failure must not alter the underlying item.
+
+137. NOTIFICATION ACKNOWLEDGEMENT
+- Notification delivered/seen/acknowledged state must remain separate from completion, follow-up state, and waiting state.
+- Opening a notification must not automatically complete or modify an item.
+- Notification acknowledgement should be optional presentation/integration metadata.
+
+138. PROMOTE-TO-ROS CONTRACT
+Promotion must record:
+- Vigila ItemId
+- ROS WorkItemId
+- promotion timestamp
+- actor
+- OperationId
+
+Requirements:
+- Repeating the same promotion operation must not create multiple ROS work items.
+- Promotion should add a durable cross-reference in Vigila.
+- Promotion should not erase Vigila notes/history.
+- The resulting Vigila state/resolution should follow an explicit policy.
+- A failed ROS creation must not leave Vigila falsely marked as promoted.
+
+139. ROS STATE MUST NOT IMPLICITLY CONTROL VIGILA
+- Completing a ROS work item must not automatically complete the Vigila item unless an explicit integration rule has been configured.
+- Cancelling a Vigila item must not automatically cancel ROS work.
+- Cross-system synchronization rules must be explicit and versioned.
+- Default behavior should preserve system independence.
+
+140. CROSS-APPLICATION REFERENCES
+A cross-application reference should support:
+- application/system type
+- stable record ID
+- optional current URL
+- optional display name
+- optional integration version
+
+Requirements:
+- URLs should be treated as navigation hints, not primary identity.
+- References should survive deployment URL changes where possible.
+- Vigila should not need to understand another application's internal storage.
+
+141. V1 ADDITIONS TO ELEVATE NOW
+Include in v1:
+- WaitingSince
+- optional resolution/outcome note
+- common command envelope
+- machine-readable error taxonomy
+- retryability indicator
+- read-before-write concurrency requirement
+- compact search result DTO
+- pagination
+- explicit clock abstraction
+- derived-state calculation rules
+- Capture and Continue behavior
+- attachment/source references by identity rather than file storage
+- unsaved text preservation from prior requirements
+
+142. FUTURE / DEFERRED ITEMS FROM THIS PASS
+Defer unless early use demonstrates a need:
+- multi-level priority
+- manual list ordering
+- escalation date
+- structured multiple WaitingOn entities
+- saved views
+- rich tag metadata / aliasing
+- global command palette
+- advanced Inbox customization
+- repository migration UI
+- atomic multi-system transactions
+- notification delivery/acknowledgement
+- extensive cross-application reference resolution
+
+143. GUIDING RULE FOR NEW FEATURES
+A proposed feature should be accepted only if it improves at least one of these core Vigila jobs:
+- capture an open loop quickly
+- preserve context
+- record follow-up history
+- identify what is waiting
+- identify what needs attention
+- make the next action obvious
+- close the loop safely
+- allow an agent to do the same deterministically
+
+If a feature primarily adds project planning, engineering execution, resource coordination, or work estimation, it should likely belong in ROS instead.
+
+END OF VIGILA ADDITIONAL REQUIREMENTS v0.4

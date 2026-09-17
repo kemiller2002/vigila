@@ -1,0 +1,823 @@
+Vigila Additional Requirements v0.3
+Second-Pass Requirements and Architecture Hardening
+
+This document extends Vigila Requirements v0.2.
+It contains additional requirements discovered during architecture review.
+Where this document changes an earlier requirement, the newer requirement should take precedence.
+
+55. RECURRING FOLLOW-UPS
+
+Vigila should eventually support recurring items while avoiding the complexity of a full calendar engine.
+
+Examples:
+- Review invoices every Friday.
+- Follow up with accountant every two weeks until resolved.
+- Check subscriptions monthly.
+- Review stale sales leads every Monday.
+
+Requirements:
+- An item may optionally contain a recurrence rule.
+- Recurrence must not be required for normal items.
+- Completing a recurring item should create or schedule the next occurrence.
+- Historical occurrences must remain completed rather than being overwritten.
+- Recurrence should support at least:
+  - daily
+  - weekly
+  - monthly
+  - yearly
+  - custom interval
+- Recurrence should eventually allow an end date or occurrence limit.
+- Recurrence behavior must be deterministic and testable.
+- Recurrence should not require a general-purpose calendar framework unless demonstrated requirements justify one.
+
+Initial classification:
+- Future upgrade unless required by an early user workflow.
+
+56. SNOOZE VERSUS DEFER
+
+Snooze and defer are semantically different concepts.
+
+Snooze means:
+Temporarily remove an item from immediate attention and surface it again at a specified date/time.
+
+Deferred means:
+The user has intentionally decided not to work on the item now.
+
+Requirements:
+- Active items may be snoozed until a date/time.
+- Snoozed items should disappear from the Now view until the snooze expires.
+- Snoozing must not erase or alter the underlying due date.
+- Snoozing an overdue item must not change the fact that it is overdue.
+- Deferred should remain a domain state.
+- Snooze should be treated as review/presentation timing rather than a domain state.
+- Snooze expiration should make the item eligible to reappear automatically.
+- Snoozing should be auditable.
+
+57. TIME AND TIME-ZONE SEMANTICS
+
+Vigila must explicitly model date and time behavior.
+
+Requirements:
+- Vigila must know the user's local time zone when interpreting or presenting local dates/times.
+- Stored timestamps must use an unambiguous representation.
+- Date-only values must remain date-only where appropriate.
+- A date-only value must not accidentally shift to the prior or following calendar date because of UTC conversion.
+- Due values may be:
+  - date only
+  - date and time
+- Follow-up values may be:
+  - date only
+  - date and time
+- Snooze values may be:
+  - date and time
+  - date only where supported by product behavior
+- Created/updated/history timestamps should be precise timestamps.
+- Display formatting should be separate from persisted semantics.
+- The user's local time zone must not be embedded as an assumption in the core domain where it can be supplied as context.
+
+58. NATURAL-LANGUAGE DATE INTERPRETATION OUTSIDE THE DOMAIN
+
+Natural-language date parsing belongs outside Vigila's deterministic core.
+
+Example user request:
+Bring this back next Tuesday afternoon.
+
+The calling agent may resolve this into a concrete value such as:
+2026-09-22T15:00:00-04:00
+
+Requirements:
+- Vigila must not require an LLM to function.
+- Vigila must not require a natural-language date parser to function.
+- Calling agents are responsible for resolving phrases such as:
+  - tomorrow
+  - next Friday
+  - this afternoon
+  - in two weeks
+- Vigila should receive explicit date/time or date-only values.
+- The agent should preserve uncertainty rather than inventing precision when the user's language is ambiguous.
+
+59. REPOSITORY INITIALIZATION
+
+Vigila must define behavior for a valid GitHub repository that has not yet been initialized for Vigila.
+
+Requirements:
+- Vigila must detect whether its configured storage area has been initialized.
+- If not initialized, Vigila should offer or perform a clearly defined initialization operation.
+- Initialization must create only the minimum required Vigila files/directories.
+- Initialization must not overwrite unrelated repository content.
+- Initialization must create or record the Vigila schema/data version.
+- Initialization must verify that required files were successfully persisted before reporting success.
+- Re-running initialization against an already initialized repository must be safe.
+- Initialization must be idempotent where practical.
+- Partial initialization failure must be detectable and recoverable.
+
+60. APPLICATION MANIFEST
+
+Vigila should maintain a small application manifest in its storage area.
+
+Conceptual example:
+
+{
+  "application": "vigila",
+  "schemaVersion": 1,
+  "dataVersion": 1,
+  "createdAt": "..."
+}
+
+Requirements:
+- Vigila must be able to identify whether a configured storage area belongs to Vigila.
+- The manifest must be versioned.
+- The manifest should distinguish application identity from data/schema versions.
+- An unsupported future version must fail safely rather than attempting unsafe writes.
+- The manifest must not contain credentials.
+- Manifest changes must follow normal persistence and concurrency rules.
+
+61. CONFIGURABLE STORAGE PATH
+
+Vigila must not assume it owns the repository root.
+
+Requirements:
+- A storage path must be configurable.
+- A reasonable default should be provided, such as:
+  /vigila
+- The default path may be hidden under advanced configuration in the v1 UI.
+- Vigila must never write outside its configured storage path except where explicitly required by a documented integration contract.
+- Storage path normalization must prevent path traversal or malformed-path behavior.
+- A shared repository may therefore contain data for multiple applications.
+
+Example:
+
+repo/
+  vigila/
+  chrona/
+  summa/
+  other-data/
+
+62. ITEM RELATIONSHIPS
+
+Vigila should eventually support lightweight relationships between items.
+
+Possible relationship types:
+- RelatedTo
+- CreatedFrom
+- FollowUpTo
+- PromotedToRos
+- Replaces
+
+Requirements:
+- Items may reference other Vigila items.
+- Relationships should be directional where the semantic meaning requires direction.
+- Relationships must not imply scheduling or blocking dependencies unless explicitly defined by a later requirement.
+- Relationship creation/removal should be auditable.
+- Relationship support should not evolve into a general dependency graph without demonstrated need.
+
+Initial classification:
+- Future upgrade.
+
+63. CONTEXT GROUPING WITHOUT PROJECT MANAGEMENT
+
+Vigila may eventually support an optional context/grouping concept that is distinct from tags and distinct from projects.
+
+Example:
+
+Context: National Restaurant Association Show
+Tags: culinary, sales
+
+Requirements:
+- Tags classify an item.
+- Context, if introduced, identifies the specific subject/event/body of work the item belongs to.
+- Context must not automatically introduce milestones, planning, dependencies, resource allocation, or other project-management concepts.
+- The initial version may rely only on tags if that proves sufficient.
+
+Initial classification:
+- Optional future upgrade.
+
+64. BULK OPERATIONS
+
+Vigila should eventually allow batch operations for managing larger sets of follow-ups.
+
+Potential batch operations:
+- complete
+- defer
+- snooze
+- add tag
+- remove tag
+- change follow-up date
+- cancel
+
+Requirements:
+- Batch operations must apply the same domain validation as individual operations.
+- Partial failure must be reported explicitly.
+- Batch operations must not silently skip failed items.
+- Each affected item must retain its own history/audit trail.
+- Where practical, a batch should share a parent operation identifier.
+
+Initial classification:
+- v1.1 / future upgrade.
+
+65. AGENT IDEMPOTENCY
+
+Agent operations must be designed for retry safety.
+
+Problem:
+An agent may submit a mutation, GitHub may successfully persist it, and the response may be lost. Retrying the request must not create duplicate effects.
+
+Requirements:
+- Mutation requests should support a caller-supplied OperationId.
+- OperationId must be unique within an appropriate scope.
+- Repeating the same OperationId must not repeat the mutation.
+- The system should return the original successful result when a previously completed OperationId is retried, where practical.
+- Idempotency rules must apply especially to:
+  - item creation
+  - note creation
+  - completion
+  - tag addition/removal
+  - date changes
+- Idempotency records must not expose credentials or sensitive transport details.
+
+66. AGENT OPERATION RECEIPTS
+
+Every successful mutation should return a deterministic result suitable for agent verification.
+
+A mutation receipt should include at least:
+- success/failure state
+- ItemId where applicable
+- resulting item version
+- OperationId
+- timestamp
+- error information where unsuccessful
+
+Conceptual response:
+
+{
+  "status": "success",
+  "itemId": "VIG-000123",
+  "version": 7,
+  "operationId": "...",
+  "updatedAt": "..."
+}
+
+Requirements:
+- Agents must be able to distinguish accepted/persisted changes from attempted changes.
+- The result must not claim success until persistence has succeeded.
+- A returned receipt should be safe to log and must never include a GitHub token.
+
+67. NARROW AGENT MUTATION SEMANTICS
+
+Agent commands should have narrowly scoped effects.
+
+Example:
+"Add a note saying John called."
+
+This should not also:
+- change the due date
+- mark the item Waiting
+- alter tags
+- rewrite the title
+- complete the item
+
+unless those actions were explicitly requested.
+
+Requirements:
+- Each command should modify only the state it owns or explicitly declares.
+- Multi-field changes should require an explicit composite command or multiple explicit operations.
+- Side effects must be documented.
+- Agents must not infer unrelated domain transitions from a narrow mutation request.
+
+68. OPTIMISTIC CONCURRENCY
+
+Optimistic concurrency must be explicit.
+
+Requirements:
+- Every mutable item should carry a version value or equivalent concurrency token.
+- Mutation requests should supply the expected current version.
+- A mismatch must return a conflict instead of overwriting newer state.
+- A conflict response should provide enough information for the caller to re-read and retry safely.
+- Agents must not automatically overwrite conflicts without first reading the newer state.
+- The implementation may use Git object identifiers, record versions, or another deterministic mechanism, but the domain/integration contract should expose a stable concurrency concept.
+
+Example:
+
+Update VIG-42
+ExpectedVersion = 17
+
+If current version = 18:
+Conflict
+
+69. GIT COMMIT SEMANTICS
+
+Because GitHub is the persistence backend, commit behavior must be defined.
+
+Requirements:
+- Mutations must produce understandable commits.
+- Commit messages should identify the Vigila operation without unnecessarily exposing item contents.
+- Multiple file changes belonging to one logical domain operation should preferably be committed atomically where the GitHub interaction model permits it.
+- Commit messages must never contain credentials.
+- Commit messages should avoid sensitive note text and other unnecessary user content.
+- Commit conventions should be deterministic enough to aid debugging.
+
+Preferred style:
+
+vigila: create VIG-000123
+vigila: update VIG-000123
+vigila: add note VIG-000123
+vigila: complete VIG-000123
+
+70. GIT HISTORY AND PRIVACY
+
+Git creates persistent history, so data removal has different semantics from ordinary database updates.
+
+Requirements:
+- Documentation must explain that notes and item data persisted to Git may remain in repository history after later edits.
+- Secrets must never be intentionally stored in Vigila.
+- Token values must be automatically excluded from persistence, logs, commits, history, diagnostics, and UI exports.
+- Future redaction/deletion functionality must consider Git history, not only current files.
+- The UI should not encourage storing passwords, API keys, authentication tokens, or other secrets in notes.
+- Hard-deletion semantics must be documented honestly.
+
+71. SOFT ARCHIVE
+
+Completed and archived are separate presentation concerns.
+
+Requirements:
+- Completed items may eventually be archived so older completed items do not dominate normal browsing.
+- Archive should preferably be a presentation/retention flag rather than a new core workflow state.
+- Archived items must remain searchable.
+- Archiving must not remove history.
+- Reopening an archived completed item should restore it to an active, visible state appropriately.
+
+Initial classification:
+- Future upgrade.
+
+72. PINNED ITEMS
+
+Vigila should eventually support pinning important items.
+
+Requirements:
+- An item may optionally be pinned.
+- Pinning must not change the item's workflow state.
+- Pinned items should be surfaced prominently in appropriate views.
+- Pinning/unpinning should be auditable if history granularity warrants it.
+
+Example:
+Keep the NRA submission at the top until it is resolved.
+
+Initial classification:
+- Low-cost future enhancement.
+
+73. LAST ACTIVITY
+
+Each item should expose a deterministic last-activity value.
+
+Requirements:
+- LastActivityAt should reflect meaningful activity such as:
+  - note added
+  - state transition
+  - next action changed
+  - due/follow-up date changed
+  - waiting-on changed
+  - other substantive update
+- LastActivityAt should not be changed by read-only access.
+- Stale-item detection should rely on deterministic activity data rather than inference from Git commit timestamps alone.
+
+74. CREATED-VIA / ORIGIN
+
+In addition to Actor, Vigila should distinguish how an item entered the system.
+
+Possible values:
+- UI
+- Agent
+- Integration
+- Import
+
+Requirements:
+- CreatedVia should be recorded at creation.
+- Actor identifies who/what initiated the operation.
+- CreatedVia identifies the interaction channel.
+- These fields should support debugging and auditability without exposing secrets.
+
+75. AGENT CAPABILITY DISCOVERY
+
+The integration contract should allow an agent/client to discover supported functionality.
+
+Conceptual operation:
+GetCapabilities
+
+Potential response information:
+- API/schema version
+- supported commands
+- supported item kinds
+- supported states
+- supported optional features
+- maximum supported payload sizes where relevant
+
+Requirements:
+- Clients should not have to assume they are talking to the newest Vigila version.
+- Capability discovery must be deterministic.
+- Unsupported commands should fail explicitly rather than being ignored.
+
+76. HEALTH / STATUS OPERATION
+
+Vigila should expose a small status/capability check.
+
+Conceptual operation:
+GetStatus
+
+Potential result:
+- Vigila available
+- repository connected
+- schema supported
+- read available
+- write available
+- branch valid
+- storage path initialized
+
+Requirements:
+- Health/status checks must not mutate data.
+- Status information must not expose the GitHub token.
+- The UI and agents should be able to distinguish:
+  - application available
+  - repository unavailable
+  - authentication failure
+  - schema incompatibility
+  - read-only access
+  - write-capability failure
+
+77. REPOSITORY CAPABILITY VALIDATION
+
+Startup validation must test the capabilities Vigila actually requires.
+
+At minimum validate:
+- repository reachable
+- target branch exists
+- storage path readable
+- schema compatible
+- token has required read access
+- token has required write capability for normal Vigila persistence
+
+Requirements:
+- Do not assume successful repository read means successful write access.
+- Avoid destructive probe writes merely to test permissions when capability can be determined safely by another means.
+- If required write capability is absent, clearly report that the application cannot operate normally.
+- Read-only mode should not be introduced accidentally; if supported later it must be explicit.
+
+78. BRANCH RULES
+
+The configured branch must permit Vigila's write strategy.
+
+Requirements:
+- Vigila must detect or surface failures caused by protected-branch rules.
+- If direct writes are required by v1, the configured branch must permit those writes for the supplied credential.
+- Vigila v1 does not need to support pull-request-based persistence.
+- Pull-request persistence may be considered later as a separate feature.
+- Branch protection failure must not be reported merely as a generic save failure when a more useful error can be provided.
+
+79. MALFORMED OR CORRUPTED RECORD HANDLING
+
+Vigila must fail safely when individual persisted records are malformed.
+
+Requirements:
+- A malformed item should not necessarily prevent all other valid items from loading.
+- Vigila should identify the affected record/file sufficiently for diagnosis.
+- Malformed records must not be silently rewritten or "fixed" without an explicit migration/repair operation.
+- Invalid records should not be treated as valid domain state.
+- Repair tooling may be added later.
+- Errors must avoid exposing credentials.
+
+80. UNKNOWN FIELDS AND FORWARD COMPATIBILITY
+
+Readers should tolerate unknown fields where safe.
+
+Requirements:
+- Adding a non-breaking field to a newer record must not automatically break older readers.
+- Unknown fields should be ignored or preserved according to the serialization strategy.
+- A reader must still reject records when the schema/version indicates a genuinely incompatible format.
+- Forward compatibility must not bypass validation of known required fields.
+
+81. SCHEMA MIGRATION RULES
+
+Data migrations must be explicit and deterministic.
+
+Requirements:
+- Migrations must preserve item identity.
+- Migrations must preserve history unless a documented transformation is required.
+- Migrations must preserve source references and tags where semantically valid.
+- Migration operations must be testable.
+- Migration failure must leave original persisted data intact.
+- Destructive migrations require explicit handling and documentation.
+- The system must not partially migrate a repository and then report success.
+- Migration version progression should be monotonic and auditable.
+
+82. DETERMINISTIC SORTING
+
+Primary views must have deterministic sort behavior.
+
+For the Now view, an initial policy may prioritize:
+1. overdue items
+2. due today
+3. follow-up date reached
+4. pinned items
+5. remaining currently actionable items
+
+Within a category, a secondary rule may use:
+- oldest actionable first
+- earliest due/follow-up date
+- another explicitly documented stable ordering
+
+Requirements:
+- Sorting behavior must not depend accidentally on repository file order.
+- Sort rules should be testable.
+- UI sorting options may be added later without changing underlying domain semantics.
+
+83. UNDATED ITEMS
+
+Open items with no date must not disappear indefinitely.
+
+Requirements:
+- Open items without due date, follow-up date, or snooze date must remain discoverable.
+- A review mechanism should periodically surface undated items.
+- Undated items do not necessarily belong in Now every day.
+- Search/filter must be able to identify undated active items.
+- Agent summaries should be able to ask for open items with no review date.
+
+84. REVIEW MODE
+
+Vigila should eventually provide a structured review workflow.
+
+Potential review categories:
+- overdue
+- waiting too long
+- no date
+- stale
+- deferred items whose review date has arrived
+
+Potential actions:
+- complete
+- add note
+- follow up
+- snooze
+- defer
+- cancel
+- promote to ROS
+
+Requirements:
+- Review should work from deterministic item state, not agent inference.
+- Review should not modify an item merely by viewing it.
+- Review state/progress should not complicate the core item model unnecessarily.
+
+Initial classification:
+- Future enhancement with high value.
+
+85. ITEM TYPE REFINEMENT
+
+The earlier "Reminder" item type should be reconsidered.
+
+Observation:
+A reminder is often behavior attached to an item rather than a separate domain kind.
+
+Example:
+"Submit passport documentation" is a Task.
+"Remind me Thursday" is a follow-up/surfacing instruction attached to that task.
+
+Recommendation:
+The core item kinds should initially be:
+
+- Task
+- FollowUp
+- Waiting
+
+Requirements:
+- Reminder behavior should be represented using follow-up/snooze/notification timing where possible.
+- A separate Reminder kind should only remain if real workflows demonstrate a distinct semantic need.
+- This simplification should occur before implementation if it does not conflict with existing accepted domain work.
+
+86. BROWSER SECURITY FOR LOCALLY STORED GITHUB TOKEN
+
+Because Vigila v1 stores a GitHub token in browser localStorage, browser security must be treated as a first-class requirement.
+
+Requirements:
+- The application must not load unnecessary third-party JavaScript.
+- The application should prefer zero third-party runtime scripts where practical.
+- A restrictive Content Security Policy should be used.
+- Inline script execution should be minimized or prohibited where practical.
+- User-provided text must never be inserted into the DOM as executable HTML.
+- Notes, titles, tags, descriptions, and imported data must be rendered safely.
+- If rich text is introduced later, sanitization must be explicit and thoroughly tested.
+- Vigila must never use eval or equivalent dynamic code execution.
+- GitHub token values must never be exposed in rendered HTML.
+- Token values must not be included in URLs, query strings, fragments, telemetry, or analytics.
+- The application must avoid third-party analytics or telemetry that could observe application state unless explicitly approved later.
+- Security-sensitive browser behavior should be documented.
+
+87. TOKEN STORAGE UX
+
+The user should understand what happens when the GitHub token is stored.
+
+Requirements:
+- The setup UI should state that the token is stored locally in the current browser.
+- The UI should provide a clear "Forget token / Disconnect" action.
+- Clearing the token should not delete repository data.
+- Changing repository configuration should not silently delete or migrate existing repository data.
+- The application should not display the full token after initial entry.
+- If the token is shown for editing, it should be masked by default.
+- Copying/exporting configuration must exclude the token unless a future explicit credential-export feature is designed.
+
+88. IMPORT / EXPORT / BACKUP
+
+Git provides history, but Vigila should still define portable data behavior.
+
+Requirements:
+- Vigila should eventually support exporting its canonical data in a documented format.
+- Export should not include the GitHub token.
+- Import must validate schema and item identities before mutation.
+- Import must not silently overwrite newer items.
+- Import should support dry-run/validation before commit if bulk import is added.
+- Repository history is not a substitute for a documented data export contract.
+- A future backup/restore operation should preserve item IDs and history semantics where possible.
+
+89. INPUT SIZE AND VALIDATION LIMITS
+
+Unbounded user input can create repository, UI, and agent problems.
+
+Requirements:
+- Titles, tags, notes, descriptions, and source references should have documented practical size limits.
+- Limits should be generous enough for normal use while preventing pathological payloads.
+- Validation errors must be explicit.
+- Input must be Unicode-safe.
+- Empty/whitespace-only titles must be rejected.
+- Tags should be normalized consistently.
+- Duplicate identical tags on one item should not be stored.
+- Invalid URL/source formats should not corrupt item data.
+
+90. IDENTIFIER RULES
+
+Identifiers should be stable and collision-resistant.
+
+Requirements:
+- Item IDs must never change after creation.
+- Note IDs must never change after creation.
+- IDs should not depend solely on list position, file name order, or mutable title text.
+- Concurrent creators must be able to generate IDs without collisions.
+- Human-friendly display IDs may coexist with globally unique internal IDs if needed.
+- File naming conventions must be deterministic and safe across supported repository environments.
+
+91. WRITE BATCHING AND API EFFICIENCY
+
+GitHub API interaction should remain simple but avoid obviously wasteful behavior.
+
+Requirements:
+- One logical user operation should use the minimum reasonable number of GitHub writes.
+- Loading list views should not require one GitHub request per item where the storage layout can avoid it.
+- The application should avoid rewriting unrelated items for a single-item change.
+- GitHub API rate-limit responses must be handled explicitly.
+- Rate-limit failure must not be reported as successful persistence.
+- Optimization must not introduce caching complexity before it is needed.
+
+92. RATE LIMIT AND REMOTE CHANGE HANDLING
+
+Vigila must assume GitHub is a remote system with rate limits and external modification.
+
+Requirements:
+- GitHub rate-limit responses should be recognized and surfaced clearly.
+- External repository changes must be detected through normal refresh/version behavior.
+- A user should be able to refresh/reload current repository state.
+- Vigila must not assume it is the only writer.
+- Unexpected remote changes should trigger normal concurrency/conflict handling rather than silent overwrite.
+- Automatic aggressive polling is not required for v1.
+- Any future polling must account for GitHub rate limits.
+
+93. UNSAVED EDIT PROTECTION
+
+The UI should protect users from losing text they are actively entering.
+
+Requirements:
+- If a note or item edit has unsaved changes, navigation that would discard those changes should warn the user where practical.
+- Failed saves should preserve the entered text in the UI where possible.
+- The application must not clear an edit form until persistence succeeds.
+- Retry behavior should preserve the intended operation ID when appropriate.
+
+94. ACCESSIBILITY AND KEYBOARD-FIRST CAPTURE EXTENSION
+
+Because Vigila is intended for frequent use, core operations should be efficient without a mouse.
+
+Requirements:
+- Quick capture should be reachable by keyboard.
+- Completing an item should have a keyboard-accessible control.
+- Adding a note should be keyboard accessible.
+- Focus order must be logical.
+- Dialogs/drawers must manage focus correctly.
+- Keyboard shortcuts, if added, must not conflict with normal text entry and should be discoverable.
+- Accessibility requirements apply equally to mobile and desktop responsive layouts where applicable.
+
+95. TESTING EXTENSIONS
+
+In addition to existing tests, the following should be explicitly covered:
+
+- idempotent retries
+- optimistic concurrency conflicts
+- unknown-field tolerance
+- malformed record isolation
+- schema migration success/failure
+- date-only values across time zones
+- snooze behavior
+- undated-item review behavior
+- repository initialization idempotency
+- token never appearing in logs/errors/URLs
+- safe rendering of malicious-looking user text
+- protected branch/write denial behavior
+- GitHub rate-limit behavior
+- retry after network failure
+- duplicate agent operation IDs
+- storage path validation/path traversal prevention
+
+Property-based testing should be considered for:
+- state transitions
+- serialization round-trips
+- migration invariants
+- tag normalization
+- identifier generation
+
+96. DOCUMENTATION EXTENSIONS
+
+Documentation should explicitly include:
+- Git-backed persistence tradeoffs
+- Git history/privacy implications
+- token-in-localStorage security model
+- recovery from connection failure
+- repository initialization
+- schema/version compatibility
+- concurrency conflict behavior
+- agent idempotency expectations
+- operation receipts
+- safe handling of dates and time zones
+- v1 non-goals
+- future shared Echelon connection-profile upgrade
+
+97. UPDATED V1 REQUIREMENTS TO INCLUDE NOW
+
+The following additions should be part of the first implementation because delaying them would create architectural debt:
+
+- snooze semantics
+- explicit date/time/date-only semantics
+- time-zone-safe presentation
+- repository initialization
+- application manifest
+- configurable storage path
+- agent OperationId/idempotency
+- deterministic mutation receipts
+- narrowly scoped agent operations
+- optimistic concurrency
+- Git commit conventions
+- Git history/privacy awareness
+- LastActivityAt
+- CreatedVia
+- capability discovery
+- health/status operation
+- read/write repository capability validation
+- branch/write-rule handling
+- malformed-record isolation
+- unknown-field tolerance
+- schema migration rules
+- deterministic sorting
+- undated-item discoverability
+- browser security requirements for localStorage token use
+- token-storage UX
+- identifier rules
+- GitHub rate-limit handling
+- unsaved-edit protection
+- extended testing requirements
+
+98. DEFERRED / UPGRADE BACKLOG
+
+The following should be intentionally deferred unless an early workflow proves they are necessary:
+
+- recurring items
+- item relationships
+- context grouping beyond tags
+- bulk operations
+- soft archive
+- pinned items
+- full Review mode
+- pull-request-based persistence
+- richer notification delivery
+- shared Echelon credential/repository configuration
+- multiple repository/token profiles
+- JSON credential bundles
+- full offline synchronization
+
+99. DESIGN PRINCIPLE: DO NOT TURN VIGILA INTO ROS
+
+Any proposed feature should be challenged against this rule:
+
+If the feature exists primarily to plan, estimate, coordinate, sequence, measure, or execute engineering/project work, it probably belongs in ROS rather than Vigila.
+
+Vigila should remain focused on:
+- capturing open loops
+- preserving follow-up context
+- remembering what is waiting
+- surfacing what requires attention
+- recording notes
+- tracking the next action
+- closing the loop
+
+END OF VIGILA ADDITIONAL REQUIREMENTS v0.3
