@@ -29,9 +29,23 @@ A `Waiting` view MUST show everything currently blocked on someone or something
 else.
 
 #### VIG-UI-004 — Upcoming
-**Level:** MUST · **Release:** v1 · **Source:** v0.2 §16.3, v0.1 §16
+**Level:** MUST · **Release:** v1 · **Source:** v0.2 §16.3, v0.1 §16, v0.3 §56
 
-An `Upcoming` view MUST show future due dates and follow-up dates.
+An `Upcoming` view MUST show future due dates, future follow-up dates, and
+snooze expiry.
+
+> Snooze expiry was added by [OQ-06](OPEN-QUESTIONS.md#oq-06). §56 requires
+> snoozed items to leave `Now` without saying where they go; a snoozed item with
+> no other date would otherwise appear in no primary view, contradicting
+> [VIG-QRY-013](QUERY.md#vig-qry-013). A snooze-until is the same kind of fact
+> as the other two — a future moment at which the item returns to attention.
+
+#### VIG-UI-004a — Upcoming shows why a row qualifies
+**Level:** MUST · **Release:** v1 · **Source:** OQ-06, v0.2 §17
+
+Because one item may qualify for `Upcoming` on more than one date, the view MUST
+make clear which date put each row there. That distinction MUST NOT be carried
+by colour alone ([VIG-UI-020](#vig-ui-020)).
 
 #### VIG-UI-005 — Someday / Deferred
 **Level:** MUST · **Release:** v1 · **Source:** v0.2 §16.4, v0.1 §16

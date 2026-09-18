@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 8,
+  "nextSeq": 12,
   "items": [
     {
       "id": "WI-0001",
@@ -143,6 +143,38 @@
       "attachments": [],
       "createdAt": "2026-09-18T01:15:29Z",
       "updatedAt": "2026-09-18T01:15:30Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0010",
+      "title": "Resolve OQ-01 and OQ-06",
+      "description": null,
+      "tags": [
+        "requirements"
+      ],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-18T01:22:13.081Z",
+      "updatedAt": "2026-09-18T01:22:54Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0011",
+      "title": "Implement the capture slice: item aggregate and persisted form",
+      "description": null,
+      "tags": [
+        "domain,persistence"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-18T01:30:43.468Z",
+      "updatedAt": "2026-09-18T01:30:44Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

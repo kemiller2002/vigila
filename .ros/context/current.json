@@ -4,7 +4,7 @@
   "repository": "vigila",
   "actor": "ros-bootstrap",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-09-18T01:15:30Z",
+  "updatedAt": "2026-09-18T01:30:44Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -185,6 +185,44 @@
         "EXE-20260918T011530188Z-600abac6"
       ],
       "completedAt": "2026-09-18T01:15:30Z"
+    },
+    {
+      "id": "WI-0010",
+      "type": "mechanical",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "documentation",
+          "path": "docs/requirements/OPEN-QUESTIONS.md"
+        }
+      ],
+      "updatedAt": "2026-09-18T01:22:54Z",
+      "telemetryExecutionIds": [
+        "EXE-20260918T012213705Z-c2bd6925"
+      ],
+      "completedAt": "2026-09-18T01:22:54Z"
+    },
+    {
+      "id": "WI-0011",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/Vigila.Semantic/Item.fs"
+        },
+        {
+          "type": "tests",
+          "path": "tests/Vigila.Host.GitHub.Tests/Tests.fs"
+        }
+      ],
+      "updatedAt": "2026-09-18T01:30:44Z",
+      "telemetryExecutionIds": [
+        "EXE-20260918T013044077Z-9c2706b5"
+      ],
+      "completedAt": "2026-09-18T01:30:44Z"
     }
   ]
 }

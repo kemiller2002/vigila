@@ -18,7 +18,13 @@
 
   <ItemGroup>
     <Compile Include="Identifiers.fs" />
+    <Compile Include="Time.fs" />
+    <Compile Include="Actors.fs" />
     <Compile Include="Items.fs" />
+    <Compile Include="Tags.fs" />
+    <Compile Include="Notes.fs" />
+    <Compile Include="History.fs" />
+    <Compile Include="Item.fs" />
   </ItemGroup>
 
 </Project>
