@@ -13,3 +13,4 @@
 | WI-0008 | Add SessionStart hook installing the .NET SDK for web sessions | complete | tooling | medium |
 | WI-0009 | Record answered open questions: Limen, OQ-02, charter scope | complete | requirements | medium |
 | WI-0010 | Resolve OQ-01 and OQ-06 | complete | requirements | medium |
+| WI-0011 | Implement the capture slice: item aggregate and persisted form | complete | domain,persistence | high |

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 11,
+  "nextSeq": 12,
   "items": [
     {
       "id": "WI-0001",
@@ -159,6 +159,22 @@
       "attachments": [],
       "createdAt": "2026-09-18T01:22:13.081Z",
       "updatedAt": "2026-09-18T01:22:54Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0011",
+      "title": "Implement the capture slice: item aggregate and persisted form",
+      "description": null,
+      "tags": [
+        "domain,persistence"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-18T01:30:43.468Z",
+      "updatedAt": "2026-09-18T01:30:44Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
