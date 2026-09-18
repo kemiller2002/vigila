@@ -4,7 +4,7 @@
   "repository": "vigila",
   "actor": "ros-bootstrap",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-09-18T11:07:42Z",
+  "updatedAt": "2026-09-18T11:12:38Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -349,6 +349,48 @@
         "EXE-20260918T110742622Z-9a8ed654"
       ],
       "completedAt": "2026-09-18T11:07:42Z"
+    },
+    {
+      "id": "WI-0017",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/Vigila.Application/Dispatch.fs"
+        },
+        {
+          "type": "tests",
+          "path": "tests/browser/capture.spec.js"
+        }
+      ],
+      "updatedAt": "2026-09-18T11:12:37Z",
+      "telemetryExecutionIds": [
+        "EXE-20260918T111236963Z-8a75ee3d"
+      ],
+      "completedAt": "2026-09-18T11:12:37Z"
+    },
+    {
+      "id": "WI-0018",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "tests/Vigila.Application.Tests/ViewBindingTests.fs"
+        },
+        {
+          "type": "tests",
+          "path": "tests/Vigila.Application.Tests/ViewBindingTests.fs"
+        }
+      ],
+      "updatedAt": "2026-09-18T11:12:38Z",
+      "telemetryExecutionIds": [
+        "EXE-20260918T111237613Z-a42c378b"
+      ],
+      "completedAt": "2026-09-18T11:12:38Z"
     }
   ]
 }
