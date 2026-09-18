@@ -9,3 +9,5 @@
 | WI-0004 | Correct product name from Vigilia to Vigila | complete | naming,docs | high |
 | WI-0005 | Move repository identifiers to vigila after repo rename | complete | naming | medium |
 | WI-0006 | Scaffold F# solution with four-tier layout and Aegis at the boundary | complete | architecture,fsharp | high |
+| WI-0007 | Add SessionStart hook installing the .NET SDK for web sessions | abandoned | tooling | medium |
+| WI-0008 | Add SessionStart hook installing the .NET SDK for web sessions | complete | tooling | medium |

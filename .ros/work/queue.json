@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 7,
+  "nextSeq": 8,
   "items": [
     {
       "id": "WI-0001",
@@ -95,6 +95,39 @@
       "attachments": [],
       "createdAt": "2026-09-18T00:26:19.092Z",
       "updatedAt": "2026-09-18T00:31:11Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0007",
+      "title": "Add SessionStart hook installing the .NET SDK for web sessions",
+      "description": null,
+      "tags": [
+        "tooling"
+      ],
+      "priority": "medium",
+      "status": "abandoned",
+      "attachments": [],
+      "createdAt": "2026-09-18T01:14:05.602Z",
+      "updatedAt": "2026-09-18T01:14:29Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null,
+      "abandonedReason": "WI-0007 is already allocated on the unmerged storage-layout branch; renumbered to avoid a queue collision on merge"
+    },
+    {
+      "id": "WI-0008",
+      "title": "Add SessionStart hook installing the .NET SDK for web sessions",
+      "description": null,
+      "tags": [
+        "tooling"
+      ],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-18T01:14:29Z",
+      "updatedAt": "2026-09-18T01:14:35Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
