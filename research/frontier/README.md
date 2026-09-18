@@ -1,4 +1,4 @@
-# Vigilia research frontier
+# Vigila research frontier
 
 This directory contains derived frontier views: unresolved questions,
 contradictions, candidate research opportunities, dependencies, confidence

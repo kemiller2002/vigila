@@ -4,7 +4,7 @@
   "repository": "vigilia",
   "actor": "ros-bootstrap",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-09-18T00:05:53Z",
+  "updatedAt": "2026-09-18T00:13:02Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -75,6 +75,23 @@
         "EXE-20260917T235513004Z-44a6cac9"
       ],
       "completedAt": "2026-09-18T00:05:53Z"
+    },
+    {
+      "id": "WI-0004",
+      "type": "mechanical",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "documentation",
+          "path": "docs/requirements/OPEN-QUESTIONS.md"
+        }
+      ],
+      "updatedAt": "2026-09-18T00:13:02Z",
+      "telemetryExecutionIds": [
+        "EXE-20260918T001302773Z-18e12eba"
+      ],
+      "completedAt": "2026-09-18T00:13:02Z"
     }
   ]
 }

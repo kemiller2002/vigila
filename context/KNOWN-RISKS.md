@@ -1,4 +1,4 @@
-# Vigilia known risks
+# Vigila known risks
 
 | Risk | Likelihood | Impact | Mitigation | Owner |
 |---|---|---|---|---|

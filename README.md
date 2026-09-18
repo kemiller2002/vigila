@@ -1,4 +1,4 @@
-# Vigilia
+# Vigila
 
 Task organizer.
 
@@ -33,6 +33,6 @@ of installed files.
 ## Pilot rule
 
 The operating system is itself under evaluation. Do not infer that
-Vigilia is a validated discipline, method, or product merely because
+Vigila is a validated discipline, method, or product merely because
 the repository follows a rigorous process. Measure whether the process improves
 decisions, traceability, handoffs, and rework relative to the declared baseline.

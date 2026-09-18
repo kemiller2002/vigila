@@ -1,4 +1,4 @@
-# Vigilia current state
+# Vigila current state
 
 ## Repository status
 

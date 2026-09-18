@@ -75,22 +75,38 @@ they say) under reading 2.
 
 <a id="oq-03"></a>
 
-## OQ-03 — "Vigila" or "Vigilia"?
+## OQ-03 — "Vigila" or "Vigilia"? — **RESOLVED**
 
-**Inconsistency.** All four source documents spell the product **Vigila**. This
-repository is named **vigilia**, and `PROJECT-CHARTER.md` calls the project
+**Resolved 2026-09-18.** The product is **Vigila**. "Vigilia" was a misspelling,
+introduced into the repository name and propagated from there by `ros init`,
+which derives the project name from the directory it runs in.
+
+**Was.** All four source documents spell the product Vigila, while the
+repository is named `vigilia` and the ROS-generated documents called the project
 "Vigilia".
 
-**Assumed.** The source documents' spelling, "Vigila", is used throughout the
-requirements, since they are the artifact being derived from.
-
-**Decision changes.** The product name in every user-facing string, the
-`"application": "vigila"` value in the manifest
+**Applied.** Every prose reference in the repository now reads "Vigila", along
+with `ros.json`'s `project` field and the document ids in
+`PROJECT-CHARTER.md` and `docs/PILOT-MEASUREMENT-PLAN.md`. The requirements
+already used the source documents' spelling and were unaffected, which confirms
+the values that matter downstream: `"application": "vigila"` in the manifest
 ([VIG-PER-013](PERSISTENCE.md#vig-per-013)), the `vigila:` commit prefix
 ([VIG-PER-033](PERSISTENCE.md#vig-per-033)), the default storage path `/vigila`
 ([VIG-PER-004](PERSISTENCE.md#vig-per-004)), and the `VIG-` identifier prefix.
-The manifest value and storage path are persisted, so this is worth settling
-before any data exists.
+
+**Still outstanding.** Three identifiers still carry the misspelling because
+they track the *repository*, not the product, and changing them is a separate
+decision:
+
+| Identifier | Current | Notes |
+|---|---|---|
+| GitHub repository | `kemiller2002/vigilia` | Renaming changes clone URLs and this repo's remote. Outward-facing. |
+| `ros.json` → `name`, `repository.id` | `vigilia` | Repository slug. ROS work and telemetry records already written carry `"repository": "vigilia"`; those are historical and were left intact. |
+| `package-lock.json` → `name` | `vigilia` | Derived from the directory name. |
+
+If the repository is renamed, those three should follow in the same change.
+Past ROS records should not be rewritten — they accurately record the identity
+in effect when they were written.
 
 ---
 
