@@ -20,9 +20,14 @@ open Vigila.Semantic.History
 
 /// How a closed item was resolved (VIG-DOM-040). Optional metadata that never
 /// replaces state history.
+///
+/// Four cases, not the six v0.4 section 105 lists. `Cancelled` and
+/// `CompletedSuccessfully` were dropped because they duplicate the `Cancelled`
+/// and `Completed` statuses exactly, and section 105 is explicit that a
+/// classification must not replace state history -- so where the status already
+/// carries the fact, a classification saying the same thing is only a second
+/// place to disagree. What remains is what a status cannot express. See OQ-09.
 type Resolution =
-    | CompletedSuccessfully
-    | Cancelled
     | Superseded
     | PromotedToRos
     | NoLongerRelevant

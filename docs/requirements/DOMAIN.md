@@ -372,6 +372,15 @@ MUST affect presentation and filtering only. Important items MUST be filterable
 and MAY be surfaced more prominently. Multi-level priority scoring is deferred
 by §142.
 
+`Important` is also the field that marks an item "for current attention", so it
+brings an open item into the `Now` view ([VIG-UI-002](UI.md#vig-ui-002)) and
+breaks ties within the last tier of that view's sort
+([VIG-QRY-011](QUERY.md#vig-qry-011)).
+
+> Both are presentation effects, not state changes: `Now` is a derived view and
+> [VIG-TIME-024](TIME.md#vig-time-024) already treats view membership as
+> calculated rather than stored. See [OQ-05](OPEN-QUESTIONS.md#oq-05).
+
 ## Closure metadata
 
 #### VIG-DOM-039 — Resolution note
@@ -383,17 +392,28 @@ completed-item detail, MUST be searchable, and MUST be included in
 human-readable export ([VIG-OPS-030](OPERATIONS.md#vig-ops-030)).
 
 #### VIG-DOM-040 — Resolution classification
-**Level:** MAY · **Release:** v1 · **Source:** v0.4 §105
+**Level:** MAY · **Release:** v1 · **Source:** v0.4 §105, OQ-09
 
-Closure MAY carry an optional resolution classification from:
-`CompletedSuccessfully`, `Cancelled`, `Superseded`, `PromotedToRos`,
-`NoLongerRelevant`, `Other`.
+Closure MAY carry an optional resolution classification from: `Superseded`,
+`PromotedToRos`, `NoLongerRelevant`, `Other`.
 
 It MUST remain optional metadata associated with closure, MUST NOT replace state
 history, and MUST NOT complicate the core state model. Additional
 classifications MAY be introduced later without changing item identity. Agents
 MUST set a classification only when explicitly requested or deterministically
 implied ([VIG-AGT-022](AGENT.md#vig-agt-022)).
+
+> **Four classifications, not six.** §105 also lists `Cancelled` and
+> `CompletedSuccessfully`, which duplicate the `Cancelled` and `Completed`
+> workflow states exactly ([VIG-DOM-008](#vig-dom-008)). §105 itself says a
+> classification must not replace state history, so where the state already
+> carries the fact the classification adds only a second place to disagree —
+> and leaves "deterministically implied" with no determinate answer.
+>
+> This is a recorded deviation from §105's literal list, taken in the
+> reversible direction: restoring the two is additive, while removing them once
+> items carry them is a migration. See
+> [OQ-09](OPEN-QUESTIONS.md#oq-09).
 
 ## Completion, reopening, deletion
 

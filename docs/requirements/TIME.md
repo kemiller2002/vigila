@@ -162,6 +162,12 @@ waiting age MUST NOT call ambient system time directly inside domain logic.
 Tests MUST be able to inject a deterministic clock, and clock use MUST be
 standardised across the application.
 
+> §122 lists recurrence here although recurrence is deferred by §98
+> ([VIG-TIME-025](#vig-time-025)). That is not a conflict and not evidence that
+> recurrence is in v1 scope: the clock abstracts *reading the time* and serves
+> the v1 cases without knowing what will later ask it. See
+> [OQ-10](OPEN-QUESTIONS.md#oq-10).
+
 ## Derived state
 
 #### VIG-TIME-024 — Derived values are calculated, not stored

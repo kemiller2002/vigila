@@ -40,7 +40,7 @@ disagree, or because a statement was ambiguous — that call is recorded in
 | [`QUALITY.md`](QUALITY.md) | Testing and documentation obligations | §49, §50, §95, §96 |
 | [`SCOPE.md`](SCOPE.md) | v1 scope, non-goals, deferred backlog | §52, §53, §54, §97, §98, §141, §142 |
 | [`TRACEABILITY.md`](TRACEABILITY.md) | Source section → requirement ID map, both directions | all |
-| [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md) | Conflicts and ambiguities needing a decision | — |
+| [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md) | Decisions taken where the sources conflicted or were silent (all resolved) | — |
 
 ## Identifier scheme
 
