@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Tier 2 - State Transition / Domain Execution. "What legal change may
+       happen?"
+
+       Depends on Tier 1 only. Performs no infrastructure effects: an effect is
+       returned as data and executed by Tier 4.
+
+       Aegis is deliberately absent here for the same reason it is absent from
+       Tier 1 - a transition either is legal or is not, which is a domain
+       answer, not an operational failure.
+
+       Requirements: VIG-GOV-013 (explicit transitions), VIG-GOV-014 (explicit
+       external effects), VIG-DOM-009, VIG-DOM-010, VIG-DOM-012. -->
+
+  <ItemGroup>
+    <Compile Include="Transitions.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Vigila.Semantic/Vigila.Semantic.fsproj" />
+  </ItemGroup>
+
+</Project>

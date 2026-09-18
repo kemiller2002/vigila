@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Tier 1 - Semantic Model. "What can be true?"
+
+       This project references FSharp.Core and nothing else, by design. The
+       restriction is structural, not a convention: with no other package
+       reference it cannot take a dependency on GitHub, HTTP, the browser,
+       localStorage, serialization or a UI framework even by accident.
+
+       That includes Aegis. Aegis handles failure at boundaries, and Tier 1 has
+       no boundaries - it only says what can be true. Aegis enters at Tier 3
+       and Tier 4, where effects actually happen.
+
+       Enforced by scripts/check-architecture.sh.
+
+       Requirements: VIG-GOV-015 (domain independence), VIG-GOV-012 (illegal
+       states unrepresentable), VIG-GOV-009 (F# where practical). -->
+
+  <ItemGroup>
+    <Compile Include="Identifiers.fs" />
+    <Compile Include="Items.fs" />
+  </ItemGroup>
+
+</Project>

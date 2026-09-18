@@ -1,0 +1,34 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Runs before the build: the tier boundaries are the point of the
+      # layout, so a violation should fail fast rather than after a
+      # successful compile.
+      - name: Check four-tier dependency direction
+        run: ./scripts/check-architecture.sh
+
+      - name: Restore
+        run: dotnet restore Vigila.sln
+
+      # Warnings are errors (Directory.Build.props), so this also gates
+      # warning regressions.
+      - name: Build
+        run: dotnet build Vigila.sln --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test Vigila.sln --no-build --configuration Release --verbosity normal

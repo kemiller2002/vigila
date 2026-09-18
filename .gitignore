@@ -39,3 +39,8 @@ logs/*
 #   npx @echelon-foundry/visual-engineering init
 .visual-engineering/
 # END echelon:visual-engineering
+
+# .NET
+bin/
+obj/
+*.user
