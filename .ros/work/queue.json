@@ -131,6 +131,22 @@
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
+    },
+    {
+      "id": "WI-0009",
+      "title": "Record answered open questions: Limen, OQ-02, charter scope",
+      "description": null,
+      "tags": [
+        "requirements"
+      ],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-18T01:15:29Z",
+      "updatedAt": "2026-09-18T01:15:30Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
     }
   ]
 }

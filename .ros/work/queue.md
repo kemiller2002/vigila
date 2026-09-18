@@ -11,3 +11,4 @@
 | WI-0006 | Scaffold F# solution with four-tier layout and Aegis at the boundary | complete | architecture,fsharp | high |
 | WI-0007 | Add SessionStart hook installing the .NET SDK for web sessions | abandoned | tooling | medium |
 | WI-0008 | Add SessionStart hook installing the .NET SDK for web sessions | complete | tooling | medium |
+| WI-0009 | Record answered open questions: Limen, OQ-02, charter scope | complete | requirements | medium |

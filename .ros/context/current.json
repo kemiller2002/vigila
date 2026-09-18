@@ -4,7 +4,7 @@
   "repository": "vigila",
   "actor": "ros-bootstrap",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-09-18T01:14:35Z",
+  "updatedAt": "2026-09-18T01:15:30Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -147,6 +147,23 @@
         "EXE-20260918T011435724Z-2064bd32"
       ],
       "completedAt": "2026-09-18T01:14:35Z"
+    },
+    {
+      "id": "WI-0009",
+      "type": "mechanical",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "documentation",
+          "path": "PROJECT-CHARTER.md"
+        }
+      ],
+      "updatedAt": "2026-09-18T01:15:30Z",
+      "telemetryExecutionIds": [
+        "EXE-20260918T011530188Z-600abac6"
+      ],
+      "completedAt": "2026-09-18T01:15:30Z"
     }
   ]
 }
