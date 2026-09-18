@@ -18,8 +18,10 @@
 | WI-0013 | Retarget to net10.0 and honour F# nullness at the boundaries | complete | architecture,fsharp | high |
 | WI-0014 | Wire the F# engine to the browser through Limen as WebAssembly | complete | architecture,limen | high |
 | WI-0015 | Evaluate the build against the SDE method and record the conformance findings | complete |  | medium |
-| WI-0016 | Verify the composed browser path end to end with Playwright (SDE conformance F-5) | captured |  | medium |
+| WI-0016 | Verify the composed browser path end to end with Playwright (SDE conformance F-5) | complete |  | medium |
 | WI-0017 | Hand-write the Limen host-boundary JSON and close the effects algebra (SDE conformance F-4) | captured |  | medium |
 | WI-0018 | Replace the view-binding grep with a projection agreement test (SDE conformance F-6) | captured |  | medium |
 | WI-0019 | Write SDE-MAP.md with a manifest or a recorded not-needed reason per area (SDE conformance F-1, F-2) | captured |  | medium |
 | WI-0020 | Add sde.config.json excluding build output from structural review (SDE conformance F-10) | captured |  | medium |
+| WI-0021 | Decide how a refused capture is communicated in the UI; error/hasError are projected but unreachable (browser suite WI-0016) | captured |  | medium |
+| WI-0022 | Decide whether to take the Limen 0.6.x upgrade (repo initialized at 0.5.1) | complete |  | medium |

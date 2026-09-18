@@ -15,17 +15,20 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # index.html loads Limen's kernel from node_modules, and the browser
+      # suite needs its runner, so both are installed before anything runs.
+      - name: Install npm dependencies
+        run: npm ci
 
       # Runs before the build: the tier boundaries are the point of the
       # layout, so a violation should fail fast rather than after a
       # successful compile.
       - name: Check four-tier dependency direction
         run: ./scripts/check-architecture.sh
-
-      # The engine fills the HTML by key name, so a renamed projection key or a
-      # misspelled binding fails silently in the browser. Caught here instead.
-      - name: Check view bindings against the engine's projection
-        run: ./scripts/check-view-bindings.sh
 
       - name: Restore
         run: dotnet restore Vigila.sln
@@ -35,10 +38,32 @@ jobs:
       - name: Build
         run: dotnet build Vigila.sln --no-restore --configuration Release
 
+      # Includes the binding-agreement tests, which assert that every data-*
+      # key in index.html is one the engine actually emits.
       - name: Test
         run: dotnet test Vigila.sln --no-build --configuration Release --verbosity normal
 
-      # Proves the engine still publishes to WebAssembly, which is how it
-      # reaches the browser.
+      # Publishing proves the engine still compiles to WebAssembly. It does not
+      # prove the page works, which is what the browser suite below is for.
       - name: Publish the WASM engine
         run: npm run build:wasm
+
+      - name: Install Chromium for the browser suite
+        run: npx playwright install --with-deps chromium
+
+      # The load-bearing check: the composed path — DOM event, kernel, JSON,
+      # JSExport shim, F# engine and back — driven in a real browser. Every
+      # other check in this job was green while the page was rendering nothing
+      # at all, so this one is not optional.
+      #
+      # SDE: method/VERIFICATION-METHOD.md, "present-but-wrong implementation".
+      - name: Verify the composed browser path
+        run: npx playwright test
+
+      - name: Upload browser traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
