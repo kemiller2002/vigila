@@ -21,6 +21,13 @@ type ItemId =
         let (ItemId v) = this
         "VIG-" + v.ToString("N").Substring(0, 8)
 
+    /// The form used as a filename. Lowercase hex with no separators, so it is
+    /// deterministic and safe across repository environments (VIG-PER-043),
+    /// and derived only from the immutable id (VIG-PER-041).
+    member this.Segment =
+        let (ItemId v) = this
+        v.ToString("N")
+
     override this.Equals other =
         match other with
         | :? ItemId as o -> o.Value = this.Value
@@ -72,3 +79,52 @@ module NoteId =
     let ofGuid (value: Guid) = NoteId value
 
     let toGuid (id: NoteId) = id.Value
+
+/// A workspace's identity.
+///
+/// A workspace is the scope a set of items belongs to - what v0.2 section 27
+/// called an "organization" before v0.4 section 124 named it and gave it stable
+/// identity.
+///
+/// Deliberately opaque and separate from any display name. VIG-PER-007 requires
+/// identity to survive the repository moving, and a name cannot: renaming an
+/// organisation would otherwise rewrite every path that contains it. The
+/// human-readable name lives beside the id, not in it.
+///
+/// Requirements: VIG-PER-007, VIG-PER-040.
+[<Struct; CustomEquality; NoComparison>]
+type WorkspaceId =
+    private
+    | WorkspaceId of Guid
+
+    member this.Value = let (WorkspaceId v) = this in v
+
+    /// The form used as a path segment. Lowercase hex with no separators, so it
+    /// is deterministic and safe on every supported repository environment
+    /// (VIG-PER-043).
+    member this.Segment =
+        let (WorkspaceId v) = this
+        v.ToString("N")
+
+    override this.Equals other =
+        match other with
+        | :? WorkspaceId as o -> o.Value = this.Value
+        | _ -> false
+
+    override this.GetHashCode() =
+        let (WorkspaceId v) = this
+        v.GetHashCode()
+
+[<RequireQualifiedAccess>]
+module WorkspaceId =
+
+    let create () = WorkspaceId(Guid.NewGuid())
+
+    let ofGuid (value: Guid) = WorkspaceId value
+
+    let toGuid (id: WorkspaceId) = id.Value
+
+    let parse (text: string) =
+        match Guid.TryParse text with
+        | true, value -> Ok(WorkspaceId value)
+        | _ -> Error $"'%s{text}' is not a valid workspace identifier."

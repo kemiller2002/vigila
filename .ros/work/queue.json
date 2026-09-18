@@ -101,20 +101,19 @@
     },
     {
       "id": "WI-0007",
-      "title": "Add SessionStart hook installing the .NET SDK for web sessions",
+      "title": "Decide and implement repository storage layout (OQ-08)",
       "description": null,
       "tags": [
-        "tooling"
+        "architecture,persistence"
       ],
-      "priority": "medium",
-      "status": "abandoned",
+      "priority": "high",
+      "status": "complete",
       "attachments": [],
-      "createdAt": "2026-09-18T01:14:05.602Z",
-      "updatedAt": "2026-09-18T01:14:29Z",
+      "createdAt": "2026-09-18T00:53:58.737Z",
+      "updatedAt": "2026-09-18T00:57:26Z",
       "createdBy": "unknown",
       "source": "manual",
-      "sourceReference": null,
-      "abandonedReason": "WI-0007 is already allocated on the unmerged storage-layout branch; renumbered to avoid a queue collision on merge"
+      "sourceReference": null
     },
     {
       "id": "WI-0008",
