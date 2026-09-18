@@ -94,19 +94,22 @@ the values that matter downstream: `"application": "vigila"` in the manifest
 ([VIG-PER-033](PERSISTENCE.md#vig-per-033)), the default storage path `/vigila`
 ([VIG-PER-004](PERSISTENCE.md#vig-per-004)), and the `VIG-` identifier prefix.
 
-**Still outstanding.** Three identifiers still carry the misspelling because
-they track the *repository*, not the product, and changing them is a separate
-decision:
+**Repository renamed.** The three repository-tracking identifiers moved together
+once the GitHub repository was renamed:
 
-| Identifier | Current | Notes |
-|---|---|---|
-| GitHub repository | `kemiller2002/vigilia` | Renaming changes clone URLs and this repo's remote. Outward-facing. |
-| `ros.json` → `name`, `repository.id` | `vigilia` | Repository slug. ROS work and telemetry records already written carry `"repository": "vigilia"`; those are historical and were left intact. |
-| `package-lock.json` → `name` | `vigilia` | Derived from the directory name. |
+| Identifier | Now |
+|---|---|
+| GitHub repository | `kemiller2002/vigila` |
+| `ros.json` → `name`, `repository.id` | `vigila` |
+| `package-lock.json` → `name` | `vigila` |
 
-If the repository is renamed, those three should follow in the same change.
-Past ROS records should not be rewritten — they accurately record the identity
-in effect when they were written.
+**Not rewritten.** ROS work and telemetry records written before the rename
+still carry `"repository": "vigilia"`. They accurately record the identity in
+effect when they were written, and rewriting an audit trail to match a later
+decision would make it less trustworthy, not more. New records carry `vigila`.
+
+Nothing in this repository now refers to the product or the repository as
+"Vigilia" outside those historical records.
 
 ---
 

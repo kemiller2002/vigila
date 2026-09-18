@@ -7,3 +7,4 @@
 | WI-0002 | Install SDE, Visual Engineering, and typescript-wasm-kernel toolchain | complete | tooling | medium |
 | WI-0003 | Derive consolidated requirements specification from input-documents | complete | requirements,docs | high |
 | WI-0004 | Correct product name from Vigilia to Vigila | complete | naming,docs | high |
+| WI-0005 | Move repository identifiers to vigila after repo rename | complete | naming | medium |

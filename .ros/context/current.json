@@ -1,10 +1,10 @@
 {
   "schemaVersion": "1.0.0",
   "protocolVersion": "1.0.0",
-  "repository": "vigilia",
+  "repository": "vigila",
   "actor": "ros-bootstrap",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-09-18T00:13:02Z",
+  "updatedAt": "2026-09-18T00:15:45Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -92,6 +92,23 @@
         "EXE-20260918T001302773Z-18e12eba"
       ],
       "completedAt": "2026-09-18T00:13:02Z"
+    },
+    {
+      "id": "WI-0005",
+      "type": "mechanical",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "documentation",
+          "path": "docs/requirements/OPEN-QUESTIONS.md"
+        }
+      ],
+      "updatedAt": "2026-09-18T00:15:45Z",
+      "telemetryExecutionIds": [
+        "EXE-20260918T001545214Z-bc755dc0"
+      ],
+      "completedAt": "2026-09-18T00:15:45Z"
     }
   ]
 }
