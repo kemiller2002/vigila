@@ -1,0 +1,90 @@
+/* Presentation only. No state lives here (VIG-GOV-010). */
+:root {
+  --ink: #1b1b1f;
+  --muted: #5c5c66;
+  --line: #d9d9e0;
+  --accent: #2f5cff;
+  --danger: #b3261e;
+  --surface: #fff;
+  --bg: #f7f7fa;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e6e6ea;
+    --muted: #a0a0ad;
+    --line: #35353f;
+    --accent: #8ea4ff;
+    --danger: #ff8a80;
+    --surface: #1c1c22;
+    --bg: #131318;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Comfortable on a phone first (VIG-UI-023). */
+.app { max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+h1 { font-size: 1.5rem; margin: 0 0 1.25rem; }
+
+.capture { display: grid; gap: 0.5rem; margin-bottom: 1rem; }
+.capture__label { font-weight: 600; font-size: 0.9rem; }
+
+.capture__input {
+  padding: 0.75rem;
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+/* Focus must stay visible (VIG-UI-020). */
+.capture__input:focus-visible,
+.capture__submit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.capture__submit {
+  padding: 0.75rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.capture__submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.error { color: var(--danger); margin: 0 0 1rem; font-size: 0.95rem; }
+.empty { color: var(--muted); }
+
+.items { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+
+.item {
+  padding: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.item__title { display: block; }
+
+.item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}

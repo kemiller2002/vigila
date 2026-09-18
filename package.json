@@ -1,5 +1,18 @@
 {
   "dependencies": {
     "@echelon-foundry/typescript-wasm-kernel": "^0.5.1"
+  },
+  "name": "vigila",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:wasm": "dotnet publish src/Vigila.Wasm/Vigila.Wasm.csproj -c Release",
+    "check:limen": "npx --yes @echelon-foundry/typescript-wasm-kernel verify --strict",
+    "check:architecture": "./scripts/check-architecture.sh",
+    "test:dotnet": "dotnet test Vigila.sln -c Release",
+    "test": "npm run check:architecture && npm run check:bindings && npm run check:limen && npm run test:dotnet",
+    "serve": "python3 -m http.server 4321",
+    "start": "npm run build:wasm && npm run serve",
+    "check:bindings": "./scripts/check-view-bindings.sh"
   }
 }

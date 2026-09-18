@@ -4,7 +4,7 @@
   "repository": "vigila",
   "actor": "ros-bootstrap",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-09-18T05:55:19Z",
+  "updatedAt": "2026-09-18T06:05:10Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -265,6 +265,27 @@
         "EXE-20260918T055519355Z-74da7a50"
       ],
       "completedAt": "2026-09-18T05:55:19Z"
+    },
+    {
+      "id": "WI-0014",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/Vigila.Application/Dispatch.fs"
+        },
+        {
+          "type": "tests",
+          "path": "tests/Vigila.Application.Tests/Tests.fs"
+        }
+      ],
+      "updatedAt": "2026-09-18T06:05:10Z",
+      "telemetryExecutionIds": [
+        "EXE-20260918T060510652Z-6751c4d5"
+      ],
+      "completedAt": "2026-09-18T06:05:10Z"
     }
   ]
 }

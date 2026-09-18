@@ -53,6 +53,14 @@ module ItemId =
         | true, value -> Ok(ItemId value)
         | _ -> Error $"'%s{text}' is not a valid item identifier."
 
+    /// The display form as a function.
+    ///
+    /// ItemId is a struct, and reaching its `Display` member from inside
+    /// another expression makes the compiler copy it (FS0052), which
+    /// warnings-as-errors then rejects. Callers that only want the string use
+    /// this instead.
+    let display (id: ItemId) = id.Display
+
 /// A note's identity. Separate type from ItemId so the two cannot be passed
 /// interchangeably (VIG-GOV-012).
 [<Struct; CustomEquality; NoComparison>]

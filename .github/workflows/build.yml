@@ -22,6 +22,11 @@ jobs:
       - name: Check four-tier dependency direction
         run: ./scripts/check-architecture.sh
 
+      # The engine fills the HTML by key name, so a renamed projection key or a
+      # misspelled binding fails silently in the browser. Caught here instead.
+      - name: Check view bindings against the engine's projection
+        run: ./scripts/check-view-bindings.sh
+
       - name: Restore
         run: dotnet restore Vigila.sln
 
@@ -32,3 +37,8 @@ jobs:
 
       - name: Test
         run: dotnet test Vigila.sln --no-build --configuration Release --verbosity normal
+
+      # Proves the engine still publishes to WebAssembly, which is how it
+      # reaches the browser.
+      - name: Publish the WASM engine
+        run: npm run build:wasm

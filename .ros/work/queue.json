@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 14,
+  "nextSeq": 15,
   "items": [
     {
       "id": "WI-0001",
@@ -207,6 +207,22 @@
       "attachments": [],
       "createdAt": "2026-09-18T05:55:18.649Z",
       "updatedAt": "2026-09-18T05:55:19Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0014",
+      "title": "Wire the F# engine to the browser through Limen as WebAssembly",
+      "description": null,
+      "tags": [
+        "architecture,limen"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-18T06:05:09.982Z",
+      "updatedAt": "2026-09-18T06:05:10Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
