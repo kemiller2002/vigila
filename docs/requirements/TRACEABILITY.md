@@ -191,7 +191,7 @@ Sections §55–§99 are v0.3. Sections §100–§143 are v0.4.
 |---|---|
 | Source sections | 143 (plus 11 `§47.x` subsections and 3 `§0.x` subsections) |
 | Sections with no mapped requirement | **0** |
-| Distinct requirements | 265 |
+| Distinct requirements | 266 |
 
 ### By area
 
@@ -200,7 +200,7 @@ Sections §55–§99 are v0.3. Sections §100–§143 are v0.4.
 | `DOM` — domain model | 50 |
 | `AGT` — agent and integration | 36 |
 | `PER` — persistence | 34 |
-| `UI` — user interface | 25 |
+| `UI` — user interface | 26 |
 | `TIME` — time and scheduling | 22 |
 | `GOV` — governance | 21 |
 | `OPS` — operations | 20 |
@@ -208,7 +208,7 @@ Sections §55–§99 are v0.3. Sections §100–§143 are v0.4.
 | `QRY` — query and retrieval | 18 |
 | `TST` — testing and documentation | 13 |
 | `SCOPE` — scope | 6 |
-| **Total** | **265** |
+| **Total** | **266** |
 
 ### By release
 
