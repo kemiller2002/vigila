@@ -18,18 +18,18 @@ cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/../..}"
 log() { printf '[session-start] %s\n' "$1"; }
 
 # --- .NET SDK -------------------------------------------------------------
-# global.json pins 8.0 with rollForward: latestFeature, matching the net8.0
-# target of EchelonFoundry.Aegis.Core.
-if command -v dotnet >/dev/null 2>&1; then
-  log "dotnet $(dotnet --version) already present"
+# global.json pins 10.0, matching the target framework in
+# Directory.Build.props and the rest of the Echelon application family.
+if dotnet --list-sdks 2>/dev/null | grep -q '^10\.'; then
+  log "dotnet SDK 10 already present ($(dotnet --version))"
 else
-  log "installing .NET SDK 8"
+  log "installing .NET SDK 10"
   export DEBIAN_FRONTEND=noninteractive
   # The image ships a stale package index whose .deb versions have already been
   # superseded on the mirror, so installing without updating first fails with
   # 404s on every dotnet package.
   apt-get update -qq
-  apt-get install -y -qq dotnet-sdk-8.0
+  apt-get install -y -qq dotnet-sdk-10.0
   log "installed dotnet $(dotnet --version)"
 fi
 

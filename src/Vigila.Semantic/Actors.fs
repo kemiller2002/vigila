@@ -25,8 +25,11 @@ type Actor =
 [<RequireQualifiedAccess>]
 module Actor =
 
-    let create actorType (name: string) =
-        let trimmed = if isNull name then "" else name.Trim()
+    let create actorType (name: string | null) =
+        let trimmed =
+            match name with
+            | Null -> ""
+            | NonNull supplied -> supplied.Trim()
 
         if trimmed.Length = 0 then
             Error "An actor name is required."

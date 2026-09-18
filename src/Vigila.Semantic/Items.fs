@@ -71,11 +71,11 @@ module Title =
     /// (VIG-DOM-048) and input beyond the documented limit (VIG-DOM-047).
     /// Surrounding whitespace is trimmed; interior text is preserved exactly,
     /// including non-ASCII characters (VIG-DOM-047 requires Unicode safety).
-    let create (text: string) =
+    let create (text: string | null) =
         match text with
-        | null -> Error "A title is required."
-        | _ ->
-            let trimmed = text.Trim()
+        | Null -> Error "A title is required."
+        | NonNull supplied ->
+            let trimmed = supplied.Trim()
 
             if trimmed.Length = 0 then
                 Error "A title is required."

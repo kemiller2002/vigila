@@ -69,12 +69,12 @@ module StoragePath =
     /// because those are spelling rather than meaning. Refuses anything that
     /// could escape the configured area or behave differently across
     /// repository environments.
-    let create (raw: string) =
+    let create (raw: string | null) =
         match raw with
-        | null -> Error Empty
-        | _ when raw.Contains '\\' -> Error BackslashSeparator
-        | _ when raw |> Seq.exists Char.IsControl -> Error ControlCharacter
-        | _ ->
+        | Null -> Error Empty
+        | NonNull raw when raw.Contains '\\' -> Error BackslashSeparator
+        | NonNull raw when raw |> Seq.exists Char.IsControl -> Error ControlCharacter
+        | NonNull raw ->
             // A drive letter or UNC prefix is not repository-relative, and
             // stripping it would silently redirect the write. A leading "//"
             // is refused rather than collapsed for the same reason: "//host/share"
@@ -156,7 +156,9 @@ let itemPath (root: StoragePath) (workspace: WorkspaceId) (item: ItemId) =
 /// this module returns already satisfies it - but a path arriving from
 /// configuration, an import or a stored reference has not been through
 /// `StoragePath.create`.
-let isInside (root: StoragePath) (candidate: string) =
-    not (isNull candidate)
-    && let prefix = root.Value + "/" in
-       candidate = root.Value || candidate.StartsWith(prefix, StringComparison.Ordinal)
+let isInside (root: StoragePath) (candidate: string | null) =
+    match candidate with
+    | Null -> false
+    | NonNull candidate ->
+        let prefix = root.Value + "/"
+        candidate = root.Value || candidate.StartsWith(prefix, StringComparison.Ordinal)

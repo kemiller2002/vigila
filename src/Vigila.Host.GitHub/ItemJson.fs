@@ -294,15 +294,24 @@ let private prop (el: JsonElement) (name: string) =
     | true, v when v.ValueKind <> JsonValueKind.Null -> Some v
     | _ -> None
 
+/// `JsonElement.GetString()` is typed as nullable, so the null case is handled
+/// here rather than at each of the twenty-odd call sites. A JSON null already
+/// failed `prop`, so reaching null here means the document is malformed.
 let private requiredString el name =
     match prop el name with
-    | Some v when v.ValueKind = JsonValueKind.String -> Ok(v.GetString())
+    | Some v when v.ValueKind = JsonValueKind.String ->
+        match v.GetString() with
+        | NonNull text -> Ok text
+        | Null -> Error $"'%s{name}' must be a string."
     | Some _ -> Error $"'%s{name}' must be a string."
     | None -> Error $"'%s{name}' is required."
 
 let private optionalString el name =
     match prop el name with
-    | Some v when v.ValueKind = JsonValueKind.String -> Ok(Some(v.GetString()))
+    | Some v when v.ValueKind = JsonValueKind.String ->
+        match v.GetString() with
+        | NonNull text -> Ok(Some text)
+        | Null -> Error $"'%s{name}' must be a string."
     | Some _ -> Error $"'%s{name}' must be a string."
     | None -> Ok None
 

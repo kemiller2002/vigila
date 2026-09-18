@@ -33,12 +33,12 @@ module Tag =
     /// used deliberately: culture-sensitive casing would make tag identity
     /// depend on the reader's locale, which would break VIG-DOM-028's
     /// intersection queries across machines.
-    let create (text: string) =
+    let create (text: string | null) =
         match text with
-        | null -> Error "A tag is required."
-        | _ ->
+        | Null -> Error "A tag is required."
+        | NonNull supplied ->
             let collapsed =
-                text.Split([| ' '; '\t'; '\n'; '\r' |], StringSplitOptions.RemoveEmptyEntries)
+                supplied.Split([| ' '; '\t'; '\n'; '\r' |], StringSplitOptions.RemoveEmptyEntries)
                 |> String.concat " "
 
             let normalised = collapsed.ToLowerInvariant()

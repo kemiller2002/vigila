@@ -29,11 +29,11 @@ module Note =
     [<Literal>]
     let MaxLength = 10000
 
-    let create clock author itemId (text: string) =
+    let create clock author itemId (text: string | null) =
         match text with
-        | null -> Error "Note text is required."
-        | _ ->
-            let trimmed = text.Trim()
+        | Null -> Error "Note text is required."
+        | NonNull supplied ->
+            let trimmed = supplied.Trim()
 
             if trimmed.Length = 0 then
                 Error "Note text is required."

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 13,
+  "nextSeq": 14,
   "items": [
     {
       "id": "WI-0001",
@@ -191,6 +191,22 @@
       "attachments": [],
       "createdAt": "2026-09-18T05:36:11.214Z",
       "updatedAt": "2026-09-18T05:39:19Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0013",
+      "title": "Retarget to net10.0 and honour F# nullness at the boundaries",
+      "description": null,
+      "tags": [
+        "architecture,fsharp"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-18T05:55:18.649Z",
+      "updatedAt": "2026-09-18T05:55:19Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
