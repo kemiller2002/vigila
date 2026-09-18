@@ -29,7 +29,8 @@ Search ranking SHOULD follow this order:
 
 1. exact `ItemId` match
 2. exact title match
-3. strong title match
+3. strong title match — **every term in the query appears in the title as a
+   whole word, ignoring case** (OQ-11)
 4. tag match
 5. `WaitingOn` match
 6. source/context match
@@ -39,6 +40,15 @@ Search ranking SHOULD follow this order:
 Ranking behaviour MUST be documented. Results SHOULD indicate why an item
 matched where practical. Search MUST avoid unpredictable ranking that changes
 without data changes.
+
+> **"Strong title match" is defined at tier 3 above** rather than left to the
+> implementation. §116 requires ranking to be documented and not to shift
+> without data changes, which no scoring heuristic satisfies: a corpus-relative
+> score (TF-IDF, BM25) can reorder results when an unrelated item is added, and
+> an edit-distance threshold is arbitrary. Whole-word containment of every query
+> term is deterministic, reproducible from the item alone, needs no index
+> ([VIG-UI-026](UI.md#vig-ui-026)), and is explicable in one sentence — "all of
+> your words are in the title". See [OQ-11](OPEN-QUESTIONS.md#oq-11).
 
 #### VIG-QRY-004 — Exact-ID lookup is separable
 **Level:** MUST · **Release:** v1 · **Source:** v0.4 §116
@@ -79,22 +89,30 @@ Primary views MUST have deterministic sort behaviour. Sorting MUST NOT depend
 accidentally on repository file order, and sort rules MUST be testable.
 
 #### VIG-QRY-011 — Now view sort policy
-**Level:** SHOULD · **Release:** v1 · **Source:** v0.3 §82
+**Level:** SHOULD · **Release:** v1 · **Source:** v0.3 §82, OQ-04
 
 The `Now` view SHOULD prioritise, in order:
 
-1. overdue items
-2. due today
-3. follow-up date reached
-4. pinned items
-5. remaining currently actionable items
+| Tier | Contents |
+|---|---|
+| 1 | overdue items |
+| 2 | due today |
+| 3 | follow-up date reached |
+| 4 | remaining currently actionable items |
 
-Within a category a secondary rule MAY use oldest-actionable-first, earliest
-due/follow-up date, or another explicitly documented stable ordering.
+Within tier 4 the secondary rule is `Important`
+([VIG-DOM-038](DOMAIN.md#vig-dom-038)) first, then oldest actionable first.
+§82 permits "another explicitly documented stable ordering", and this is it.
 
-> The policy references pinned items, which §72 classifies as a future
-> enhancement. Until pinning exists, that tier is empty — see
-> [OQ-04](OPEN-QUESTIONS.md#oq-04).
+> **Four tiers, not five.** §82's policy names "pinned items" fourth, but
+> pinning is deferred by §98 ([VIG-OPS-021](OPERATIONS.md#vig-ops-021)), so the
+> v1 policy would otherwise reference a v1-absent feature — see
+> [OQ-04](OPEN-QUESTIONS.md#oq-04). When pinning ships it takes the position
+> between tier 3 and the current tier 4, and the tiers below it renumber.
+>
+> Note that `Important` decides *membership* in `Now`
+> ([VIG-UI-002](UI.md#vig-ui-002)) and ordering only as the tie-break above;
+> pinning would decide ordering outright. They are separate features.
 
 #### VIG-QRY-012 — UI sort options do not change domain semantics
 **Level:** MAY · **Release:** future · **Source:** v0.3 §82

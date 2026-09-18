@@ -487,3 +487,36 @@ module ItemSerialization =
 
         Assert.Equal(1, Set.count twice.Tags)
         Assert.Equal(once.History.Length, twice.History.Length)
+
+    // --- OQ-09: the resolution enumeration -------------------------------
+
+    [<Fact>]
+    let ``every resolution classification round-trips`` () =
+        for resolution in [ Superseded; PromotedToRos; NoLongerRelevant; Other ] do
+            let original = { newItem () with Resolution = Some resolution }
+            Assert.Equal<Resolution option>(Some resolution, (roundTrip original).Resolution)
+
+    [<Theory>]
+    [<InlineData("cancelled")>]
+    [<InlineData("completed-successfully")>]
+    let ``a withdrawn resolution classification is refused`` (withdrawn: string) =
+        // OQ-09 removed these because they duplicate the workflow status. A
+        // record still carrying one is refused rather than quietly mapped, so a
+        // value the domain cannot represent cannot get back in.
+        let json =
+            (toJson { newItem () with Resolution = Some Superseded })
+                .Replace("\"resolution\": \"superseded\"", $"\"resolution\": \"{withdrawn}\"")
+
+        match fromJson json with
+        | Error msg -> Assert.Contains("resolution", msg)
+        | Ok _ -> failwith $"'%s{withdrawn}' should no longer be a valid resolution"
+
+    [<Fact>]
+    let ``status carries closure, not the resolution classification`` () =
+        // The point of OQ-09: an item can be closed with no classification at
+        // all, because the status already says it was.
+        let closed = { newItem () with Status = Completed; Resolution = None }
+        let restored = roundTrip closed
+
+        Assert.Equal(Completed, restored.Status)
+        Assert.True restored.Resolution.IsNone

@@ -1,19 +1,31 @@
 ---
 id: REQ-OQ
 title: Open questions from requirements derivation
-status: open
+status: resolved
 created: 2026-09-18
+updated: 2026-09-18
 ---
 
 # Open questions
 
 Points where deriving the requirements needed a judgement the source documents
-do not settle. Each records what the sources say, what the requirement set
-currently assumes, and what a decision would change.
+do not settle. Each records what the sources said, what was decided, and why.
 
-Nothing here blocks reading the requirements — each has a working assumption
-already applied. They are listed because the assumption may be wrong, and
-because several are cheaper to settle before implementation than after.
+**All eleven are resolved.** The file is kept rather than deleted: each entry is
+the reasoning behind a decision that is now load-bearing elsewhere, and the
+alternatives that were rejected are the part hardest to reconstruct later.
+
+Two of them record deliberate deviations from the source documents, taken with
+reasons rather than silently: [OQ-09](#oq-09) drops two resolution
+classifications §105 lists, and [OQ-01](#oq-01) keeps §85's withdrawal of the
+`Reminder` kind over §54's scope list.
+
+A recurring argument decided three of these. Where a choice was close,
+it went in the **reversible direction**: adding a case to a closed set later is
+additive, while removing one after items carry it is a migration. That reasoning
+settled [OQ-01](#oq-01), [OQ-09](#oq-09), and the shape of
+[OQ-04](#oq-04).
+
 
 ---
 
@@ -50,6 +62,7 @@ left open.
 `Reminder` is one DU case and one persisted value. §85 asks for exactly that
 evidence before adding it.
 
+
 ---
 
 <a id="oq-02"></a>
@@ -76,6 +89,7 @@ scope, so one must be qualified — `ItemKind.Waiting` or `ItemStatus.Waiting`.
 This is a real cost of the decision and it already broke a build during the
 scaffold work. It is left visible rather than worked around: the compiler flags
 every ambiguous use, which is the safest place for the ambiguity to surface.
+
 
 ---
 
@@ -117,45 +131,66 @@ decision would make it less trustworthy, not more. New records carry `vigila`.
 Nothing in this repository now refers to the product or the repository as
 "Vigilia" outside those historical records.
 
+
 ---
 
 <a id="oq-04"></a>
 
-## OQ-04 — Pinned items are in the sort policy but deferred
+## OQ-04 — Pinned items are in the sort policy but deferred — **RESOLVED**
 
-**Gap.** v0.3 §82's `Now` sort policy has five tiers, and tier 4 is "pinned
-items". v0.3 §72 classifies pinning as a future enhancement, and §98 lists it in
-the deferred backlog.
+**Resolved 2026-09-18.** The v1 `Now` sort policy has four tiers. The pinned
+tier keeps its position, reserved, and fills when pinning ships.
 
-So the v1 sort policy references a v1-absent feature.
+**Was.** §82's policy has five tiers with "pinned items" fourth, while §72 calls
+pinning a future enhancement and §98 defers it — so the v1 policy referenced a
+v1-absent feature.
 
-**Assumed.** Tier 4 is empty in v1 and the policy degrades to four tiers.
-[VIG-QRY-011](QUERY.md#vig-qry-011) records this.
+**Why not pull pinning into v1 instead.** A sort policy mentioning a feature is
+not a demonstrated requirement for it, and [VIG-GOV-018](GOVERNANCE.md#vig-gov-018)
+asks features to justify their own complexity. Overriding an explicit deferral
+to satisfy a placeholder is the wrong direction; the tier existing on paper is
+the thing to fix.
 
-**Decision changes.** Either pinning moves into v1 (it is described as
-low-cost), or the documented v1 sort policy should say four tiers so the
-implementation is not written against a placeholder.
+**Applied.** [VIG-QRY-011](QUERY.md#vig-qry-011) states four tiers, names the
+reserved position so a later change slots in rather than renumbering, and
+documents the tier-4 secondary rule.
+
+**Note on the division of labour.** Pinning and `Important`
+([OQ-05](#oq-05)) are not the same feature and should not be merged. `Important`
+decides **membership** in `Now`; pinning would decide **ordering** within it.
+Keeping them apart is what lets §100's "presentation and filtering only"
+and §82's ordering tiers both stand.
 
 ---
 
 <a id="oq-05"></a>
 
-## OQ-05 — What marks an item "for current attention"?
+## OQ-05 — What marks an item "for current attention"? — **RESOLVED**
 
-**Gap.** v0.2 §16.1 says the `Now` view includes "open items explicitly marked
-for current attention". No source document defines the field that marks them.
+**Resolved 2026-09-18.** `Important` is the marker.
 
-Candidates that exist elsewhere: `Important` (v0.4 §100), pinning (v0.3 §72,
-deferred), or `NeedsReview` (v0.4 §114). None is described as doing this job.
+**Was.** §16.1 puts "open items explicitly marked for current attention" in
+`Now`, and no source document says which field marks them.
 
-**Assumed.** No dedicated field. [VIG-UI-002](UI.md#vig-ui-002) restates §16.1
-verbatim, leaving the marker unspecified.
+**Why `Important`.** It is the only one of the three candidates that is both in
+v1 and about the user's own judgement of significance:
 
-**Decision changes.** Whether v1 needs a fourth boolean on the item, or whether
-`Important` is meant to serve this purpose — in which case
-[VIG-DOM-038](DOMAIN.md#vig-dom-038)'s "presentation and filtering only"
-constraint needs re-reading, since inclusion in `Now` is arguably more than
-presentation.
+| Candidate | Why not |
+|---|---|
+| `NeedsReview` (§114) | About an *agent-created* item awaiting human check. A different question from "this matters now". |
+| Pinning (§72) | Deferred by §98, and §72's own example is about keeping something *at the top* — ordering, not membership ([OQ-04](#oq-04)). |
+
+**The §100 tension, resolved.** §100 says `Important` must affect "presentation
+and filtering only" and must not change workflow state. Appearing in `Now` is
+presentation: `Now` is a derived view, not a state, and
+[VIG-TIME-024](TIME.md#vig-time-024) already treats view membership as
+calculated rather than stored. Marking an item Important changes no status and
+no transition, so §100 holds.
+
+**Applied.** [VIG-UI-002](UI.md#vig-ui-002) names the field;
+[VIG-DOM-038](DOMAIN.md#vig-dom-038) records that `Now` membership is one of the
+presentation effects it permits. No new field was added — the alternative was a
+fourth boolean meaning almost exactly what `Important` already means.
 
 ---
 
@@ -203,21 +238,41 @@ or snooze — since the same item may qualify on more than one, and
 [VIG-UI-020](UI.md#vig-ui-020) forbids carrying that distinction by colour
 alone.
 
+
 ---
 
 <a id="oq-07"></a>
 
-## OQ-07 — Is the Inbox view in v1?
+## OQ-07 — Is the Inbox view in v1? — **RESOLVED**
 
-**Classification ambiguity.** v0.4 §113 describes the Inbox view in present-tense
-requirement language ("Vigila should support a derived Inbox view"), but it is
-not in v0.2 §54's v1 scope list, not elevated by §97 or §141, and not deferred
-by §98 or §142. Only "advanced Inbox customisation" is deferred, by §142 —
-implying the basic view is not.
+**Resolved 2026-09-18.** Yes, at SHOULD level, with fixed documented criteria.
 
-**Assumed.** v1, at SHOULD level. [VIG-UI-006a](UI.md#vig-ui-006a).
+**Was.** §113 describes Inbox in requirement language but it appears in no scope
+list: not in §54, not elevated by §97 or §141, not deferred by §98 or §142 —
+which defers only *advanced Inbox customisation*, implying the basic view is not
+deferred.
 
-**Decision changes.** Whether v1 ships five primary views or six.
+**Why v1.** Inbox is not new scope; it is the mechanism for a requirement
+already in v1. [VIG-QRY-013](QUERY.md#vig-qry-013) requires that open items with
+no dates stay discoverable and that "a review mechanism SHOULD periodically
+surface undated items". Inbox *is* that mechanism. Building it costs a derived
+query rather than a new concept — §113 is explicit that Inbox must not be a
+workflow state.
+
+**Criteria, fixed for v1.** An open item is in `Inbox` when either:
+
+- it carries no organising signal at all — no tags, no due date, no follow-up
+  date and no next action; or
+- `NeedsReview` is set.
+
+The conjunction is deliberate. Taking §113's list disjunctively would hold every
+item in `Inbox` until it was fully annotated, which turns a processing queue
+into a nag. The conjunction captures the genuinely unprocessed, and adding any
+one signal removes the item automatically, as §113 requires.
+
+§113 asks for criteria "configurable or documented". Documented is the cheaper
+limb and the one §142 leaves in v1; configurability rides with the deferred
+customisation work.
 
 ---
 
@@ -265,60 +320,94 @@ shape.
 Implemented in `src/Vigila.Host.GitHub/StorageLayout.fs`, with path-traversal
 coverage per [VIG-TST-016](QUALITY.md#vig-tst-016).
 
+
 ---
 
 <a id="oq-09"></a>
 
-## OQ-09 — `Cancelled` is both a state and a resolution classification
+## OQ-09 — `Cancelled` is both a state and a resolution classification — **RESOLVED**
 
-**Overlap.** v0.2 §3 defines `Cancelled` as a workflow state. v0.4 §105 lists
-`Cancelled` as one of the optional resolution classifications, alongside
-`CompletedSuccessfully`, `Superseded`, `PromotedToRos`, `NoLongerRelevant`,
-`Other`.
+**Resolved 2026-09-18.** `Cancelled` and `CompletedSuccessfully` are removed
+from the resolution enumeration. Four classifications remain: `Superseded`,
+`PromotedToRos`, `NoLongerRelevant`, `Other`.
 
-An item in state `Cancelled` with classification `Cancelled` carries the same
-fact twice; an item in state `Cancelled` with classification `NoLongerRelevant`
-carries two different facts. The relationship is not defined.
+**Was.** §3 makes `Cancelled` a workflow state; §105 also lists it as a
+resolution classification, alongside `CompletedSuccessfully`. An item in state
+`Cancelled` with classification `Cancelled` states one fact twice, and nothing
+says which encoding wins.
 
-**Assumed.** Classification is independent optional metadata that does not
-constrain or derive from state, per §105's "must not replace state history".
-[VIG-DOM-040](DOMAIN.md#vig-dom-040).
+**Why remove rather than keep both.** §105 is explicit that classification "must
+not replace state history" — so where state already carries the fact, the
+classification adds nothing but a second place to disagree. The value of the
+classification is in what state *cannot* express: that an item was superseded,
+promoted to ROS, or simply stopped mattering. Keeping the redundant two would
+leave [VIG-AGT-022](AGENT.md#vig-agt-022)'s "deterministically implied" with no
+determinate answer, because the state already implies them.
 
-**Decision changes.** Whether the classification enumeration should drop
-`Cancelled` (and arguably `CompletedSuccessfully`) as redundant with state, and
-whether any validation couples the two.
+**This is a deviation from §105's literal list,** recorded rather than silent.
+It is also the reversible direction: §105 permits adding classifications later
+without changing item identity, so restoring the two is additive, while removing
+them after items carry them is a migration
+([VIG-PER-023](PERSISTENCE.md#vig-per-023)). The same asymmetry decided
+[OQ-01](#oq-01).
+
+**Applied.** [VIG-DOM-040](DOMAIN.md#vig-dom-040) lists four classifications,
+and `Resolution` in `src/Vigila.Semantic/Item.fs` matches.
 
 ---
 
 <a id="oq-10"></a>
 
-## OQ-10 — Clock abstraction covers deferred features
+## OQ-10 — Clock abstraction covers deferred features — **RESOLVED**
 
-**Minor.** v0.4 §122 requires the clock abstraction to cover "today, overdue,
-snooze expiration, recurrence, staleness, and waiting age". Recurrence is
-deferred by §98 ([VIG-TIME-025](TIME.md#vig-time-025)).
+**Resolved 2026-09-18.** No action needed; closed as recorded.
 
-**Assumed.** The clock abstraction is built for the v1 cases and must not
-preclude recurrence. [VIG-TIME-023](TIME.md#vig-time-023) lists the full set as
-§122 states it.
+§122 lists recurrence among the things the clock abstraction must cover, and
+recurrence is deferred by §98. That is not a conflict: the clock is an
+abstraction over *reading the time*, and it serves the v1 cases — today,
+overdue, snooze expiry, staleness, waiting age — without knowing what will
+later ask it for the time.
 
-**Decision changes.** Nothing structural — noted so the recurrence mention is
-not read as pulling recurrence into v1.
+`Clock` in `src/Vigila.Semantic/Time.fs` is a function from unit to `Instant`.
+Nothing about it would need to change to support recurrence, so there is no
+decision to make and nothing to build ahead of need
+([VIG-GOV-018](GOVERNANCE.md#vig-gov-018)).
+
+Recorded so that §122's mention of recurrence is not later read as evidence that
+recurrence was in v1 scope.
 
 ---
 
 <a id="oq-11"></a>
 
-## OQ-11 — "Strong title match" is undefined
+## OQ-11 — "Strong title match" is undefined — **RESOLVED**
 
-**Gap.** v0.4 §116's ranking places "strong title match" third, between exact
-title match and tag match. No source defines what makes a title match "strong",
-and §116 simultaneously requires that search "avoid unpredictable ranking".
+**Resolved 2026-09-18.** A strong title match is one where **every term in the
+query appears in the title as a whole word**, ignoring case.
 
-**Assumed.** Undefined, and flagged rather than invented.
-[VIG-QRY-003](QUERY.md#vig-qry-003) reproduces the ordering as given.
+**Was.** §116 ranks "strong title match" third without defining it, while the
+same section requires ranking behaviour to be documented and to "avoid
+unpredictable ranking that changes without data changes". The requirement could
+not be satisfied as written.
 
-**Decision changes.** Whether v1 implements a documented, testable definition
-(prefix match, token subset, edit distance under a threshold) or collapses tiers
-2–3 until one is chosen. §116's "ranking behaviour should be documented" cannot
-be satisfied without settling this.
+**The definition.** Given a query split on whitespace, a title matches strongly
+when each term occurs in it as a whole word, case-insensitively. So
+`generator accountant` strongly matches *"Call accountant about generator"*;
+`generator invoice` does not.
+
+**Why this one.** It is deterministic, cheap, and explicable to a user in one
+sentence — "all of your words are in the title". The alternatives all fail
+§116's own constraint:
+
+| Alternative | Why not |
+|---|---|
+| Edit distance under a threshold | The threshold is arbitrary, and results shift for reasons the user cannot see. |
+| Relevance scoring (TF-IDF, BM25) | Needs corpus statistics, so a result can change when an *unrelated* item is added — precisely "ranking that changes without data changes" from the searcher's point of view. |
+| Substring anywhere | Matches inside words, so `cat` hits *"communication"*. Noisy and surprising. |
+
+Whole-word matching also avoids an index ([VIG-UI-026](UI.md#vig-ui-026)) and
+needs no scoring model, which keeps ranking reproducible from the item data
+alone.
+
+**Applied.** [VIG-QRY-003](QUERY.md#vig-qry-003) carries the definition, so the
+"ranking behaviour MUST be documented" clause is now discharged.

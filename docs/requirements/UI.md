@@ -19,8 +19,14 @@ The initial UI SHOULD have a deliberately small number of views.
 
 A `Now` view MUST show actionable items needing attention now: overdue items,
 due items, follow-ups that have reached their follow-up date, and open items
-explicitly marked for current attention. Snoozed items MUST be excluded until
-the snooze expires ([VIG-TIME-010](TIME.md#vig-time-010)).
+marked `Important` ([VIG-DOM-038](DOMAIN.md#vig-dom-038)). Snoozed items MUST be
+excluded until the snooze expires ([VIG-TIME-010](TIME.md#vig-time-010)).
+
+> §16.1 says "open items explicitly marked for current attention" without
+> naming the field. `Important` is that field — see
+> [OQ-05](OPEN-QUESTIONS.md#oq-05). `NeedsReview` was rejected because it is
+> about an agent-created item awaiting human check, and pinning because it is
+> deferred and concerns ordering rather than membership.
 
 #### VIG-UI-003 — Waiting
 **Level:** MUST · **Release:** v1 · **Source:** v0.2 §16.2, v0.1 §16
@@ -62,12 +68,25 @@ searchable.
 **Level:** SHOULD · **Release:** v1 · **Source:** v0.4 §113
 
 Vigila SHOULD support a derived `Inbox` view for items needing additional
-organisation. Inbox MUST NOT be a workflow state. Membership MAY be derived from
-missing tags, no due or follow-up date, no next action, or `NeedsReview`. The
-criteria MUST be configurable or documented, and an item MUST leave Inbox
+organisation. Inbox MUST NOT be a workflow state, and an item MUST leave Inbox
 automatically when the criteria are satisfied.
 
-> Advanced Inbox customisation is deferred by §142.
+**The v1 criteria.** An open item is in `Inbox` when either:
+
+- it carries no organising signal at all — no tags, **and** no due date,
+  **and** no follow-up date, **and** no next action; or
+- `NeedsReview` is set ([VIG-AGT-023](AGENT.md#vig-agt-023)).
+
+> The conjunction is deliberate. §113 lists the signals disjunctively, which
+> would hold an item in `Inbox` until it was fully annotated and turn a
+> processing queue into a nag. See [OQ-07](OPEN-QUESTIONS.md#oq-07).
+>
+> Inbox is in v1 because it is the mechanism for a v1 requirement that already
+> exists: [VIG-QRY-013](QUERY.md#vig-qry-013) requires undated open items to
+> stay discoverable and asks for a review mechanism to surface them.
+>
+> §113 asks for criteria "configurable or documented"; these are documented.
+> Configurability rides with the Inbox customisation §142 defers.
 
 ## Item presentation
 

@@ -186,17 +186,16 @@ let private writeOperationDetail (w: Utf8JsonWriter) operation =
 
 let private resolutionName =
     function
-    | CompletedSuccessfully -> "completed-successfully"
-    | Resolution.Cancelled -> "cancelled"
     | Superseded -> "superseded"
     | PromotedToRos -> "promoted-to-ros"
     | NoLongerRelevant -> "no-longer-relevant"
     | Other -> "other"
 
+/// Rejects "cancelled" and "completed-successfully" rather than mapping them:
+/// they are no longer classifications (OQ-09), and silently accepting them
+/// would let a value the domain cannot represent back in.
 let private parseResolution =
     function
-    | "completed-successfully" -> Ok CompletedSuccessfully
-    | "cancelled" -> Ok Resolution.Cancelled
     | "superseded" -> Ok Superseded
     | "promoted-to-ros" -> Ok PromotedToRos
     | "no-longer-relevant" -> Ok NoLongerRelevant
