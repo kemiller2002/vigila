@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Tier 3 - Application / Projection / Orchestration.
+
+       Coordinates use cases, projections and boundary translation. Must not
+       become a second semantic authority: if this project starts deciding
+       which states are legal, the Tier 1/2 boundary has failed.
+
+       This is the lowest tier that references Aegis, because it is the lowest
+       tier that coordinates calls which can fail operationally.
+
+       Requirements: VIG-AGT-001 (agents use defined operations),
+       VIG-QRY-020 (read models separate from the write model),
+       VIG-AGT-050 (machine-readable error taxonomy). -->
+
+  <ItemGroup>
+    <Compile Include="Ports.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Vigila.Semantic/Vigila.Semantic.fsproj" />
+    <ProjectReference Include="../Vigila.Transition/Vigila.Transition.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EchelonFoundry.Aegis.Core" />
+  </ItemGroup>
+
+</Project>

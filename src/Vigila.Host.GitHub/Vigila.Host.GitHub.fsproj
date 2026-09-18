@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Tier 4 - Host / External Effects.
+
+       Owns the network, the GitHub API, the clock and the filesystem. Reports
+       what actually happened, including "we do not know what happened" as a
+       first-class outcome rather than a swallowed exception - which is
+       precisely what Aegis exists to express.
+
+       Requirements: VIG-PER-001 (GitHub behind an abstraction),
+       VIG-PER-046 (rate limits handled explicitly),
+       VIG-SEC-005 (token containment), VIG-SEC-020 (auth outside the domain),
+       VIG-UI-014 (never claim a failed save succeeded). -->
+
+  <ItemGroup>
+    <Compile Include="GitHubStore.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Vigila.Application/Vigila.Application.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EchelonFoundry.Aegis.Core" />
+  </ItemGroup>
+
+</Project>

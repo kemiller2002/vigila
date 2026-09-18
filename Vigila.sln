@@ -1,0 +1,64 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{346ECB2B-955A-4337-BBE1-5DE291EB6B1A}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vigila.Application", "src\Vigila.Application\Vigila.Application.fsproj", "{6C2BB441-A33F-47E9-BDAB-69EEFFABE681}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vigila.Host.GitHub", "src\Vigila.Host.GitHub\Vigila.Host.GitHub.fsproj", "{5D88263F-AD6D-4403-B73A-729B3AE342FB}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vigila.Semantic", "src\Vigila.Semantic\Vigila.Semantic.fsproj", "{B25B1FE2-B21D-474E-A51D-4DD1A1663751}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vigila.Transition", "src\Vigila.Transition\Vigila.Transition.fsproj", "{069BAC37-BC7D-4C26-B045-27B99BBC52AD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{E0D4E48F-395B-4974-8C3E-74711329761D}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vigila.Semantic.Tests", "tests\Vigila.Semantic.Tests\Vigila.Semantic.Tests.fsproj", "{80FBAD2A-6422-4AB4-A0E2-4B914805DD0B}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vigila.Transition.Tests", "tests\Vigila.Transition.Tests\Vigila.Transition.Tests.fsproj", "{2BFDAA03-F187-40AB-8F27-71B3C504A726}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6C2BB441-A33F-47E9-BDAB-69EEFFABE681}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C2BB441-A33F-47E9-BDAB-69EEFFABE681}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C2BB441-A33F-47E9-BDAB-69EEFFABE681}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C2BB441-A33F-47E9-BDAB-69EEFFABE681}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D88263F-AD6D-4403-B73A-729B3AE342FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D88263F-AD6D-4403-B73A-729B3AE342FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D88263F-AD6D-4403-B73A-729B3AE342FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D88263F-AD6D-4403-B73A-729B3AE342FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B25B1FE2-B21D-474E-A51D-4DD1A1663751}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B25B1FE2-B21D-474E-A51D-4DD1A1663751}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B25B1FE2-B21D-474E-A51D-4DD1A1663751}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B25B1FE2-B21D-474E-A51D-4DD1A1663751}.Release|Any CPU.Build.0 = Release|Any CPU
+		{069BAC37-BC7D-4C26-B045-27B99BBC52AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{069BAC37-BC7D-4C26-B045-27B99BBC52AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{069BAC37-BC7D-4C26-B045-27B99BBC52AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{069BAC37-BC7D-4C26-B045-27B99BBC52AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80FBAD2A-6422-4AB4-A0E2-4B914805DD0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80FBAD2A-6422-4AB4-A0E2-4B914805DD0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80FBAD2A-6422-4AB4-A0E2-4B914805DD0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80FBAD2A-6422-4AB4-A0E2-4B914805DD0B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2BFDAA03-F187-40AB-8F27-71B3C504A726}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2BFDAA03-F187-40AB-8F27-71B3C504A726}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2BFDAA03-F187-40AB-8F27-71B3C504A726}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2BFDAA03-F187-40AB-8F27-71B3C504A726}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6C2BB441-A33F-47E9-BDAB-69EEFFABE681} = {346ECB2B-955A-4337-BBE1-5DE291EB6B1A}
+		{5D88263F-AD6D-4403-B73A-729B3AE342FB} = {346ECB2B-955A-4337-BBE1-5DE291EB6B1A}
+		{B25B1FE2-B21D-474E-A51D-4DD1A1663751} = {346ECB2B-955A-4337-BBE1-5DE291EB6B1A}
+		{069BAC37-BC7D-4C26-B045-27B99BBC52AD} = {346ECB2B-955A-4337-BBE1-5DE291EB6B1A}
+		{80FBAD2A-6422-4AB4-A0E2-4B914805DD0B} = {E0D4E48F-395B-4974-8C3E-74711329761D}
+		{2BFDAA03-F187-40AB-8F27-71B3C504A726} = {E0D4E48F-395B-4974-8C3E-74711329761D}
+	EndGlobalSection
+EndGlobal
