@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 21,
+  "nextSeq": 22,
   "items": [
     {
       "id": "WI-0001",
@@ -247,10 +247,10 @@
       "description": null,
       "tags": [],
       "priority": "medium",
-      "status": "captured",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-09-18T06:26:48.091Z",
-      "updatedAt": "2026-09-18T06:26:48.091Z",
+      "updatedAt": "2026-09-18T11:02:51Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
@@ -307,6 +307,20 @@
       "attachments": [],
       "createdAt": "2026-09-18T06:26:49.216Z",
       "updatedAt": "2026-09-18T06:26:49.216Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0021",
+      "title": "Decide how a refused capture is communicated in the UI; error/hasError are projected but unreachable (browser suite WI-0016)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-18T11:02:12.887Z",
+      "updatedAt": "2026-09-18T11:02:12.887Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

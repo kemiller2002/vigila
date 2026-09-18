@@ -47,3 +47,7 @@ obj/
 
 # Published WASM engine — rebuilt with `npm run build:wasm`
 **/wwwroot/_framework/
+
+# Playwright output
+test-results/
+playwright-report/

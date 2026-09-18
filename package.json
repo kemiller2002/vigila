@@ -10,9 +10,12 @@
     "check:limen": "npx --yes @echelon-foundry/typescript-wasm-kernel verify --strict",
     "check:architecture": "./scripts/check-architecture.sh",
     "test:dotnet": "dotnet test Vigila.sln -c Release",
-    "test": "npm run check:architecture && npm run check:bindings && npm run check:limen && npm run test:dotnet",
+    "test": "npm run check:architecture && npm run check:limen && npm run test:dotnet && npm run test:browser",
     "serve": "python3 -m http.server 4321",
     "start": "npm run build:wasm && npm run serve",
-    "check:bindings": "./scripts/check-view-bindings.sh"
+    "test:browser": "npm run build:wasm && npx playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
   }
 }

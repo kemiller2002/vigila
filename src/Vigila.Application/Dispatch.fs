@@ -116,42 +116,109 @@ let apply command state =
 /// because "is this legal" is an engine decision (VIG-GOV-013).
 let captureDisabled state = Title.create state.Draft |> Result.isError
 
+/// The name the browser sees for a kind.
+///
+/// Kept separate from the case names so renaming a case cannot silently change
+/// the wire contract — the same rule `GitHubStore.codeOf` follows.
+let private kindName =
+    function
+    | Task -> "Task"
+    | FollowUp -> "Follow-up"
+    | ItemKind.Waiting -> "Waiting"
+
+let private statusName =
+    function
+    | Open -> "Open"
+    | ItemStatus.Waiting -> "Waiting"
+    | Deferred -> "Deferred"
+    | Completed -> "Completed"
+    | ItemStatus.Cancelled -> "Cancelled"
+
+/// What one view key may hold.
+///
+/// Limen's `ViewState` admits primitives and flat item arrays only. That is
+/// modelled here as a closed set rather than left for a serializer to infer
+/// from whatever shape the projection happened to have: the wire contract is
+/// decided in this file, by these types, and the compiler checks that every
+/// case is rendered.
+type ViewPrimitive =
+    | Text of string
+    | Flag of bool
+    | Count of int
+
+type ViewValue =
+    | Value of ViewPrimitive
+    | Rows of (string * ViewPrimitive) list list
+
+/// The fields each row of `items` carries.
+let private itemRow item =
+    [ "id", Text(ItemId.display item.Id)
+      "title", Text(Title.value item.Title)
+      "kind", Text(kindName item.Kind)
+      "status", Text(statusName item.Status) ]
+
 /// Builds the view.
 ///
-/// `ViewState` admits primitives and flat item arrays only, so the projection
-/// is deliberately shallow: notes, history and dates stay in the engine until a
-/// view needs them.
-let project state =
-    let items =
-        state.Items
-        |> List.map (fun item ->
-            {| id = ItemId.display item.Id
-               title = Title.value item.Title
-               kind = (match item.Kind with
-                       | Task -> "Task"
-                       | FollowUp -> "Follow-up"
-                       | ItemKind.Waiting -> "Waiting")
-               status = (match item.Status with
-                         | Open -> "Open"
-                         | ItemStatus.Waiting -> "Waiting"
-                         | Deferred -> "Deferred"
-                         | Completed -> "Completed"
-                         | ItemStatus.Cancelled -> "Cancelled") |})
+/// Deliberately shallow: notes, history and dates stay in the engine until a
+/// view needs them. The keys here are the whole vocabulary the HTML may bind
+/// to, and `Vigila.Application.Tests` asserts the two agree.
+let project state : (string * ViewValue) list =
+    [ "draft", Value(Text state.Draft)
+      "error", Value(Text state.Error)
+      "hasError", Value(Flag(state.Error <> ""))
+      "captureDisabled", Value(Flag(captureDisabled state))
+      "itemCount", Value(Count(List.length state.Items))
+      "isEmpty", Value(Flag(List.isEmpty state.Items))
+      "hasItems", Value(Flag(not (List.isEmpty state.Items)))
+      "items", Rows(state.Items |> List.map itemRow) ]
 
-    {| draft = state.Draft
-       error = state.Error
-       hasError = state.Error <> ""
-       captureDisabled = captureDisabled state
-       itemCount = List.length state.Items
-       isEmpty = List.isEmpty state.Items
-       hasItems = not (List.isEmpty state.Items)
-       items = items |}
+// ---------------------------------------------------------------------------
+// Effects - what the engine may ask the kernel to do
+// ---------------------------------------------------------------------------
+
+/// One constructor per legal operation, rather than one record with optional
+/// fields. A closed algebra is what Limen's protocol actually describes, and
+/// keeping it closed across the boundary is the Host Contract rule in
+/// `.sde/architecture/BOUNDARY-PRESERVATION.md`.
+///
+/// Nothing constructs these yet: no effect is requested until the connection
+/// flow lands (VIG-SEC-001). They exist now so that day extends a closed set
+/// instead of opening one.
+type HttpMethod =
+    | Get
+    | Put
+    | Post
+    | Patch
+    | Delete
+
+type StorageOperation =
+    | StorageGet of key: string
+    | StorageSet of key: string * value: string
+    | StorageRemove of key: string
+
+type HttpEffect =
+    { CorrelationId: string
+      Method: HttpMethod
+      Url: string
+      Headers: (string * string) list
+      Body: string option
+      TimeoutMs: int }
+
+type Effect =
+    | Http of HttpEffect
+    | Storage of correlationId: string * operation: StorageOperation
+
+/// The effects this step is asking for, and the ones it is abandoning.
+///
+/// Both are empty for now, and both go through the closed rendering below
+/// rather than being hard-coded as `[]` at the wire.
+let pendingEffects (_: State) : Effect list = []
+
+let pendingCancellations (_: State) : string list = []
 
 // ---------------------------------------------------------------------------
 // The JSON boundary
 // ---------------------------------------------------------------------------
-
-let private options = JsonSerializerOptions(WriteIndented = false)
 
 /// Reads one browser-to-engine message and returns the command it implies.
 ///
@@ -193,18 +260,126 @@ let private readCommand (json: string) =
         | _ -> Ignored
     | _ -> Ignored
 
+/// Writes one primitive under a name.
+///
+/// Exhaustive by construction: adding a case to `ViewPrimitive` fails to
+/// compile until it is given a rendering here.
+let private writePrimitive (w: Utf8JsonWriter) (name: string) value =
+    match value with
+    | Text text -> w.WriteString(name, text)
+    | Flag flag -> w.WriteBoolean(name, flag)
+    | Count number -> w.WriteNumber(name, number)
+
+let private writeViewValue (w: Utf8JsonWriter) (name: string) value =
+    match value with
+    | Value primitive -> writePrimitive w name primitive
+    | Rows rows ->
+        w.WriteStartArray name
+
+        for row in rows do
+            w.WriteStartObject()
+
+            for field, primitive in row do
+                writePrimitive w field primitive
+
+            w.WriteEndObject()
+
+        w.WriteEndArray()
+
+let private methodName =
+    function
+    | Get -> "GET"
+    | Put -> "PUT"
+    | Post -> "POST"
+    | Patch -> "PATCH"
+    | Delete -> "DELETE"
+
+let private writeEffect (w: Utf8JsonWriter) effect =
+    w.WriteStartObject()
+
+    match effect with
+    | Http http ->
+        w.WriteString("kind", "Http")
+        w.WriteString("correlationId", http.CorrelationId)
+        w.WriteString("method", methodName http.Method)
+        w.WriteString("url", http.Url)
+
+        match http.Headers with
+        | [] -> ()
+        | headers ->
+            w.WriteStartObject "headers"
+
+            for name, value in headers do
+                w.WriteString(name, value)
+
+            w.WriteEndObject()
+
+        match http.Body with
+        | Some body -> w.WriteString("body", body)
+        | None -> ()
+
+        w.WriteNumber("timeoutMs", http.TimeoutMs)
+    | Storage(correlationId, operation) ->
+        w.WriteString("kind", "Storage")
+        w.WriteString("correlationId", correlationId)
+
+        match operation with
+        | StorageGet key ->
+            w.WriteString("operation", "get")
+            w.WriteString("key", key)
+        | StorageSet(key, value) ->
+            w.WriteString("operation", "set")
+            w.WriteString("key", key)
+            w.WriteString("value", value)
+        | StorageRemove key ->
+            w.WriteString("operation", "remove")
+            w.WriteString("key", key)
+
+    w.WriteEndObject()
+
 /// Serialises the engine-to-browser message.
+///
+/// Written by hand rather than reflected over an anonymous record. That is the
+/// Host Contract rule in `.sde/architecture/BOUNDARY-PRESERVATION.md`, and it
+/// is not merely doctrine here: `JsonSerializer.Serialize` needs reflection,
+/// which a trimmed WebAssembly publish disables, so the reflected version threw
+/// `JsonSerializerIsReflectionDisabled` on the first dispatch and the page never
+/// rendered. Every mechanical check was green while it did.
 ///
 /// `effects` and `cancellations` are always present and currently always empty.
 /// Emitting them rather than omitting them keeps the wire shape stable for the
 /// kernel, which reads all three keys.
 let private writeResponse state =
-    let payload =
-        {| view = project state
-           effects = ([]: obj list)
-           cancellations = ([]: string list) |}
+    use stream = new IO.MemoryStream()
 
-    JsonSerializer.Serialize(payload, options)
+    (use writer = new Utf8JsonWriter(stream)
+
+     writer.WriteStartObject()
+
+     writer.WriteStartObject "view"
+
+     for key, value in project state do
+         writeViewValue writer key value
+
+     writer.WriteEndObject()
+
+     writer.WriteStartArray "effects"
+
+     for effect in pendingEffects state do
+         writeEffect writer effect
+
+     writer.WriteEndArray()
+
+     writer.WriteStartArray "cancellations"
+
+     for correlationId in pendingCancellations state do
+         writer.WriteStringValue(correlationId: string)
+
+     writer.WriteEndArray()
+
+     writer.WriteEndObject())
+
+    Encoding.UTF8.GetString(stream.ToArray())
 
 /// The engine's entire surface: JSON in, JSON out.
 ///
