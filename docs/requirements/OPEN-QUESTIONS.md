@@ -196,26 +196,47 @@ implying the basic view is not.
 
 <a id="oq-08"></a>
 
-## OQ-08 — Storage path and organisation layout do not compose cleanly
+## OQ-08 — Storage path and organisation layout do not compose cleanly — **RESOLVED**
 
-**Ambiguity.** v0.2 §27 gives the layout as
-`/vigila/organizations/<org>/items/`. v0.3 §61 then makes the storage path
-configurable with default `/vigila`, and shows sibling applications at the
-repository root (`repo/vigila/`, `repo/chrona/`).
+**Resolved 2026-09-18** by [ADR-0002](../architecture/ADR-0002-storage-layout.md).
 
-Whether `organizations/<org>/` sits inside the configurable path, or whether the
-configurable path replaces the whole `/vigila/organizations/<org>/` prefix, is
-not stated. v0.4 §124 adds `WorkspaceId` as a third organising concept without
-saying where it lives in the path.
+**Was.** v0.2 §27 gives `/vigila/organizations/<org>/items/`. v0.3 §61 makes
+the storage path configurable with default `/vigila` and shows sibling
+applications at the repository root. v0.4 §124 adds `WorkspaceId` without
+saying where it sits. The three were never stated to compose.
 
-**Assumed.** The configurable path is the root of Vigila's storage and the
-organisation/workspace structure sits beneath it.
-[VIG-PER-003](PERSISTENCE.md#vig-per-003) and
-[VIG-PER-004](PERSISTENCE.md#vig-per-004) are stated separately without
-asserting a composition.
+**Decided.**
 
-**Decision changes.** The on-disk layout, which is persisted and therefore
-expensive to change once data exists.
+```
+<storagePath>/
+  manifest.json                    application identity + schema version
+  workspaces/
+    <workspaceId>/
+      workspace.json               display name, created-at
+      items/
+        <itemId>.json              one file per item
+```
+
+- `organizations/` becomes `workspaces/`, keyed on the stable `WorkspaceId`
+  rather than a display name, because [VIG-PER-007](PERSISTENCE.md#vig-per-007)
+  requires identity to survive a rename.
+- The application manifest sits at the storage root; per-workspace metadata
+  sits inside the workspace.
+- One file per item, flat, named by the immutable id. The file's blob SHA
+  serves as the concurrency token
+  ([VIG-AGT-032](AGENT.md#vig-agt-032)).
+
+**The conflict it forced.** [VIG-PER-044](PERSISTENCE.md#vig-per-044) (SHOULD)
+says a list view should not cost one request per item;
+[VIG-UI-026](UI.md#vig-ui-026) (MUST) forbids indexes until scale requires
+them. One file per item cannot satisfy both. Resolved in favour of UI-026 as
+the stronger level: v1 has no index and accepts N reads. The layout is shaped
+so an index can be added later without moving files, and
+[VIG-QRY-021](QUERY.md#vig-qry-021)'s compact result already describes its row
+shape.
+
+Implemented in `src/Vigila.Host.GitHub/StorageLayout.fs`, with path-traversal
+coverage per [VIG-TST-016](QUALITY.md#vig-tst-016).
 
 ---
 

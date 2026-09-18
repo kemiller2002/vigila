@@ -13,6 +13,7 @@
        VIG-UI-014 (never claim a failed save succeeded). -->
 
   <ItemGroup>
+    <Compile Include="StorageLayout.fs" />
     <Compile Include="GitHubStore.fs" />
   </ItemGroup>
 

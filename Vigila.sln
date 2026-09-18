@@ -19,6 +19,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vigila.Semantic.Tests", "te
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vigila.Transition.Tests", "tests\Vigila.Transition.Tests\Vigila.Transition.Tests.fsproj", "{2BFDAA03-F187-40AB-8F27-71B3C504A726}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vigila.Host.GitHub.Tests", "tests\Vigila.Host.GitHub.Tests\Vigila.Host.GitHub.Tests.fsproj", "{78D4599B-976B-43F9-918B-ABF14A59326B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +54,10 @@ Global
 		{2BFDAA03-F187-40AB-8F27-71B3C504A726}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2BFDAA03-F187-40AB-8F27-71B3C504A726}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2BFDAA03-F187-40AB-8F27-71B3C504A726}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78D4599B-976B-43F9-918B-ABF14A59326B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78D4599B-976B-43F9-918B-ABF14A59326B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78D4599B-976B-43F9-918B-ABF14A59326B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78D4599B-976B-43F9-918B-ABF14A59326B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{6C2BB441-A33F-47E9-BDAB-69EEFFABE681} = {346ECB2B-955A-4337-BBE1-5DE291EB6B1A}
@@ -60,5 +66,6 @@ Global
 		{069BAC37-BC7D-4C26-B045-27B99BBC52AD} = {346ECB2B-955A-4337-BBE1-5DE291EB6B1A}
 		{80FBAD2A-6422-4AB4-A0E2-4B914805DD0B} = {E0D4E48F-395B-4974-8C3E-74711329761D}
 		{2BFDAA03-F187-40AB-8F27-71B3C504A726} = {E0D4E48F-395B-4974-8C3E-74711329761D}
+		{78D4599B-976B-43F9-918B-ABF14A59326B} = {E0D4E48F-395B-4974-8C3E-74711329761D}
 	EndGlobalSection
 EndGlobal

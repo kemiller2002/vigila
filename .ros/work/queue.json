@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 7,
+  "nextSeq": 8,
   "items": [
     {
       "id": "WI-0001",
@@ -95,6 +95,22 @@
       "attachments": [],
       "createdAt": "2026-09-18T00:26:19.092Z",
       "updatedAt": "2026-09-18T00:31:11Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0007",
+      "title": "Decide and implement repository storage layout (OQ-08)",
+      "description": null,
+      "tags": [
+        "architecture,persistence"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-18T00:53:58.737Z",
+      "updatedAt": "2026-09-18T00:57:26Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
