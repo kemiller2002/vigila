@@ -4,7 +4,7 @@
   "repository": "vigila",
   "actor": "ros-bootstrap",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-09-18T11:02:51Z",
+  "updatedAt": "2026-09-18T11:07:42Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -328,6 +328,27 @@
         "EXE-20260918T105055888Z-bf87bfa2"
       ],
       "completedAt": "2026-09-18T11:02:51Z"
+    },
+    {
+      "id": "WI-0022",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "package.json"
+        },
+        {
+          "type": "tests",
+          "path": "tests/browser/capture.spec.js"
+        }
+      ],
+      "updatedAt": "2026-09-18T11:07:42Z",
+      "telemetryExecutionIds": [
+        "EXE-20260918T110742622Z-9a8ed654"
+      ],
+      "completedAt": "2026-09-18T11:07:42Z"
     }
   ]
 }

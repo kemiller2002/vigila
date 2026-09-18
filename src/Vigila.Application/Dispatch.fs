@@ -196,6 +196,12 @@ type StorageOperation =
     | StorageSet of key: string * value: string
     | StorageRemove of key: string
 
+type NavigationOperation =
+    | NavigatePush of url: string
+    | NavigateReplace of url: string
+    | NavigateBack
+    | NavigateForward
+
 type HttpEffect =
     { CorrelationId: string
       Method: HttpMethod
@@ -204,9 +210,14 @@ type HttpEffect =
       Body: string option
       TimeoutMs: int }
 
+/// The four capabilities Limen's protocol declares. Vigila requests none of
+/// them yet; the set is complete so that it mirrors the protocol rather than
+/// the subset one feature happened to need.
 type Effect =
     | Http of HttpEffect
     | Storage of correlationId: string * operation: StorageOperation
+    | Clipboard of correlationId: string * text: string
+    | Navigation of correlationId: string * operation: NavigationOperation
 
 /// The effects this step is asking for, and the ones it is abandoning.
 ///
@@ -334,6 +345,24 @@ let private writeEffect (w: Utf8JsonWriter) effect =
         | StorageRemove key ->
             w.WriteString("operation", "remove")
             w.WriteString("key", key)
+    | Clipboard(correlationId, text) ->
+        w.WriteString("kind", "Clipboard")
+        w.WriteString("correlationId", correlationId)
+        w.WriteString("operation", "writeText")
+        w.WriteString("text", text)
+    | Navigation(correlationId, operation) ->
+        w.WriteString("kind", "Navigation")
+        w.WriteString("correlationId", correlationId)
+
+        match operation with
+        | NavigatePush url ->
+            w.WriteString("operation", "push")
+            w.WriteString("url", url)
+        | NavigateReplace url ->
+            w.WriteString("operation", "replace")
+            w.WriteString("url", url)
+        | NavigateBack -> w.WriteString("operation", "back")
+        | NavigateForward -> w.WriteString("operation", "forward")
 
     w.WriteEndObject()
 

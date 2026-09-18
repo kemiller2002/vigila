@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 22,
+  "nextSeq": 23,
   "items": [
     {
       "id": "WI-0001",
@@ -321,6 +321,20 @@
       "attachments": [],
       "createdAt": "2026-09-18T11:02:12.887Z",
       "updatedAt": "2026-09-18T11:02:12.887Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0022",
+      "title": "Decide whether to take the Limen 0.6.x upgrade (repo initialized at 0.5.1)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-18T11:04:58.618Z",
+      "updatedAt": "2026-09-18T11:07:42Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

@@ -24,3 +24,4 @@
 | WI-0019 | Write SDE-MAP.md with a manifest or a recorded not-needed reason per area (SDE conformance F-1, F-2) | captured |  | medium |
 | WI-0020 | Add sde.config.json excluding build output from structural review (SDE conformance F-10) | captured |  | medium |
 | WI-0021 | Decide how a refused capture is communicated in the UI; error/hasError are projected but unreachable (browser suite WI-0016) | captured |  | medium |
+| WI-0022 | Decide whether to take the Limen 0.6.x upgrade (repo initialized at 0.5.1) | complete |  | medium |
