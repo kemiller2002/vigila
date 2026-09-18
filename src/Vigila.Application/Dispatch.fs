@@ -26,22 +26,61 @@ open Vigila.Semantic.Time
 open Vigila.Semantic.Actors
 open Vigila.Semantic.Items
 open Vigila.Semantic.Item
+open Vigila.Application.Effects
+open Vigila.Application.Connection
 
 /// The engine's authoritative state.
 ///
-/// One case for now. Capture needs no loading state because nothing is fetched
-/// yet; persistence adds `Submitting` and the states around it when the GitHub
-/// effects land.
+/// `Outbox` and `Awaiting` are how a step communicates with the kernel. A step
+/// is a pure function, so it cannot perform an effect; it can only leave one in
+/// the outbox for the kernel to pick up, and remember what it is waiting for so
+/// the eventual result can be matched to the request that caused it.
 [<NoComparison>]
 type State =
     { Items: Item list
       Draft: string
-      Error: string }
+      Error: string
+      Connection: Connection
+      SetupRepository: string
+      SetupBranch: string
+      SetupTokenEntered: bool
+      SetupError: string
+      Outbox: Effect list
+      Awaiting: Map<string, Awaiting>
+      NextCorrelation: int }
+
+/// What an outstanding effect was asked for.
+///
+/// Keyed by correlation id, because Limen's results arrive asynchronously and
+/// carry nothing but that id. Without this the engine would have to guess which
+/// request a result belonged to, and guessing is how a validation failure gets
+/// attributed to the wrong step.
+and Awaiting =
+    | RestoringRepository
+    | RestoringBranch
+    | RestoringTokenPresence
+    | ProbingRepositoryRead
+    | ProbingBranchExists
+    /// A write whose acknowledgement carries nothing the engine needs.
+    ///
+    /// Distinct from the `Restoring…` cases on purpose: a storage *write* is
+    /// acknowledged with the same message shape as a storage *read*, so reusing
+    /// a read's tag makes the acknowledgement look like "restored an empty
+    /// value" and silently clears the field that was just saved.
+    | AcknowledgingWrite
 
 let initial =
     { Items = []
       Draft = ""
-      Error = "" }
+      Error = ""
+      Connection = disconnected
+      SetupRepository = ""
+      SetupBranch = BranchName.Default
+      SetupTokenEntered = false
+      SetupError = ""
+      Outbox = []
+      Awaiting = Map.empty
+      NextCorrelation = 0 }
 
 /// The clock the engine hands to the domain.
 ///
@@ -69,7 +108,26 @@ let private localUser =
 type Command =
     | EditDraft of string
     | Capture
+    | EditSetupRepository of string
+    | EditSetupBranch of string
+    | SetupTokenEntered of bool
+    | Connect
+    | Disconnect
+    | Restore
+    | StorageValue of correlationId: string * value: string option
+    | HttpOutcome of correlationId: string * outcome: HttpOutcome
     | Ignored
+
+/// What the kernel observed when it performed an Http effect.
+///
+/// `Unknown` is carried rather than folded into a failure because Limen's
+/// protocol reports "dispatched but the outcome was never observed" as its own
+/// case, and VIG-UI-014 forbids reporting an unobserved result as either a
+/// success or a definite failure.
+and HttpOutcome =
+    | Responded of status: int * body: string
+    | Unreachable
+    | Unknown
 
 /// Maps a semantic event to a command.
 ///
@@ -80,11 +138,82 @@ let eventToCommand (name: string) (value: string option) =
     match name with
     | "titleChanged" -> EditDraft(defaultArg value "")
     | "capture" -> Capture
+    | "repositoryChanged" -> EditSetupRepository(defaultArg value "")
+    | "branchChanged" -> EditSetupBranch(defaultArg value "")
+    // The kernel reports only whether a token has been typed, never the token.
+    | "tokenEntered" -> SetupTokenEntered(defaultArg value "" <> "")
+    | "connect" -> Connect
+    | "disconnect" -> Disconnect
     | _ -> Ignored
 
 // ---------------------------------------------------------------------------
 // Transitions - pure, and the only place these decisions are made
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Issuing effects
+// ---------------------------------------------------------------------------
+
+/// Allocates a correlation id and records what it is for.
+///
+/// Sequential rather than random: the engine is pure, a GUID would need a
+/// source of entropy it deliberately does not have, and a deterministic id
+/// makes a test able to name the request it is answering.
+let private issue awaiting build state =
+    let correlationId = $"c%d{state.NextCorrelation}"
+
+    { state with
+        Outbox = state.Outbox @ [ build correlationId ]
+        Awaiting = Map.add correlationId awaiting state.Awaiting
+        NextCorrelation = state.NextCorrelation + 1 }
+
+let private issueStorageGet key awaiting state =
+    issue awaiting (fun id -> Storage(id, StorageGet key)) state
+
+let private issueHttp (probe: HttpEffect) awaiting state =
+    issue awaiting (fun id -> Http { probe with CorrelationId = id }) state
+
+/// The settings the setup form currently describes, or why it is not valid.
+let private settingsFromSetup state =
+    match RepositoryId.create state.SetupRepository with
+    | Error refusal -> Error refusal
+    | Ok repository ->
+        match BranchName.create state.SetupBranch with
+        | Error refusal -> Error refusal
+        | Ok branch -> Ok { Repository = repository; Branch = branch }
+
+/// Starts validation: prove the repository reads before anything else
+/// (VIG-SEC-007 step 4, VIG-SEC-008).
+let private beginValidation settings state =
+    { state with
+        Connection =
+            { state.Connection with
+                Settings = Some settings
+                Status = Validating ProvingRead } }
+    |> issueHttp (readProbe settings) ProbingRepositoryRead
+
+let private refuse reason state =
+    { state with
+        Connection =
+            { state.Connection with
+                Status = Refused reason } }
+
+/// Reads `permissions.push` from a repository response.
+///
+/// Absent or unreadable means "no write capability" rather than "assume yes":
+/// VIG-SEC-009 forbids inferring write access from a successful read.
+let private canPush (body: string) =
+    try
+        use parsed = JsonDocument.Parse body
+
+        match parsed.RootElement.TryGetProperty "permissions" with
+        | true, permissions ->
+            match permissions.TryGetProperty "push" with
+            | true, push -> push.ValueKind = JsonValueKind.True
+            | _ -> false
+        | _ -> false
+    with _ ->
+        false
 
 /// Applies a command.
 ///
@@ -105,6 +234,154 @@ let apply command state =
                 Items = item :: state.Items
                 Draft = ""
                 Error = "" }
+
+    // -- setup form ---------------------------------------------------------
+    | EditSetupRepository value -> { state with SetupRepository = value; SetupError = "" }
+    | EditSetupBranch value -> { state with SetupBranch = value; SetupError = "" }
+    | SetupTokenEntered entered -> { state with SetupTokenEntered = entered; SetupError = "" }
+
+    // -- VIG-SEC-007 step 1: read stored configuration -----------------------
+    | Restore ->
+        state
+        |> issueStorageGet Keys.Repository RestoringRepository
+        |> issueStorageGet Keys.Branch RestoringBranch
+        |> issueStorageGet Keys.TokenPresent RestoringTokenPresence
+
+    | StorageValue(correlationId, value) ->
+        match Map.tryFind correlationId state.Awaiting with
+        | None -> state
+        | Some awaiting ->
+            let state = { state with Awaiting = Map.remove correlationId state.Awaiting }
+
+            let restored =
+                match awaiting with
+                | RestoringRepository -> { state with SetupRepository = defaultArg value "" }
+                | RestoringBranch ->
+                    { state with
+                        SetupBranch =
+                            match value with
+                            | Some branch when branch <> "" -> branch
+                            | _ -> BranchName.Default }
+                | RestoringTokenPresence ->
+                    { state with
+                        SetupTokenEntered = value = Some "yes"
+                        Connection =
+                            { state.Connection with
+                                HasToken = value = Some "yes" } }
+                | ProbingRepositoryRead
+                | ProbingBranchExists
+                | AcknowledgingWrite -> state
+
+            // Only a restore can complete the startup sequence. A write
+            // acknowledgement must not re-enter it: doing so restarted
+            // validation on every save and left the connection stuck
+            // "Checking…" forever.
+            let wasRestore =
+                match awaiting with
+                | RestoringRepository
+                | RestoringBranch
+                | RestoringTokenPresence -> true
+                | ProbingRepositoryRead
+                | ProbingBranchExists
+                | AcknowledgingWrite -> false
+
+            let stillRestoring =
+                restored.Awaiting
+                |> Map.exists (fun _ a ->
+                    a = RestoringRepository || a = RestoringBranch || a = RestoringTokenPresence)
+
+            // VIG-SEC-007 step 3, and VIG-SEC-008: what was stored is attempted,
+            // never assumed.
+            if not wasRestore || stillRestoring then
+                restored
+            elif not restored.Connection.HasToken then
+                restored
+            else
+                match settingsFromSetup restored with
+                | Error _ -> restored
+                | Ok settings -> beginValidation settings restored
+
+    // -- VIG-SEC-007 step 3: connect -----------------------------------------
+    | Connect ->
+        if not state.SetupTokenEntered then
+            { state with SetupError = describeConnectionRefusal TokenMissing }
+        else
+            match settingsFromSetup state with
+            | Error refusal -> { state with SetupError = describeRefusal refusal }
+            | Ok settings ->
+                { state with
+                    SetupError = ""
+                    Connection = { state.Connection with HasToken = true } }
+                |> beginValidation settings
+
+    | Disconnect ->
+        // VIG-SEC-006: clearing the token must not delete repository data, so
+        // only the credential and the connection state are dropped. The
+        // repository and branch stay, because re-entering them is friction with
+        // no security benefit.
+        { state with
+            Connection =
+                { state.Connection with
+                    HasToken = false
+                    Status = Unconfigured }
+            SetupTokenEntered = false
+            SetupError = ""
+            Items = [] }
+        |> issue AcknowledgingWrite (fun id -> Storage(id, StorageRemove Keys.TokenPresent))
+
+    | HttpOutcome(correlationId, outcome) ->
+        match Map.tryFind correlationId state.Awaiting with
+        | None -> state
+        | Some awaiting ->
+            let state = { state with Awaiting = Map.remove correlationId state.Awaiting }
+
+            match awaiting, outcome with
+            | (ProbingRepositoryRead | ProbingBranchExists), Unreachable
+            | (ProbingRepositoryRead | ProbingBranchExists), Unknown ->
+                refuse RepositoryUnavailable state
+
+            | ProbingRepositoryRead, Responded(status, body) ->
+                match classifyStatus RepositoryNotFound status with
+                | Error reason -> refuse reason state
+                | Ok() ->
+                    match classifyWriteCapability (canPush body) with
+                    | Error reason -> refuse reason state
+                    | Ok() ->
+                        match state.Connection.Settings with
+                        | None -> refuse RepositoryNotFound state
+                        | Some settings ->
+                            { state with
+                                Connection =
+                                    { state.Connection with
+                                        Status = Validating ProvingWrite } }
+                            |> issueHttp (branchProbe settings) ProbingBranchExists
+
+            | ProbingBranchExists, Responded(status, _) ->
+                match classifyStatus BranchUnavailable status with
+                | Error reason -> refuse reason state
+                | Ok() ->
+                    // Every capability VIG-SEC-009 names for this slice is now
+                    // proved, so the configuration is worth persisting
+                    // (VIG-SEC-002). The token is not written here: the kernel
+                    // already holds it.
+                    let settings = state.Connection.Settings
+
+                    let persisted =
+                        match settings with
+                        | None -> state
+                        | Some s ->
+                            state
+                            |> issue AcknowledgingWrite (fun id ->
+                                Storage(id, StorageSet(Keys.Repository, RepositoryId.value s.Repository)))
+                            |> issue AcknowledgingWrite (fun id ->
+                                Storage(id, StorageSet(Keys.Branch, BranchName.value s.Branch)))
+
+                    { persisted with
+                        Connection = { persisted.Connection with Status = Connected }
+                        SetupError = "" }
+
+            | (RestoringRepository | RestoringBranch | RestoringTokenPresence | AcknowledgingWrite), _ ->
+                state
 
 // ---------------------------------------------------------------------------
 // Projection - what the browser is allowed to see
@@ -163,6 +440,33 @@ let private itemRow item =
 /// view needs them. The keys here are the whole vocabulary the HTML may bind
 /// to, and `Vigila.Application.Tests` asserts the two agree.
 let project state : (string * ViewValue) list =
+    let connection = state.Connection
+
+    let statusText =
+        match connection.Status with
+        | Unconfigured -> ""
+        | Validating ProvingRead -> "Checking the repository…"
+        | Validating ProvingWrite -> "Checking the branch…"
+        | Connected -> "Connected"
+        | Refused reason -> describeConnectionRefusal reason
+
+    // The setup error is whatever the user most recently needs to fix: a
+    // refused configuration value, or a refused connection. They cannot both
+    // be current, because editing a field clears the first and a new attempt
+    // replaces the second.
+    let setupError =
+        if state.SetupError <> "" then
+            state.SetupError
+        else
+            match connection.Status with
+            | Refused reason -> describeConnectionRefusal reason
+            | _ -> ""
+
+    let validating =
+        match connection.Status with
+        | Validating _ -> true
+        | _ -> false
+
     [ "draft", Value(Text state.Draft)
       "error", Value(Text state.Error)
       "hasError", Value(Flag(state.Error <> ""))
@@ -170,62 +474,27 @@ let project state : (string * ViewValue) list =
       "itemCount", Value(Count(List.length state.Items))
       "isEmpty", Value(Flag(List.isEmpty state.Items))
       "hasItems", Value(Flag(not (List.isEmpty state.Items)))
-      "items", Rows(state.Items |> List.map itemRow) ]
+      "items", Rows(state.Items |> List.map itemRow)
 
-// ---------------------------------------------------------------------------
-// Effects - what the engine may ask the kernel to do
-// ---------------------------------------------------------------------------
-
-/// One constructor per legal operation, rather than one record with optional
-/// fields. A closed algebra is what Limen's protocol actually describes, and
-/// keeping it closed across the boundary is the Host Contract rule in
-/// `.sde/architecture/BOUNDARY-PRESERVATION.md`.
-///
-/// Nothing constructs these yet: no effect is requested until the connection
-/// flow lands (VIG-SEC-001). They exist now so that day extends a closed set
-/// instead of opening one.
-type HttpMethod =
-    | Get
-    | Put
-    | Post
-    | Patch
-    | Delete
-
-type StorageOperation =
-    | StorageGet of key: string
-    | StorageSet of key: string * value: string
-    | StorageRemove of key: string
-
-type NavigationOperation =
-    | NavigatePush of url: string
-    | NavigateReplace of url: string
-    | NavigateBack
-    | NavigateForward
-
-type HttpEffect =
-    { CorrelationId: string
-      Method: HttpMethod
-      Url: string
-      Headers: (string * string) list
-      Body: string option
-      TimeoutMs: int }
-
-/// The four capabilities Limen's protocol declares. Vigila requests none of
-/// them yet; the set is complete so that it mirrors the protocol rather than
-/// the subset one feature happened to need.
-type Effect =
-    | Http of HttpEffect
-    | Storage of correlationId: string * operation: StorageOperation
-    | Clipboard of correlationId: string * text: string
-    | Navigation of correlationId: string * operation: NavigationOperation
-
-/// The effects this step is asking for, and the ones it is abandoning.
-///
-/// Both are empty for now, and both go through the closed rendering below
-/// rather than being hard-coded as `[]` at the wire.
-let pendingEffects (_: State) : Effect list = []
-
-let pendingCancellations (_: State) : string list = []
+      // -- connection -------------------------------------------------------
+      "setupRepository", Value(Text state.SetupRepository)
+      "setupBranch", Value(Text state.SetupBranch)
+      "connectionStatus", Value(Text statusText)
+      "connectionCode",
+      Value(
+          Text(
+              match connection.Status with
+              | Refused reason -> refusalCode reason
+              | _ -> ""
+          )
+      )
+      "setupError", Value(Text setupError)
+      "hasSetupError", Value(Flag(setupError <> ""))
+      "isValidating", Value(Flag validating)
+      "connectDisabled", Value(Flag(validating || not state.SetupTokenEntered))
+      "needsSetup", Value(Flag(needsSetup connection))
+      "isConnected", Value(Flag(connection.Status = Connected))
+      "hasToken", Value(Flag connection.HasToken) ]
 
 // ---------------------------------------------------------------------------
 // The JSON boundary
@@ -233,9 +502,10 @@ let pendingCancellations (_: State) : string list = []
 
 /// Reads one browser-to-engine message and returns the command it implies.
 ///
-/// `Initialize` and `EffectResult` are understood and currently carry no
-/// command: initialization needs no work yet, and no effect has been requested
-/// for a result to belong to.
+/// `LocationChanged` is understood and carries no command: Vigila has no
+/// routing, so a location change is not a domain fact. It becomes `Ignored`
+/// rather than an error, because an unrecognised message is the kernel's
+/// business and not a domain failure.
 let private readCommand (json: string) =
     // Named `parsed`, not `document`: Limen's boundary check matches the
     // identifier textually, and `document` is a browser global.
@@ -269,6 +539,80 @@ let private readCommand (json: string) =
 
             eventToCommand name value
         | _ -> Ignored
+
+    // VIG-SEC-007 step 1: startup begins by reading stored configuration.
+    | "Initialize" -> Restore
+
+    | "EffectResult" ->
+        match root.TryGetProperty "result" with
+        | true, result ->
+            let correlationId =
+                match result.TryGetProperty "correlationId" with
+                | true, c when c.ValueKind = JsonValueKind.String ->
+                    match c.GetString() with
+                    | NonNull text -> text
+                    | Null -> ""
+                | _ -> ""
+
+            let resultKind =
+                match result.TryGetProperty "kind" with
+                | true, k when k.ValueKind = JsonValueKind.String -> k.GetString()
+                | _ -> null
+
+            let outcome =
+                match result.TryGetProperty "outcome" with
+                | true, o -> Some o
+                | _ -> None
+
+            let outcomeKind (o: JsonElement) =
+                match o.TryGetProperty "kind" with
+                | true, k when k.ValueKind = JsonValueKind.String -> k.GetString()
+                | _ -> null
+
+            match resultKind, outcome with
+            | "StorageResult", Some o ->
+                match outcomeKind o with
+                | "Success" ->
+                    let value =
+                        match o.TryGetProperty "value" with
+                        | true, v when v.ValueKind = JsonValueKind.String ->
+                            match v.GetString() with
+                            | NonNull text -> Some text
+                            | Null -> None
+                        | _ -> None
+
+                    StorageValue(correlationId, value)
+                // A storage failure is indistinguishable from "nothing stored"
+                // for this purpose: either way there is no configuration to
+                // restore, and VIG-SEC-007 step 2 sends the user to setup.
+                | _ -> StorageValue(correlationId, None)
+
+            | "HttpResult", Some o ->
+                match outcomeKind o with
+                | "Success" ->
+                    let status =
+                        match o.TryGetProperty "status" with
+                        | true, st when st.ValueKind = JsonValueKind.Number -> st.GetInt32()
+                        | _ -> 0
+
+                    let body =
+                        match o.TryGetProperty "body" with
+                        | true, b when b.ValueKind = JsonValueKind.String ->
+                            match b.GetString() with
+                            | NonNull text -> text
+                            | Null -> ""
+                        | true, b -> b.GetRawText()
+                        | _ -> ""
+
+                    HttpOutcome(correlationId, Responded(status, body))
+                // Limen reports a dispatched-but-unobserved request as its own
+                // case, and VIG-UI-014 forbids calling that either outcome.
+                | "OutcomeUnknown" -> HttpOutcome(correlationId, Unknown)
+                | _ -> HttpOutcome(correlationId, Unreachable)
+
+            | _ -> Ignored
+        | _ -> Ignored
+
     | _ -> Ignored
 
 /// Writes one primitive under a name.
@@ -394,15 +738,17 @@ let private writeResponse state =
 
      writer.WriteStartArray "effects"
 
-     for effect in pendingEffects state do
+     for effect in state.Outbox do
          writeEffect writer effect
 
      writer.WriteEndArray()
 
      writer.WriteStartArray "cancellations"
 
-     for correlationId in pendingCancellations state do
-         writer.WriteStringValue(correlationId: string)
+     // Nothing is cancelled yet; the key is emitted because the kernel reads
+     // all three and a stable wire shape is cheaper than a conditional one.
+     for correlationId in ([]: string list) do
+         writer.WriteStringValue correlationId
 
      writer.WriteEndArray()
 
@@ -415,7 +761,10 @@ let private writeResponse state =
 /// State is threaded by the caller rather than held here, so the function stays
 /// pure and testable without a browser or a WASM host.
 let step (state: State) (messageJson: string) =
-    let next = apply (readCommand messageJson) state
+    // The outbox is cleared before the command runs, so a step emits exactly
+    // the effects that step decided on. Carrying yesterday's effects forward
+    // would re-issue a request the kernel has already performed.
+    let next = apply (readCommand messageJson) { state with Outbox = [] }
     next, writeResponse next
 
 /// Mutable entry point for the WASM shim, which cannot thread state itself.

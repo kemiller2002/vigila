@@ -4,7 +4,7 @@
   "repository": "vigila",
   "actor": "ros-bootstrap",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-09-18T11:12:38Z",
+  "updatedAt": "2026-09-18T14:30:22Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -391,6 +391,27 @@
         "EXE-20260918T111237613Z-a42c378b"
       ],
       "completedAt": "2026-09-18T11:12:38Z"
+    },
+    {
+      "id": "WI-0023",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/Vigila.Application/Connection.fs"
+        },
+        {
+          "type": "tests",
+          "path": "tests/browser/connection.spec.js"
+        }
+      ],
+      "updatedAt": "2026-09-18T14:30:22Z",
+      "telemetryExecutionIds": [
+        "EXE-20260918T141200362Z-2c9a1e90"
+      ],
+      "completedAt": "2026-09-18T14:30:22Z"
     }
   ]
 }

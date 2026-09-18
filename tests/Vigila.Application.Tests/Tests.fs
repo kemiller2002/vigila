@@ -52,9 +52,30 @@ let ``an unknown event is ignored rather than failing`` () =
     Assert.Equal<State>(before, after)
 
 [<Fact>]
-let ``initialize is understood and changes nothing yet`` () =
-    let next, _ = step initial """{"kind":"Initialize","protocolVersion":1,"capabilities":["Http","Storage"]}"""
-    Assert.Equal<State>(initial, next)
+let ``initialize asks for the stored configuration`` () =
+    // VIG-SEC-007 step 1: startup begins by reading what was stored, and asks
+    // for it rather than assuming it, because the engine cannot touch
+    // localStorage itself.
+    let _, json = step initial """{"kind":"Initialize","protocolVersion":1,"capabilities":["Http","Storage"],"location":{"origin":"http://localhost","path":"/","query":"","hash":""}}"""
+
+    use parsed = JsonDocument.Parse json
+    let effects = parsed.RootElement.GetProperty "effects"
+
+    let requested =
+        effects.EnumerateArray()
+        |> Seq.map (fun e ->
+            match e.GetProperty("key").GetString() with
+            | NonNull key -> key
+            | Null -> "")
+        |> Seq.toList
+
+    Assert.Equal<string list>(
+        [ "vigila.repository"; "vigila.branch"; "vigila.tokenPresent" ],
+        requested
+    )
+
+    // The token's own key is never requested: the engine does not know it.
+    Assert.DoesNotContain("vigila.token\"", json)
 
 // ---------------------------------------------------------------------------
 // Capture

@@ -16,51 +16,131 @@
     <main class="app">
       <h1>Vigila</h1>
 
+      <!-- Setup. The token input carries no data-* binding on purpose: Limen
+           would otherwise send its value through the engine, and the whole
+           point of VIG-SEC-005 here is that the token never goes there.
+           connection.js owns that one field. Every other field is ordinary. -->
+      <template data-if="needsSetup">
+        <form class="setup" data-event="connect">
+          <h2 class="setup__heading">Connect to a repository</h2>
+
+          <label class="setup__label" for="token">GitHub token</label>
+          <input
+            id="token"
+            class="setup__input"
+            type="password"
+            autocomplete="off"
+            spellcheck="false"
+            aria-describedby="token-note"
+          />
+          <!-- Carries "yes" or "", never the token. It is the only route the
+               engine has to learn that a credential exists, and connection.js
+               is the only code that sets it. -->
+          <input id="token-present" type="hidden" data-event="tokenEntered" data-on="input" />
+
+          <p id="token-note" class="setup__note">
+            Stored locally in this browser only, and never written to your repository.
+          </p>
+
+          <label class="setup__label" for="repository">Repository</label>
+          <input
+            id="repository"
+            class="setup__input"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="owner/repository"
+            data-event="repositoryChanged"
+            data-on="input"
+            data-bind-value="setupRepository"
+          />
+
+          <label class="setup__label" for="branch">Branch</label>
+          <input
+            id="branch"
+            class="setup__input"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            data-event="branchChanged"
+            data-on="input"
+            data-bind-value="setupBranch"
+          />
+
+          <button class="setup__submit" type="submit" data-bind-disabled="connectDisabled">
+            Connect
+          </button>
+
+          <template data-if="isValidating">
+            <p class="setup__status" role="status" data-text="connectionStatus"></p>
+          </template>
+
+          <template data-if="hasSetupError">
+            <p class="setup__error" role="alert" data-text="setupError"></p>
+          </template>
+        </form>
+      </template>
+
       <!-- Capture is one field: VIG-UI-010 requires a title to be enough, and
            VIG-UI-011 wants the control on the primary view. The submit event
            and the per-keystroke event are separate bindings — the first
            captures, the second keeps the engine's draft current so it can
            decide whether capture is legal. -->
-      <form class="capture" data-event="capture">
-        <label class="capture__label" for="title">What is open?</label>
-        <input
-          id="title"
-          class="capture__input"
-          type="text"
-          autocomplete="off"
-          aria-describedby="capture-error"
-          data-event="titleChanged"
-          data-on="input"
-          data-bind-value="draft"
-        />
-        <button class="capture__submit" type="submit" data-bind-disabled="captureDisabled">
-          Capture
-        </button>
-      </form>
+      <!-- One root element, not several. Limen mounts a data-if template's
+           first element child and only that one, so siblings here would be
+           dropped in silence — the capture form would appear and the item list
+           would not. -->
+      <template data-if="isConnected">
+        <section class="workspace">
+          <form class="capture" data-event="capture">
+            <label class="capture__label" for="title">What is open?</label>
+            <input
+              id="title"
+              class="capture__input"
+              type="text"
+              autocomplete="off"
+              aria-describedby="capture-error"
+              data-event="titleChanged"
+              data-on="input"
+              data-bind-value="draft"
+            />
+            <button class="capture__submit" type="submit" data-bind-disabled="captureDisabled">
+              Capture
+            </button>
+          </form>
 
-      <!-- The refusal is text, announced, and never carried by colour alone
-           (VIG-UI-020). -->
-      <template data-if="hasError">
-        <p id="capture-error" class="error" role="alert" data-text="error"></p>
-      </template>
-
-      <template data-if="isEmpty">
-        <p class="empty">Nothing open yet.</p>
-      </template>
-
-      <template data-if="hasItems">
-        <ul class="items">
-          <template data-each="items" data-key="id">
-            <li class="item">
-              <span class="item__title" data-text="title"></span>
-              <span class="item__meta">
-                <span class="item__kind" data-text="kind"></span>
-                <span class="item__status" data-text="status"></span>
-                <span class="item__id" data-text="id"></span>
-              </span>
-            </li>
+          <!-- The refusal is text, announced, and never carried by colour alone
+               (VIG-UI-020). -->
+          <template data-if="hasError">
+            <p id="capture-error" class="error" role="alert" data-text="error"></p>
           </template>
-        </ul>
+
+          <template data-if="isEmpty">
+            <p class="empty">Nothing open yet.</p>
+          </template>
+
+          <template data-if="hasItems">
+            <ul class="items">
+              <template data-each="items" data-key="id">
+                <li class="item">
+                  <span class="item__title" data-text="title"></span>
+                  <span class="item__meta">
+                    <span class="item__kind" data-text="kind"></span>
+                    <span class="item__status" data-text="status"></span>
+                    <span class="item__id" data-text="id"></span>
+                  </span>
+                </li>
+              </template>
+            </ul>
+          </template>
+
+          <p class="connected">
+            <span data-text="connectionStatus"></span>
+            <button class="disconnect" type="button" data-event="disconnect">
+              Forget token / Disconnect
+            </button>
+          </p>
+        </section>
       </template>
     </main>
 

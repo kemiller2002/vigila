@@ -7,8 +7,7 @@
 //
 // Requirements: VIG-UI-010, VIG-UI-011, VIG-UI-012, VIG-UI-020, VIG-GOV-013.
 import { expect, test } from "@playwright/test";
-
-const PAGE = "/web/index.html";
+import { openConnected } from "./support.js";
 
 const selectors = {
   input: "#title",
@@ -22,23 +21,15 @@ const selectors = {
   id: ".item__id",
 };
 
-/// Opens the page and fails the test on any console error or uncaught
-/// exception. A silently dead engine renders an empty page and passes a naive
-/// assertion; it does not pass this.
+/// Opens the page, connects to a stubbed GitHub, and fails the test on any
+/// console error or uncaught exception.
+///
+/// Capture lives behind the connection now, so every test here starts connected
+/// (VIG-SEC-007: an unconfigured Vigila shows setup, not the application).
 const openPage = async (page) => {
-  const failures = [];
-
-  page.on("console", (message) => {
-    if (message.type() === "error") failures.push(`console: ${message.text()}`);
-  });
-  page.on("pageerror", (error) => failures.push(`pageerror: ${error.message}`));
-
-  await page.goto(PAGE);
-  // The kernel renders the first view only after the WASM runtime has started,
-  // so the empty state appearing is the signal that the whole path is live.
+  const { failures } = await openConnected(page);
   await expect(page.locator(selectors.empty)).toBeVisible();
-
-  return () => failures;
+  return failures;
 };
 
 const capture = async (page, title) => {
