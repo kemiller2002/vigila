@@ -58,6 +58,12 @@ Vigila MUST follow SDE principles.
 
 Vigila MUST use Limen for the browser/application boundary.
 
+> **Limen is `@echelon-foundry/typescript-wasm-kernel`** (confirmed 2026-09-18).
+> The source documents name Limen without identifying it, and no package or
+> repository carries that name — the `Limen` on NuGet is an unrelated
+> validation library. The dependency is already installed
+> ([VIG-GOV-011](#vig-gov-011) constrains what may be written against it).
+
 #### VIG-GOV-009 — F# for application and domain code
 **Level:** SHOULD · **Release:** v1 · **Source:** v0.2 §0.2, v0.1 §2
 

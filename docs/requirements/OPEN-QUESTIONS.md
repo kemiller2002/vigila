@@ -44,32 +44,28 @@ it. Cheap now, a schema migration later.
 
 <a id="oq-02"></a>
 
-## OQ-02 — `Waiting` is both a kind and a state
+## OQ-02 — `Waiting` is both a kind and a state — **RESOLVED**
 
-**Ambiguity.** v0.2 §2.3 defines `Waiting` as an item *kind*. v0.2 §3 defines
-`Waiting` as an item *state*, with transitions into and out of it. The documents
-never say how the two relate.
+**Resolved 2026-09-18.** Both survive. A `Waiting` kind and a `Waiting` status
+are independent: a `Task` may be in status `Waiting`, and the kind is a capture
+convenience, not a claim about state.
 
-Three readings are possible:
+**Was.** v0.2 §2.3 defines `Waiting` as an item *kind*; v0.2 §3 defines
+`Waiting` as an item *status*. Neither says how they relate. Two other readings
+were possible — that the kind implies the status, or that the kind should be
+withdrawn the way §85 withdrew `Reminder`.
 
-1. They are independent: a `Task` can be in state `Waiting`, and kind `Waiting`
-   is just a capture convenience.
-2. Kind `Waiting` implies state `Waiting`, making one of them redundant.
-3. Kind `Waiting` is what §85 says about `Reminder` — behaviour mistaken for a
-   kind — and should also be withdrawn.
+**Applied.** [VIG-DOM-005](DOMAIN.md#vig-dom-005) and
+[VIG-DOM-008](DOMAIN.md#vig-dom-008) stay orthogonal, which is what
+`src/Vigila.Semantic/Items.fs` already implements. In particular
+`SetKind(Waiting)` does **not** imply a status transition, which would have
+violated [VIG-AGT-020](AGENT.md#vig-agt-020) (commands do only what they say).
 
-Reading 1 is the only one consistent with the rest of the documents:
-[VIG-DOM-025](DOMAIN.md#vig-dom-025) attaches `WaitingSince` to the *state*
-transition, and §16.2's Waiting view is described as "everything currently
-blocked", which is a state question.
-
-**Assumed.** Reading 1. Kind and state are independent;
-[VIG-DOM-005](DOMAIN.md#vig-dom-005) and
-[VIG-DOM-008](DOMAIN.md#vig-dom-008) are orthogonal.
-
-**Decision changes.** Whether `SetKind(Waiting)` implies a state transition —
-which would violate [VIG-AGT-020](AGENT.md#vig-agt-020) (commands do only what
-they say) under reading 2.
+**Consequence.** The name is ambiguous at any call site that has both types in
+scope, so one must be qualified — `ItemKind.Waiting` or `ItemStatus.Waiting`.
+This is a real cost of the decision and it already broke a build during the
+scaffold work. It is left visible rather than worked around: the compiler flags
+every ambiguous use, which is the safest place for the ambiguity to surface.
 
 ---
 
