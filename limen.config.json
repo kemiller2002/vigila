@@ -1,0 +1,15 @@
+{
+  "configurationVersion": 1,
+  "boundary": {
+    "engine": [
+      "src/Vigila.Semantic",
+      "src/Vigila.Transition",
+      "src/Vigila.Application",
+      "src/Vigila.Host.GitHub"
+    ],
+    "kernel": [
+      "src/Vigila.Wasm",
+      "web"
+    ]
+  }
+}

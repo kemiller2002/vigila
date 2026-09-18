@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vigila</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <!-- Structure only. Every data-* binding is filled from the engine's
+         ViewState; nothing here decides anything (VIG-GOV-010). -->
+    <main class="app">
+      <h1>Vigila</h1>
+
+      <!-- Capture is one field: VIG-UI-010 requires a title to be enough, and
+           VIG-UI-011 wants the control on the primary view. The submit event
+           and the per-keystroke event are separate bindings — the first
+           captures, the second keeps the engine's draft current so it can
+           decide whether capture is legal. -->
+      <form class="capture" data-event="capture">
+        <label class="capture__label" for="title">What is open?</label>
+        <input
+          id="title"
+          class="capture__input"
+          type="text"
+          autocomplete="off"
+          aria-describedby="capture-error"
+          data-event="titleChanged"
+          data-on="input"
+          data-bind-value="draft"
+        />
+        <button class="capture__submit" type="submit" data-bind-disabled="captureDisabled">
+          Capture
+        </button>
+      </form>
+
+      <!-- The refusal is text, announced, and never carried by colour alone
+           (VIG-UI-020). -->
+      <template data-if="hasError">
+        <p id="capture-error" class="error" role="alert" data-text="error"></p>
+      </template>
+
+      <template data-if="isEmpty">
+        <p class="empty">Nothing open yet.</p>
+      </template>
+
+      <template data-if="hasItems">
+        <ul class="items">
+          <template data-each="items" data-key="id">
+            <li class="item">
+              <span class="item__title" data-text="title"></span>
+              <span class="item__meta">
+                <span class="item__kind" data-text="kind"></span>
+                <span class="item__status" data-text="status"></span>
+                <span class="item__id" data-text="id"></span>
+              </span>
+            </li>
+          </template>
+        </ul>
+      </template>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

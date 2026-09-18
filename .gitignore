@@ -44,3 +44,6 @@ logs/*
 bin/
 obj/
 *.user
+
+# Published WASM engine — rebuilt with `npm run build:wasm`
+**/wwwroot/_framework/

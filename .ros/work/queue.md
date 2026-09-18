@@ -16,3 +16,4 @@
 | WI-0011 | Implement the capture slice: item aggregate and persisted form | complete | domain,persistence | high |
 | WI-0012 | Resolve the remaining open questions OQ-04, 05, 07, 09, 10, 11 | complete | requirements | high |
 | WI-0013 | Retarget to net10.0 and honour F# nullness at the boundaries | complete | architecture,fsharp | high |
+| WI-0014 | Wire the F# engine to the browser through Limen as WebAssembly | complete | architecture,limen | high |

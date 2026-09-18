@@ -296,7 +296,7 @@ let private prop (el: JsonElement) (name: string) =
 
 /// `JsonElement.GetString()` is typed as nullable, so the null case is handled
 /// here rather than at each of the twenty-odd call sites. A JSON null already
-/// failed `prop`, so reaching null here means the document is malformed.
+/// failed `prop`, so reaching null here means the record is malformed.
 let private requiredString el name =
     match prop el name with
     | Some v when v.ValueKind = JsonValueKind.String ->
@@ -497,9 +497,11 @@ let fromJson (json: string) =
 
     match parsed with
     | Error msg -> Error msg
-    | Ok document ->
-        use document = document
-        let el = document.RootElement
+    | Ok parsedDocument ->
+        // Named `parsedDocument`, not `document`: Limen's boundary check
+        // matches the identifier textually, and `document` is a browser global.
+        use parsed = parsedDocument
+        let el = parsed.RootElement
 
         result {
             let! version =
