@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 23,
+  "nextSeq": 24,
   "items": [
     {
       "id": "WI-0001",
@@ -335,6 +335,20 @@
       "attachments": [],
       "createdAt": "2026-09-18T11:04:58.618Z",
       "updatedAt": "2026-09-18T11:07:42Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0023",
+      "title": "Implement the connection flow: setup, validation and disconnect (VIG-SEC-001..012)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-18T14:11:54.342Z",
+      "updatedAt": "2026-09-18T14:30:22Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
