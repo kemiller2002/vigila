@@ -19,26 +19,36 @@ because several are cheaper to settle before implementation than after.
 
 <a id="oq-01"></a>
 
-## OQ-01 — Does the `Reminder` kind survive?
+## OQ-01 — Does the `Reminder` kind survive? — **RESOLVED**
 
-**Conflict.** v0.1 §2 and v0.2 §2.4 require a `Reminder` item kind, and v0.2 §54
-lists Reminder in v1 scope. v0.3 §85 withdraws it: "a reminder is often behavior
-attached to an item rather than a separate domain kind", recommending core kinds
-of `Task`, `FollowUp`, `Waiting` only.
+**Resolved 2026-09-18.** No. The kinds stay `Task`, `FollowUp`, `Waiting`.
 
-v0.4 does not revisit it, so precedence gives v0.3 §85. But §85 is phrased as a
-*recommendation* ("Recommendation:", "should only remain if real workflows
-demonstrate a distinct semantic need"), and it adds a condition: "This
-simplification should occur before implementation if it does not conflict with
-existing accepted domain work."
+**Was.** v0.1 §2 and v0.2 §2.4 require a `Reminder` kind and v0.2 §54 lists it in
+v1 scope, while v0.3 §85 withdraws it as behaviour mistaken for a kind. Later
+document governs, but §85 is phrased as a recommendation, so the conflict was
+left open.
 
-**Assumed.** Reminder is withdrawn. [VIG-DOM-005](DOMAIN.md#vig-dom-005) lists
-three kinds; [VIG-DOM-006](DOMAIN.md#vig-dom-006) covers reminder behaviour via
-follow-up and snooze timing.
+**Why withdrawn stands.**
 
-**Decision changes.** Whether the persisted kind enumeration has three members
-or four, and whether v0.2 §54's scope list is authoritative where v0.3 contradicts
-it. Cheap now, a schema migration later.
+1. §85's reasoning holds against the rest of the model. "Submit passport
+   documentation" is a `Task`; "remind me Thursday" is a follow-up date or a
+   snooze attached to it. The model already expresses reminder behaviour with
+   [VIG-TIME-004](TIME.md#vig-time-004) and
+   [VIG-TIME-010](TIME.md#vig-time-010), so a fourth kind would add a second way
+   to say the same thing.
+2. **The asymmetry decides it.** Adding a case to a closed set later is
+   additive: new kind, new persisted value, older readers reject it only if the
+   schema says to ([VIG-PER-022](PERSISTENCE.md#vig-per-022)). Removing one
+   later is a migration over existing items
+   ([VIG-PER-023](PERSISTENCE.md#vig-per-023)). Staying at three keeps the cheap
+   direction open; starting at four does not.
+3. §85's own condition is met — no accepted domain work conflicts, because the
+   three-kind enumeration is what `src/Vigila.Semantic/Items.fs` already
+   implements.
+
+**Reversible.** If a real workflow shows a distinct semantic need, adding
+`Reminder` is one DU case and one persisted value. §85 asks for exactly that
+evidence before adding it.
 
 ---
 
@@ -151,26 +161,47 @@ presentation.
 
 <a id="oq-06"></a>
 
-## OQ-06 — Where do snoozed items appear?
+## OQ-06 — Where do snoozed items appear? — **RESOLVED**
 
-**Gap.** v0.3 §56 requires snoozed items to disappear from `Now` until the
-snooze expires. It does not say which view, if any, shows them meanwhile.
+**Resolved 2026-09-18.** `Upcoming` widens to include snooze expiry.
 
-They are not `Deferred` (§56 is explicit that snooze is not that state), so the
-Deferred view is wrong. `Upcoming` shows "future due dates and follow-up dates"
-(§16.3), which a snooze is neither.
+**Was.** v0.3 §56 requires snoozed items to leave `Now` until the snooze
+expires, without saying which view holds them meanwhile. They are not
+`Deferred` (§56 is explicit), and §16.3 describes `Upcoming` as future *due and
+follow-up* dates — so a snoozed item with neither date would appear in no
+primary view at all, colliding with
+[VIG-QRY-013](QUERY.md#vig-qry-013).
 
-A snoozed item with no due or follow-up date would therefore appear in no
-primary view at all — which collides with
-[VIG-QRY-013](QUERY.md#vig-qry-013)'s requirement that open items never
-disappear indefinitely.
+**Decided.** [VIG-UI-004](UI.md#vig-ui-004) covers future due dates, future
+follow-up dates, **and** snooze expiry.
 
-**Assumed.** Snoozed items remain reachable through search and filter, and the
-gap in view coverage is real but unresolved.
+**Why here rather than elsewhere.**
 
-**Decision changes.** Whether `Upcoming` is widened to include snooze
-expiry, whether a snoozed item is surfaced in the Inbox
-([VIG-UI-006a](UI.md#vig-ui-006a)), or whether a distinct indicator is needed.
+- A snooze-until *is* a future moment at which an item returns to attention,
+  which is what the other two dates in `Upcoming` already are. It is the same
+  kind of fact, not a new one.
+- It needs no new view, so
+  [VIG-UI-001](UI.md#vig-ui-001)'s "deliberately small number of views" holds.
+- It closes the [VIG-QRY-013](QUERY.md#vig-qry-013) hole directly: every open
+  item now appears in at least one primary view.
+
+**Rejected alternatives.**
+
+- **Inbox.** [VIG-UI-006a](UI.md#vig-ui-006a) is for items missing
+  *organisation* — no tags, no dates, no next action. A snoozed item is the
+  opposite: someone made a deliberate decision about when to see it again.
+  Putting it there would ask the user to re-process work they already
+  processed.
+- **A dedicated Snoozed view.** Costs a primary view against
+  [VIG-UI-001](UI.md#vig-ui-001) to hold items that are, by definition, ones
+  the user asked not to think about yet.
+- **Nowhere, reachable only by search.** What the requirements accidentally
+  specify, and what [VIG-QRY-013](QUERY.md#vig-qry-013) forbids.
+
+**Consequence.** `Upcoming` needs to show *why* a row is there — due, follow-up
+or snooze — since the same item may qualify on more than one, and
+[VIG-UI-020](UI.md#vig-ui-020) forbids carrying that distinction by colour
+alone.
 
 ---
 
