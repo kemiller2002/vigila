@@ -1,4 +1,4 @@
-# Vigilia architecture
+# Vigila architecture
 
 ## Current architecture
 

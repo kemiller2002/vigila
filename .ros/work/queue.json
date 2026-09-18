@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 3,
+  "nextSeq": 6,
   "items": [
     {
       "id": "WI-0001",
@@ -31,6 +31,54 @@
       "attachments": [],
       "createdAt": "2026-09-17T23:37:08.544Z",
       "updatedAt": "2026-09-17T23:37:13Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0003",
+      "title": "Derive consolidated requirements specification from input-documents",
+      "description": null,
+      "tags": [
+        "requirements,docs"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-17T23:55:07.643Z",
+      "updatedAt": "2026-09-18T00:05:53Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0004",
+      "title": "Correct product name from Vigilia to Vigila",
+      "description": null,
+      "tags": [
+        "naming,docs"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-18T00:13:02.142Z",
+      "updatedAt": "2026-09-18T00:13:02Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0005",
+      "title": "Move repository identifiers to vigila after repo rename",
+      "description": null,
+      "tags": [
+        "naming"
+      ],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-18T00:15:44.592Z",
+      "updatedAt": "2026-09-18T00:15:45Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

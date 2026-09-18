@@ -1,13 +1,13 @@
 ---
-id: PILOT-MEASUREMENT-vigilia
-title: Vigilia ROS Pilot Measurement Plan
+id: PILOT-MEASUREMENT-vigila
+title: Vigila ROS Pilot Measurement Plan
 status: draft
 version: 0.1.0
 created: 2026-09-17
 updated: 2026-09-17
 ---
 
-# Vigilia ROS pilot measurement plan
+# Vigila ROS pilot measurement plan
 
 ## Evaluation question
 

@@ -1,4 +1,4 @@
-# Vigilia research queue
+# Vigila research queue
 
 | Priority | Question | Decision affected | Discriminating evidence | Status |
 |---:|---|---|---|---|

@@ -1,8 +1,8 @@
-# Vigilia handoff
+# Vigila handoff
 
 ## Objective
 
-Bootstrap Vigilia as a greenfield Repository Operating System pilot.
+Bootstrap Vigila as a greenfield Repository Operating System pilot.
 
 ## Current state
 

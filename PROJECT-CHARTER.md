@@ -1,18 +1,18 @@
 ---
-id: PROJECT-CHARTER-vigilia
-title: Vigilia Project Charter
+id: PROJECT-CHARTER-vigila
+title: Vigila Project Charter
 status: draft
 version: 0.1.0
 created: 2026-09-17
 updated: 2026-09-17
 ---
 
-# Vigilia project charter
+# Vigila project charter
 
 ## Purpose
 
 Define the practical problem this project will solve. Do not assume that
-“Vigilia” already names a distinct discipline; that is a research
+“Vigila” already names a distinct discipline; that is a research
 question, not a starting fact.
 
 ## Intended users
