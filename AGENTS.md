@@ -150,3 +150,18 @@ Before designing, implementing, or reviewing UI:
 
 Do not copy Visual Engineering research into this repository by hand.
 <!-- END echelon:visual-engineering -->
+
+<!-- echelon:communication-engineering:start -->
+## Communication Engineering
+
+Communication Engineering is installed as evidence-bounded operational guidance.
+Before producing consequential communication, read:
+
+- `.communication-engineering/COMMUNICATION-FOUNDATIONS.md`
+- `.communication-engineering/COMMUNICATION-DECISION-CHECKLIST.md`
+- `.communication-engineering/PURPOSE-OUTCOME-MATRIX.md`
+- `.communication-engineering/COMMUNICATION-ANTI-PATTERNS.md`
+- `.communication-engineering/RESEARCH-STATUS.md`
+
+Treat research maturity as a constraint. Do not turn provisional findings into universal rules, optimize persuasion at the expense of user autonomy, or substitute style for proof obligations.
+<!-- echelon:communication-engineering:end -->

@@ -2,6 +2,7 @@
 
 | ID | Work | Status | Tags | Priority |
 |---|---|---|---|---|
+| ECHELON-UPGRADE-2026-09-21 | Reconcile current Echelon engineering capabilities | complete | tooling, ordo, limen | high |
 | ROS-INSTALL-3-0-3 | ROS-INSTALL-3-0-3 | complete |  |  |
 | WI-0001 | Consolidate readme.md into ROS-generated README.md | complete | docs | medium |
 | WI-0002 | Install SDE, Visual Engineering, and typescript-wasm-kernel toolchain | complete | tooling | medium |

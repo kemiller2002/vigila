@@ -352,6 +352,24 @@
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
+    },
+    {
+      "id": "ECHELON-UPGRADE-2026-09-21",
+      "title": "Reconcile current Echelon engineering capabilities",
+      "description": null,
+      "tags": [
+        "tooling",
+        "ordo",
+        "limen"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-21T19:09:17Z",
+      "updatedAt": "2026-09-21T19:10:19Z",
+      "createdBy": "agent:chatgpt",
+      "source": "agent-discovery",
+      "sourceReference": "public-repository-upgrade-2026-09-21"
     }
   ]
 }
