@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "protocolVersion": "1.0.0",
   "repository": "vigila",
-  "actor": "ros-bootstrap",
+  "actor": "agent:chatgpt",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-09-18T14:30:22Z",
+  "updatedAt": "2026-09-21T19:10:19Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -412,6 +412,18 @@
         "EXE-20260918T141200362Z-2c9a1e90"
       ],
       "completedAt": "2026-09-18T14:30:22Z"
+    },
+    {
+      "id": "ECHELON-UPGRADE-2026-09-21",
+      "type": "mechanical",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [],
+      "updatedAt": "2026-09-21T19:10:19Z",
+      "telemetryExecutionIds": [
+        "EXE-20260921T190951383Z-102b562b"
+      ],
+      "completedAt": "2026-09-21T19:10:19Z"
     }
   ]
 }
