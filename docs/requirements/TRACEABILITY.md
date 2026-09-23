@@ -205,7 +205,7 @@ Sections §55–§99 are v0.3. Sections §100–§143 are v0.4. Sections §144�
 |---|---|
 | Source sections | 151 (plus 11 `§47.x` subsections and 3 `§0.x` subsections) |
 | Sections with no mapped requirement | **0** |
-| Distinct requirements | 300 |
+| Distinct requirements | 301 |
 
 ### By area
 
@@ -222,8 +222,8 @@ Sections §55–§99 are v0.3. Sections §100–§143 are v0.4. Sections §144�
 | `QRY` — query and retrieval | 18 |
 | `TST` — testing and documentation | 13 |
 | `SCOPE` — scope | 6 |
-| `PLAT` — shared platform dependencies | 34 |
-| **Total** | **300** |
+| `PLAT` — shared platform dependencies | 35 |
+| **Total** | **301** |
 
 ### By release
 
