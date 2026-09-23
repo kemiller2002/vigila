@@ -4,18 +4,19 @@ title: Vigila requirements — index and conventions
 status: draft
 version: 0.1.0
 created: 2026-09-17
-updated: 2026-09-17
+updated: 2026-09-23
 sources:
   - input-documents/vigila_requirements_v0.1.txt
   - input-documents/Vigila_Requirements_v0.2.txt
   - input-documents/Vigila_Additional_Requirements_v0.3.txt
   - input-documents/Vigila_Additional_Requirements_v0.4.txt
+  - input-documents/Vigila_Additional_Requirements_v0.5.txt
 ---
 
 # Vigila requirements
 
 This directory holds the consolidated, traceable requirements derived from the
-four source documents in [`input-documents/`](../../input-documents/). It is a
+five source documents in [`input-documents/`](../../input-documents/). It is a
 *derived* artifact: the source documents remain the record of what was written,
 and this set is the record of what is normative.
 
@@ -38,6 +39,7 @@ disagree, or because a statement was ambiguous — that call is recorded in
 | [`SECURITY.md`](SECURITY.md) | Authentication, token handling, browser security, authorization | §47, §48, §70, §86, §87 |
 | [`OPERATIONS.md`](OPERATIONS.md) | Notifications, review, stale items, metrics, export, automation limits | §34–§37, §41, §51, §84, §134–§137 |
 | [`QUALITY.md`](QUALITY.md) | Testing and documentation obligations | §49, §50, §95, §96 |
+| [`PLATFORM.md`](PLATFORM.md) | Required shared platform dependencies: Aegis, Forma, Folio, and their ownership boundaries | §144–§151 |
 | [`SCOPE.md`](SCOPE.md) | v1 scope, non-goals, deferred backlog | §52, §53, §54, §97, §98, §141, §142 |
 | [`TRACEABILITY.md`](TRACEABILITY.md) | Source section → requirement ID map, both directions | all |
 | [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md) | Decisions taken where the sources conflicted or were silent (all resolved) | — |
@@ -49,7 +51,7 @@ VIG-<AREA>-<NNN>
 ```
 
 `AREA` is one of `GOV`, `DOM`, `TIME`, `UI`, `QRY`, `AGT`, `PER`, `SEC`, `OPS`,
-`TST`, `SCOPE`. Numbers are assigned in document order and are **stable**: a
+`TST`, `SCOPE`, `PLAT`. Numbers are assigned in document order and are **stable**: a
 requirement that is withdrawn keeps its number and is marked `Withdrawn` rather
 than being reused or renumbered.
 
@@ -102,8 +104,10 @@ Both v0.3 and v0.4 state that where they change an earlier requirement, the
 newer text governs. Applied in order:
 
 ```
-v0.4  >  v0.3  >  v0.2  >  v0.1
+v0.5  >  v0.4  >  v0.3  >  v0.2  >  v0.1
 ```
+
+v0.5 adds mandatory shared-platform implementation requirements for Aegis, Forma, and Folio. It does not replace the earlier functional requirements; it constrains how those requirements are implemented.
 
 v0.2 is a near-complete restatement of v0.1 with §47 (authentication) added and
 several sections tightened; v0.1 is cited only where it says something v0.2

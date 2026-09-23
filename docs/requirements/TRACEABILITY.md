@@ -3,6 +3,7 @@ id: REQ-TRACE
 title: Source section to requirement traceability
 status: draft
 created: 2026-09-18
+updated: 2026-09-23
 ---
 
 # Traceability
@@ -13,7 +14,7 @@ would be a dropped requirement.
 
 Sections §0–§54 exist in both v0.1 and v0.2. v0.2 governs; v0.1 is cited in a
 requirement only where it says something v0.2 dropped or stated differently.
-Sections §55–§99 are v0.3. Sections §100–§143 are v0.4.
+Sections §55–§99 are v0.3. Sections §100–§143 are v0.4. Sections §144–§151 are v0.5.
 
 ## v0.2 (with v0.1) — §0–§54
 
@@ -185,13 +186,26 @@ Sections §55–§99 are v0.3. Sections §100–§143 are v0.4.
 | §142 | Deferred from this pass | `SCOPE-021` |
 | §143 | Guiding rule for new features | `GOV-021` |
 
+## v0.5 — §144–§151
+
+| § | Topic | Requirements |
+|---|---|---|
+| §144 | Required shared platform dependencies | `PLAT-001`–`PLAT-003` |
+| §145 | Aegis installation and startup | `PLAT-010`–`PLAT-012` |
+| §146 | Aegis use, fault ownership, and verification | `PLAT-020`–`PLAT-027` |
+| §147 | Forma installation | `PLAT-030`, `PLAT-031` |
+| §148 | Forma usage | `PLAT-032`–`PLAT-037` |
+| §149 | Folio installation | `PLAT-040`, `PLAT-041` |
+| §150 | Folio usage | `PLAT-042`–`PLAT-048` |
+| §151 | Cross-platform composition and enforcement | `PLAT-050`–`PLAT-053` |
+
 ## Coverage
 
 | | Count |
 |---|---|
-| Source sections | 143 (plus 11 `§47.x` subsections and 3 `§0.x` subsections) |
+| Source sections | 151 (plus 11 `§47.x` subsections and 3 `§0.x` subsections) |
 | Sections with no mapped requirement | **0** |
-| Distinct requirements | 266 |
+| Distinct requirements | 300 |
 
 ### By area
 
@@ -208,7 +222,8 @@ Sections §55–§99 are v0.3. Sections §100–§143 are v0.4.
 | `QRY` — query and retrieval | 18 |
 | `TST` — testing and documentation | 13 |
 | `SCOPE` — scope | 6 |
-| **Total** | **266** |
+| `PLAT` — shared platform dependencies | 34 |
+| **Total** | **300** |
 
 ### By release
 

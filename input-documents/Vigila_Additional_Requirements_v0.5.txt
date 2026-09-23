@@ -1,0 +1,146 @@
+Vigila Additional Requirements v0.5
+Date: 2026-09-23
+Status: normative additive requirements
+
+This document adds mandatory shared-platform implementation requirements to the
+existing Vigila requirements. Where it constrains how an earlier requirement is
+implemented, this newer document governs. It does not remove earlier functional
+requirements.
+
+§144 Required shared platform dependencies
+
+Vigila v1 MUST use Aegis for unexpected operational failure handling, Forma for
+reusable application UI presentation, and Folio for printable/PDF
+document-style output.
+
+These are required implementation dependencies, not optional examples. Vigila
+MUST consume shared capabilities rather than copy or fork them locally when the
+shared capability already exists. Dependencies MUST be pinned to exact releases
+or immutable artifacts/commits; Vigila MUST NOT track moving branches or
+floating application-baseline ranges.
+
+§145 Aegis installation and startup
+
+Vigila MUST reference EchelonFoundry.Aegis.Core in the .NET
+application/host tiers that own operational boundaries. The v1 baseline is
+Aegis Core 1.0.0 unless an explicit upgrade is recorded. Pure semantic and
+transition tiers MUST remain free of operational failure infrastructure unless
+they themselves become an operational boundary.
+
+Integration-specific Aegis packages MUST be used where their integration
+matches the boundary. If GitHub calls occur through Limen/browser effects,
+effect outcomes MUST be translated into the Vigila/Aegis fault vocabulary at
+the application boundary without exposing credentials.
+
+Aegis MUST be configured once at startup/composition with application identity,
+version when available, explicit sinks, redaction rules, and persistence
+posture. Bootstrap configuration MUST be validated before it is trusted.
+
+§146 Aegis use, fault ownership, and verification
+
+Aegis MUST guard unexpected operational failures at architectural boundaries,
+including network, GitHub, browser/WASM interop, durable storage, external
+files/records, parsing/deserialization, and schema migration.
+
+Boundary code MUST use the standard Aegis capture/guard surface rather than
+generic exception swallowing. Aegis MUST NOT replace typed domain outcomes such
+as validation refusal, illegal transitions, ambiguity, or ordinary optimistic
+concurrency conflict. Programming defects MUST fail loudly according to Aegis
+semantics, and cancellation MUST NOT automatically be treated as a fault.
+
+Fault classification MUST use stable machine-readable codes and explicit
+category/severity/impact/recovery/user-message semantics. Integration mappings
+SHOULD be centralized per integration rather than reclassified at every call
+site.
+
+Sensitive values MUST be privacy-classified/redacted before reaching Aegis
+context or sinks. Tokens and secrets MUST never appear in Aegis output.
+
+Vigila MUST declare its Aegis fault boundaries in machine-readable form,
+including ownership, code families, and guarded status. Tests MUST use
+replaceable deterministic sinks such as the Aegis collector and MUST prove that
+domain refusals are not misclassified as operational faults.
+
+§147 Forma installation
+
+Vigila MUST consume Forma using the @echelon-foundry/design-system package
+contract. The current baseline is Forma 0.2.0. Until npm is the selected
+canonical source, Vigila MUST pin the immutable v0.2.0 release artifact.
+
+Vigila SHOULD use Forma's all.css presentation surface unless measured evidence
+justifies selective imports. It MUST NOT copy Forma CSS into Vigila.
+
+§148 Forma usage
+
+Vigila MUST search and use an existing Forma pattern before creating a local
+screen control that serves the same purpose. Canonical semantic markup,
+accessibility relationships, and inert <ef-*> authoring wrappers MUST be
+preserved. Forma wrappers MUST NOT be registered as runtime custom elements.
+
+Forma owns presentation, responsive recomposition, tokens, and accessibility
+presentation. Limen/Vigila owns behavior beyond native HTML. Vigila/Ordo state
+owns legal transitions, capabilities, obligations, permissions, and domain
+invariants.
+
+Forma's 320 CSS px mobile contract, keyboard/non-pointer operation, visible
+focus, reduced-motion behavior, forced-colors support where required, and
+non-color state cues are mandatory for Vigila surfaces.
+
+Reusable missing patterns MUST be recorded and fixed in Forma rather than
+silently growing a second design system inside Vigila. A Forma upgrade MUST be
+explicit and verified through application, browser, accessibility, and mobile
+checks.
+
+§149 Folio installation
+
+Vigila MUST consume @echelon-foundry/print-components for printable, PDF, and
+document-style output. The current source baseline is Folio 0.3.0. Until that
+baseline has a canonical published package/release artifact, Vigila MUST pin an
+immutable Folio commit rather than track main. Once published, the exact
+canonical version MUST be pinned.
+
+Folio registration and print.css MUST be consumed from the dependency. Vigila
+MUST NOT copy Folio registration or print CSS into its own source.
+
+§150 Folio usage
+
+Printable/shareable summaries, reviews, exports, reports, human diagnostic
+bundles, and other document-style output MUST use Folio primitives where Folio
+provides the relevant reusable document/layout intent. Folio is not the normal
+interactive application UI framework; Forma is.
+
+Printable output MUST begin with semantic HTML and logical reading order.
+Renderer capability tiers MUST be stated honestly. Official deterministic PDF
+output MUST use a controlled renderer contract and preserve renderer/version
+metadata sufficient for reproduction.
+
+Vigila owns document data and meaning, privacy, authorization, labels, and
+interpretation. Folio owns reusable print/layout intent. Physical pagination
+belongs to the renderer. Vigila MUST NOT implement a DOM-measure-and-repage
+pagination engine.
+
+Substantial print/PDF surfaces MUST have structural and renderer-backed
+regression tests proportional to risk, including long/fragmented content where
+relevant and checks that sensitive Vigila/Aegis data is not leaked.
+
+Reusable missing print primitives MUST be recorded and fixed in Folio rather
+than growing a competing print library inside Vigila.
+
+§151 Cross-platform composition and enforcement
+
+Forma screen projections and Folio document projections MUST derive from the
+same authoritative Vigila application/domain state. Print code MUST NOT
+recompute domain legality or semantic state.
+
+Aegis user-facing presentation MUST flow through Forma-based interactive
+presentation. Aegis content intentionally included in printable human-readable
+output MUST flow through Folio and obey the same redaction/privacy rules.
+
+Repository/CI verification MUST prove dependency presence, exact pinning, and
+actual canonical use. Listing a dependency without using it is insufficient.
+Absence, incompatibility, or bypass of a required shared dependency MUST block
+completion of affected work.
+
+Upgrades MUST preserve ownership boundaries: Aegis owns operational failure,
+Forma owns screen presentation contracts, Folio owns print-layout intent,
+Limen owns browser interaction, and Vigila/Ordo state owns domain authority.
