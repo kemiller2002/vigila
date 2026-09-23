@@ -131,3 +131,7 @@ These documents state *what* Vigila must do. They do not schedule the work, size
 it, or assign it. Turning a requirement into engineering work goes through the
 ROS work protocol (`docs/work-protocol.md`) and, for structural decisions, the
 SDE method under `.sde/`.
+
+## Shared Echelon application capabilities
+
+`SHARED-CAPABILITIES.md` is normative across the entire Vigila requirement set. It makes Aegis mandatory at applicable operational boundaries, Forma mandatory for interactive browser UI, and Folio mandatory for printable/PDF/paginated document surfaces. Existing more-specific platform/UI requirements remain in force and are supplemented by this cross-cutting contract.
