@@ -9,6 +9,7 @@ open Vigila.Semantic.Actors
 open Vigila.Semantic.Item
 open Vigila.Semantic.Items
 open Vigila.Semantic.Time
+open Vigila.Semantic.Tags
 
 type KnownValue =
     | Known of string
@@ -131,12 +132,15 @@ let private validate request =
     elif String.IsNullOrWhiteSpace request.FollowUp.Reason then
         Error "reason is required."
     else
-        Title.create request.FollowUp.Title
+        match Title.create request.FollowUp.Title, TagSet.ofStrings request.FollowUp.Tags with
+        | Ok title, Ok tags -> Ok(title, tags)
+        | Error titleError, _ -> Error titleError
+        | _, Error tagErrors -> Error(String.concat " " tagErrors)
 
 let create (clock: Clock) (index: OperationIndex) request =
     match validate request with
     | Error reason -> Rejected reason
-    | Ok title ->
+    | Ok(title, tags) ->
         match index.TryFind request.Envelope.OperationId with
         | Some existing -> Existing existing
         | None ->
@@ -151,6 +155,7 @@ let create (clock: Clock) (index: OperationIndex) request =
                     Due = request.FollowUp.DueAt |> Option.map WhenValue.AtInstant
                     FollowUp = request.FollowUp.ReviewAfter |> Option.map WhenValue.AtInstant
                     Sources = sourceReferences request.Envelope
+                    Tags = tags
                     Important =
                         match request.FollowUp.Priority with
                         | High | Urgent -> true
