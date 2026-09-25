@@ -1,185 +1,139 @@
-/* Presentation only. No state lives here (VIG-GOV-010). */
-:root {
-  --ink: #1b1b1f;
-  --muted: #5c5c66;
-  --line: #d9d9e0;
-  --accent: #2f5cff;
-  --danger: #b3261e;
-  --surface: #fff;
-  --bg: #f7f7fa;
+@import "../node_modules/@echelon-foundry/design-system/dist/all.css";
+@import "../node_modules/@echelon-foundry/print-components/src/styles/print.css" print;
+
+/* Vigila owns page composition only. Shared controls, colors, focus,
+   accessibility presentation and print primitives come from Forma/Folio. */
+.app {
+  max-inline-size: 48rem;
+  margin-inline: auto;
+  padding: clamp(1rem, 4vw, 2rem) 1rem 4rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink: #e6e6ea;
-    --muted: #a0a0ad;
-    --line: #35353f;
-    --accent: #8ea4ff;
-    --danger: #ff8a80;
-    --surface: #1c1c22;
-    --bg: #131318;
-  }
+.app > h1 {
+  margin-block: 0 1.5rem;
 }
 
-* { box-sizing: border-box; }
+.workspace,
+.setup,
+.capture {
+  min-inline-size: 0;
+}
 
-body {
+.setup {
+  max-inline-size: 32rem;
+}
+
+.setup__heading,
+.ef-work-queue__header h2 {
   margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-/* Comfortable on a phone first (VIG-UI-023). */
-.app { max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
-h1 { font-size: 1.5rem; margin: 0 0 1.25rem; }
-
-.capture { display: grid; gap: 0.5rem; margin-bottom: 1rem; }
-.capture__label { font-weight: 600; font-size: 0.9rem; }
-
-.capture__input {
-  padding: 0.75rem;
-  font: inherit;
-  color: inherit;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-}
-
-/* Focus must stay visible (VIG-UI-020). */
-.capture__input:focus-visible,
-.capture__submit:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
+.setup__submit,
 .capture__submit {
-  padding: 0.75rem 1rem;
-  font: inherit;
-  font-weight: 600;
-  color: #fff;
-  background: var(--accent);
-  border: 0;
-  border-radius: 8px;
-  cursor: pointer;
+  justify-self: start;
 }
 
-.capture__submit:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.error { color: var(--danger); margin: 0 0 1rem; font-size: 0.95rem; }
-.empty { color: var(--muted); }
-
-.items { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
-
-.item {
-  padding: 0.75rem;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+.setup__status,
+.setup__note,
+.connected,
+.item__meta {
+  margin: 0;
 }
 
-.item__title { display: block; }
+.setup__error p,
+.error p {
+  margin: 0;
+}
+
+.workspace {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.capture {
+  gap: 0.75rem;
+}
+
+.items {
+  margin: 0;
+}
 
 .item__meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-  color: var(--muted);
-  font-size: 0.85rem;
+  gap: 0.35rem 0.75rem;
 }
 
-/* Setup ------------------------------------------------------------------ */
-
-.setup {
-  display: grid;
-  gap: 0.35rem;
-  max-width: 28rem;
-}
-
-.setup__heading {
-  margin: 0 0 0.5rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.setup__label {
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.setup__input {
-  padding: 0.5rem 0.6rem;
-  font: inherit;
-  border: 1px solid #9aa0a6;
-  border-radius: 4px;
-}
-
-.setup__input:focus-visible {
-  outline: 2px solid #1a73e8;
-  outline-offset: 1px;
-}
-
-.setup__note {
-  margin: 0 0 0.6rem;
-  font-size: 0.8rem;
-  color: #5f6368;
-}
-
-.setup__submit {
-  justify-self: start;
-  margin-top: 0.6rem;
-  padding: 0.5rem 1rem;
-  font: inherit;
-  cursor: pointer;
-}
-
-.setup__submit:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-/* Status and refusal are text first: colour is never the only signal
-   (VIG-UI-020). */
-.setup__status {
-  margin: 0.6rem 0 0;
-  font-size: 0.9rem;
-  color: #5f6368;
-}
-
-.setup__error {
-  margin: 0.6rem 0 0;
-  padding: 0.5rem 0.6rem;
-  font-size: 0.9rem;
-  color: #8c1d18;
-  background: #fce8e6;
-  border-left: 3px solid #8c1d18;
-  border-radius: 2px;
+.item__id {
+  font-family: var(--ef-primitive-font-family-mono, ui-monospace, monospace);
+  overflow-wrap: anywhere;
 }
 
 .connected {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  margin-top: 2rem;
-  padding-top: 0.75rem;
-  font-size: 0.85rem;
-  color: #5f6368;
-  border-top: 1px solid #e0e0e0;
+  padding-block-start: 0.75rem;
+  border-block-start: 1px solid var(--ef-color-border-subtle, currentColor);
 }
 
 .disconnect {
-  font: inherit;
-  font-size: 0.85rem;
-  color: #1a73e8;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  text-decoration: underline;
+  background: transparent;
 }
 
-.disconnect:focus-visible {
-  outline: 2px solid #1a73e8;
-  outline-offset: 2px;
+.operational-fault {
+  margin-block-end: 1.25rem;
+}
+
+/* Folio is present in the DOM as a projection of the same engine state, but
+   the normal application surface remains the screen presentation. */
+.print-surface {
+  display: none;
+}
+
+@media (max-width: 30rem) {
+  .app {
+    padding-inline: 0.75rem;
+  }
+
+  .setup__submit,
+  .capture__submit,
+  .disconnect {
+    inline-size: 100%;
+  }
+
+  .connected {
+    align-items: stretch;
+  }
+}
+
+@media print {
+  .app {
+    max-inline-size: none;
+    padding: 0;
+  }
+
+  .app > h1,
+  .capture,
+  .connected,
+  .empty,
+  ef-work-queue,
+  ef-fault-inline {
+    display: none !important;
+  }
+
+  .print-surface {
+    display: block;
+  }
+
+  .print-items {
+    display: grid;
+    gap: 0.12in;
+    padding-inline-start: 0.22in;
+  }
+
+  .print-item {
+    break-inside: avoid;
+  }
+
+  .print-item > * {
+    margin-inline-end: 0.08in;
+  }
 }
