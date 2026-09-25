@@ -27,3 +27,8 @@
 | WI-0021 | Decide how a refused capture is communicated in the UI; error/hasError are projected but unreachable (browser suite WI-0016) | captured |  | medium |
 | WI-0022 | Decide whether to take the Limen 0.6.x upgrade (repo initialized at 0.5.1) | complete |  | medium |
 | WI-0023 | Implement the connection flow: setup, validation and disconnect (VIG-SEC-001..012) | complete |  | medium |
+| WI-0024 | Re-evaluate the build against the SDE method and record current conformance (follow-up to WI-0015) | complete | sde,architecture | medium |
+| WI-0025 | Move connection transitions and effect interpretation into Vigila.Transition, or record a deviation (SDE conformance G-1) | captured |  | medium |
+| WI-0026 | Route the Dispatch boundary Aegis scope through Ports.scopeFor or remove scopeFor (SDE conformance G-2) | captured |  | medium |
+| WI-0027 | Attribute or declare the 22 unattributed commits on main since 2026-09-23 and restore PR-only path to main (SDE conformance G-3) | captured |  | medium |
+| WI-0028 | Bring VIG-SHR requirements into the traceability count and heading convention (SDE conformance G-4) | captured |  | medium |
