@@ -193,4 +193,4 @@ let ``handle threads state across calls`` () =
     let json = handle (event "capture" None)
 
     Assert.Equal(1, count (view json) "itemCount")
-    reset ()
+    reset ()\n\n[<Fact>]\nlet ``handle captures malformed Limen JSON as a safe Aegis presentation`` () =\n    reset ()\n\n    let json = handle "{"\n    let v = view json\n\n    Assert.True(flag v "hasOperationalFault")\n    Assert.Equal("Vigila could not complete that operation", str v "operationalFaultTitle")\n    Assert.Contains("could not process an application message", str v "operationalFaultMessage")\n    Assert.StartsWith("AG-", str v "operationalFaultReference")\n    Assert.DoesNotContain("JsonException", json)\n\n    reset ()\n
