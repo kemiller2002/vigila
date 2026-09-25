@@ -21,6 +21,7 @@ module Vigila.Application.Dispatch
 open System
 open System.Text
 open System.Text.Json
+open Aegis
 open Vigila.Semantic.Identifiers
 open Vigila.Semantic.Time
 open Vigila.Semantic.Actors
@@ -45,6 +46,7 @@ type State =
       SetupBranch: string
       SetupTokenEntered: bool
       SetupError: string
+      OperationalFault: Presentation.T option
       Outbox: Effect list
       Awaiting: Map<string, Awaiting>
       NextCorrelation: int }
@@ -78,6 +80,7 @@ let initial =
       SetupBranch = BranchName.Default
       SetupTokenEntered = false
       SetupError = ""
+      OperationalFault = None
       Outbox = []
       Awaiting = Map.empty
       NextCorrelation = 0 }
@@ -90,6 +93,42 @@ let initial =
 /// is the single place that changes.
 let private clock =
     Clock.create (fun () -> Instant.ofDateTimeOffset DateTimeOffset.UtcNow)
+
+
+/// Unexpected operational failure is classified once at the outer Limen/JSON
+/// boundary. Expected domain refusals remain ordinary typed outcomes and never
+/// become Aegis faults.
+let private aegis =
+    let configured = Aegis.configure "Vigila" None [ Sinks.standardError ]
+
+    match Bootstrap.validate None configured with
+    | Ok valid -> valid
+    | Result.Error problems ->
+        invalidOp $"Invalid Vigila Aegis configuration: %A{problems}"
+
+let private classifyBoundaryFailure scope (ex: exn) =
+    let code, category, userMessage =
+        match ex with
+        | :? JsonException ->
+            FaultCode "VIGILA.BOUNDARY.MESSAGE_INVALID",
+            DataFailure,
+            "Vigila could not process an application message. The rest of the application is still available."
+        | _ ->
+            FaultCode "VIGILA.BOUNDARY.UNEXPECTED",
+            IntegrationFailure,
+            "Vigila encountered an unexpected operational problem. Your current application state was kept."
+
+    Aegis.faultOf
+        aegis
+        scope
+        code
+        category
+        FaultSeverity.Error
+        OperationOnly
+        Transient
+        Continue
+        userMessage
+        ex
 
 /// Who the engine attributes changes to.
 ///
@@ -467,7 +506,26 @@ let project state : (string * ViewValue) list =
         | Validating _ -> true
         | _ -> false
 
+
+    let operationalFaultTitle, operationalFaultMessage, operationalFaultSeverity, operationalFaultReference =
+        match state.OperationalFault with
+        | Some fault ->
+            let severity =
+                match fault.Severity with
+                | FaultSeverity.Diagnostic -> "diagnostic"
+                | FaultSeverity.Warning -> "warning"
+                | FaultSeverity.Error -> "error"
+                | FaultSeverity.Critical -> "critical"
+
+            fault.Title, fault.Message, severity, fault.Reference
+        | None -> "", "", "", ""
+
     [ "draft", Value(Text state.Draft)
+      "operationalFaultTitle", Value(Text operationalFaultTitle)
+      "operationalFaultMessage", Value(Text operationalFaultMessage)
+      "operationalFaultSeverity", Value(Text operationalFaultSeverity)
+      "operationalFaultReference", Value(Text operationalFaultReference)
+      "hasOperationalFault", Value(Flag state.OperationalFault.IsSome)
       "error", Value(Text state.Error)
       "hasError", Value(Flag(state.Error <> ""))
       "captureDisabled", Value(Flag(captureDisabled state))
@@ -774,9 +832,22 @@ let step (state: State) (messageJson: string) =
 let mutable private current = initial
 
 let handle (messageJson: string) =
-    let next, response = step current messageJson
-    current <- next
-    response
+    let scope = Aegis.scope aegis "Vigila.Application.Dispatch.handle" Map.empty
+    let cleared = { current with OperationalFault = None }
+
+    match Aegis.capture aegis scope classifyBoundaryFailure (fun () -> step cleared messageJson) with
+    | Ok(next, response) ->
+        current <- next
+        response
+    | Result.Error fault ->
+        let presentation = Presentation.present "Vigila could not complete that operation" fault
+        let failed =
+            { current with
+                OperationalFault = Some presentation
+                Outbox = [] }
+
+        current <- failed
+        writeResponse failed
 
 /// Test seam: resets the module-level state so a test starts from a known
 /// point. Not part of the browser contract.
