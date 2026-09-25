@@ -17,7 +17,7 @@ jobs:
           global-json-file: global.json
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "24"
 
       # index.html loads Limen's kernel from node_modules, and the browser
       # suite needs its runner, so both are installed before anything runs.
