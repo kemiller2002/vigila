@@ -5,7 +5,7 @@ status: draft
 version: 0.1.0
 created: 2026-09-26
 updated: 2026-09-26
-sources: Praxis DF-ROS-2026-A036, DF-ROS-2026-A037, RQ-ROS-2026-A001..A019 (kemiller2002/praxis@a42c44e8ae0e6e16fdd513141460b700e5fa6648); work item FEAT-ECHELON-PROVENANCE
+sources: Praxis DF-ROS-2026-A036, DF-ROS-2026-A037, RQ-ROS-2026-A001..A019 (kemiller2002/praxis@c2657efb4d54f11d0fd0617cc1bcd5b8418601d5, contract revision 1.1); echelon-registry REG-PROV-006..REG-PROV-008 (commit 1788a35); work items FEAT-ECHELON-PROVENANCE, FEAT-ECHELON-PROVENANCE-R1
 provenance:
   contributions:
     EXE-20260926T081409758Z-615c839a:
@@ -19,6 +19,16 @@ provenance:
         model: unknown
         runtime: claude-code
       reason: "Add VIG-PROV requirements carrying the Praxis provenance contract (FEAT-ECHELON-PROVENANCE)"
+    EXE-20260926T085500134Z-ac7e0976:
+      operations: [modified]
+      at: 2026-09-26T09:02:58.793Z
+      actor:
+        kind: agent
+        id: anthropic/claude-code
+        provider: anthropic
+        model: unknown
+        runtime: claude-code
+      reason: "Adopt Praxis provenance contract revision 1.1 and registry REG-PROV-008 v1 keys (FEAT-ECHELON-PROVENANCE-R1)"
 ---
 
 # Actor identity and provenance
@@ -88,7 +98,10 @@ A contribution is keyed by `EXE-…` (a Praxis execution), `EXT-<system>.<run-id
 (a run in another Echelon system) or `CTB-…` (a non-agent contribution outside
 any execution). An agent contribution MUST be keyed by an execution. When only
 an operation id is known, the key MUST be `EXT-op.<operationId>`. Vigila MUST
-NOT invent `EXE-` identifiers.
+NOT invent `EXE-` identifiers. An id carried inside a key MUST be escaped
+injectively (contract revision 1.1): `_` and every character outside
+`[A-Za-z0-9.-]` become `_xx` per UTF-8 byte, so `op 1` is `EXT-op.op_201` and
+two different ids never share a key.
 
 ## Receiving and appending
 
@@ -100,7 +113,12 @@ append a contribution when an actor and an execution (or operation id) are
 supplied. They MUST NOT replace, delete, reorder or rewrite another
 contribution. The same key merges operations and advances `last` only when the
 actor agrees; re-attribution is refused, as is a second or late `created`.
-Appending an identical contribution is a no-op.
+Appending an identical contribution is a no-op. Under contract revision 1.1 a
+same-key merge also keeps the incoming entry's unknown fields (the existing
+entry wins on conflict) and sets `last` to the later of the two times; an actor
+whose identity is `unknown` cannot extend an entry a known actor holds; and an
+append MUST NOT return a block that would itself be malformed (a credential, a
+contribution dated before the creation, a second originator).
 
 #### VIG-PROV-006 — Deterministic receiving verdicts
 **Level:** MUST · **Release:** v1 · **Source:** RQ-ROS-2026-A015, DF-ROS-2026-A037 §2
@@ -111,7 +129,11 @@ Every received or loaded block MUST be classified as:
   operation codes it does not know are tolerated and reported;
 - `unsupported` (another major version) — carried verbatim and never
   interpreted, merged into or appended to;
-- `malformed` — rejected at the boundary with a structured error
+- `malformed` — including a key, code, kind or tag that matches only up to a
+  trailing newline, a timestamp that is not calendar-valid (year 0001-9999, no
+  February 30, no `24:00`; ordered at millisecond precision), and any field
+  present as JSON `null`, which never means absent — rejected at the boundary
+  with a structured error
   (`ValidationFailed`, `VIG-AGT-050`) that names the problems. A malformed block
   MUST NOT be dropped or repaired silently.
 
@@ -147,7 +169,11 @@ Vigila MUST accept `followup.create` with an `echelon.execution-envelope/v2`,
 and with a `v1` envelope mapped losslessly by the Praxis rules
 (`actorFromEnvelopeV1`: `system` → `automation`; an unknown value → the literal
 `unknown`; not-applicable omitted for humans; `model`/`runtime` `unknown`;
-key `EXT-run.<runId>` or `EXT-op.<operationId>`). The invoking actor is taken
+key `EXT-run.<runId>` or `EXT-op.<operationId>`, namespaced as
+`EXT-run.<repository>.<runId>` when `source.repository` is known, with `.` in the
+repository also escaped, exactly as echelon-registry REG-PROV-008 defines).
+Envelopes MUST meet the registry schemas: a property outside the schema is
+rejected, except `x-...` extension properties on v2. The invoking actor is taken
 only from the envelope; nothing is guessed from ambient signals. The resulting
 item's `provenance` records the invoking actor's `created` contribution keyed by
 `envelope.execution` or, when that is absent, `EXT-op.<operationId>`.

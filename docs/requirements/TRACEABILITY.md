@@ -16,6 +16,16 @@ provenance:
         model: unknown
         runtime: claude-code
       reason: "Index and trace the VIG-PROV area (FEAT-ECHELON-PROVENANCE)"
+    EXE-20260926T085500134Z-ac7e0976:
+      operations: [modified]
+      at: 2026-09-26T09:02:59.879Z
+      actor:
+        kind: agent
+        id: anthropic/claude-code
+        provider: anthropic
+        model: unknown
+        runtime: claude-code
+      reason: "Adopt Praxis provenance contract revision 1.1 and registry REG-PROV-008 v1 keys (FEAT-ECHELON-PROVENANCE-R1)"
 ---
 
 # Traceability
@@ -259,7 +269,7 @@ than deriving from one:
 
 The `PROV` area does not derive from a source section of the input documents.
 It derives from the Praxis provenance contract
-(kemiller2002/praxis@a42c44e8ae0e6e16fdd513141460b700e5fa6648) and is traced
+(kemiller2002/praxis@c2657efb4d54f11d0fd0617cc1bcd5b8418601d5, contract revision 1.1) and is traced
 from it here instead. It is not counted in the totals above.
 [`PROVENANCE.md`](PROVENANCE.md#traceability) traces each requirement on to its
 implementation and tests.

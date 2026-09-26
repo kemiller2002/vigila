@@ -232,7 +232,7 @@ let ``an unknown actor with no execution is recorded as unknown under the operat
         |> fun intake -> intake.Item
 
     let own = ownBlock item
-    Assert.Equal(Some "EXT-op.op-unknown-1", Provenance.originator own |> Option.map fst)
+    Assert.Equal(Some "EXT-op.op_20unknown_2f1", Provenance.originator own |> Option.map fst)
     Assert.Equal(Some ProvenanceActor.unknown, Provenance.originator own |> Option.map (fun (_, e) -> e.Actor))
     Assert.Equal({ Type = ActorType.Unknown; Name = "unknown" }, item.CreatedBy)
     Assert.Equal(None, item.ReceivedProvenance)
@@ -250,7 +250,7 @@ let ``a v1 envelope is mapped by the Praxis rules without invention`` () =
 
     match Provenance.originator (ownBlock item) with
     | Some(key, entry) ->
-        Assert.Equal("EXT-run.run-7", key)
+        Assert.Equal("EXT-run.run_207", key)
         Assert.Equal(ProvenanceActor.automation "aegis-bot" "unknown" "unknown", entry.Actor)
     | None -> failwith "no originator"
 
@@ -385,3 +385,91 @@ let ``an illegal transition is refused before any contribution is recorded`` () 
     match Attribution.changeStatus (attribution codex None "op-y" "2026-09-26T10:00:00.000Z") Open None None (aegisIntake ()).Item with
     | Error(TransitionRefused _) -> ()
     | other -> failwith $"expected a transition refusal, got %A{other}"
+
+// --- contract revision 1.1 and echelon-registry REG-PROV-008 ---------------
+
+let private v1With (repository: string option option) (runId: string option option) (operationId: string) =
+    let known value = $"""{{"state":"known","value":"%s{value}"}}"""
+
+    let runPart =
+        match runId with
+        | None -> ""
+        | Some None -> ""","runId":{"state":"unknown"}"""
+        | Some(Some run) -> $""","runId":%s{known run}"""
+
+    let sourcePart =
+        match repository with
+        | None -> ""
+        | Some None -> ""","source":{"repository":{"state":"unknown"}}"""
+        | Some(Some repo) -> $""","source":{{"repository":%s{known repo}}}"""
+
+    $"""{{"schema":"echelon.execution-envelope/v1","operationId":"%s{operationId}","correlationId":"c",
+         "timestamp":"2026-09-26T09:00:00Z",
+         "actor":{{"kind":"agent","provider":%s{known "openai"},"identity":%s{known "openai/codex"}%s{runPart}}}%s{sourcePart}}}"""
+
+let private v1Key repository runId operationId =
+    match readEnvelope (v1With repository runId operationId) with
+    | Ok parsed -> parsed.ContributionKey
+    | Error e -> failwith $"%A{e}"
+
+[<Fact>]
+let ``v1 runs are namespaced by a known source repository, exactly as the registry keys them`` () =
+    Assert.Equal("EXT-run.kemiller2002_2faegis.7", v1Key (Some(Some "kemiller2002/aegis")) (Some(Some "7")) "op-1")
+    Assert.Equal("EXT-run.kemiller2002_2fvigila.7", v1Key (Some(Some "kemiller2002/vigila")) (Some(Some "7")) "op-1")
+    Assert.Equal("EXT-run.octo_2frepo_2ejs.gh_2f99", v1Key (Some(Some "octo/repo.js")) (Some(Some "gh/99")) "op-1")
+
+[<Fact>]
+let ``v1 runs without a known repository keep the Praxis key, and unknown runs stay EXT-op`` () =
+    Assert.Equal("EXT-run.gh_2f99", v1Key None (Some(Some "gh/99")) "op-1")
+    Assert.Equal("EXT-run.gh_2f99", v1Key (Some None) (Some(Some "gh/99")) "op-1")
+    Assert.Equal("EXT-op.op_201", v1Key (Some(Some "kemiller2002/aegis")) (Some None) "op 1")
+    Assert.Equal("EXT-op.op-1", v1Key (Some(Some "kemiller2002/aegis")) None "op-1")
+
+[<Fact>]
+let ``namespaced v1 run keys are injective across repositories containing dots`` () =
+    let keys =
+        [ "a/b.c", "5"; "a/b", "c.5"; "a.b/c", "5"; "a/b_2ec", "5" ]
+        |> List.map (fun (repo, run) -> v1Key (Some(Some repo)) (Some(Some run)) "op-1")
+
+    Assert.Equal(keys.Length, (List.distinct keys).Length)
+
+    for key in keys do
+        Assert.Equal(ForeignExecution, Provenance.keyKind key)
+
+let private rejected (json: string) =
+    match readEnvelope json with
+    | Error e -> e.Problems
+    | Ok _ -> failwith "the envelope should have been rejected"
+
+[<Fact>]
+let ``an unknown non-extension envelope property is rejected, as the registry schema requires`` () =
+    let unknown = (envelope "op-u" aegis None None).Replace("\"x-trace\":\"t-1\"", "\"trace\":\"t-1\"")
+    Assert.Contains(rejected unknown, fun p -> p.Contains "envelope.trace")
+    // x-... extensions stay allowed on v2.
+    Assert.True(Result.isOk (readEnvelope (envelope "op-x" aegis None None)))
+
+[<Fact>]
+let ``a v1 envelope is held to the v1 schema`` () =
+    let base' = v1With None (Some(Some "7")) "op-1"
+    Assert.True(Result.isOk (readEnvelope base'))
+    Assert.Contains(rejected (base'.Replace("\"correlationId\":\"c\"", "\"correlationId\":\"c\",\"x-trace\":1")), fun p -> p.Contains "x-trace")
+    Assert.Contains(rejected (base'.Replace("{\"state\":\"known\",\"value\":\"openai\"}", "{\"state\":\"maybe\"}")), fun p -> p.Contains "state")
+    Assert.Contains(rejected (base'.Replace(",\"identity\":{\"state\":\"known\",\"value\":\"openai/codex\"}", "")), fun p -> p.Contains "identity")
+
+[<Fact>]
+let ``null never means absent in an envelope`` () =
+    let withNull = (envelope "op-n" aegis None None).Replace("\"x-trace\":\"t-1\"", "\"provenance\":null")
+    Assert.Contains(rejected withNull, fun p -> p.StartsWith "envelope.provenance")
+    let nullExecution = (envelope "op-n" aegis None None).Replace("\"x-trace\":\"t-1\"", "\"execution\":null")
+    Assert.Contains(rejected nullExecution, fun p -> p.Contains "execution")
+
+[<Fact>]
+let ``an execution or timestamp that is not exact is rejected`` () =
+    Assert.Contains(rejected (envelope "op-e" aegis (Some "EXE-20260926T090500000Z-d1d1d1d1\\n") None), fun p -> p.Contains "execution")
+    Assert.Contains(rejected ((envelope "op-t" aegis None None).Replace("2026-09-26T09:05:00.000Z", "2026-09-26")), fun p -> p.Contains "timestamp")
+
+[<Fact>]
+let ``an operation id is escaped injectively in every derived key`` () =
+    let item = (receive defaultOptions noneStored (envelope "op_1" aegis None None) payload |> received).Item
+    let keys = (ownBlock item).Contributions |> List.map fst
+    Assert.Equal<string list>([ "EXT-op.op_5f1"; "EXT-vigila.op_5f1" ], keys)

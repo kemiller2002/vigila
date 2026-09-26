@@ -126,6 +126,76 @@ let private collect results =
 
 // --- envelope ---------------------------------------------------------------
 
+let private rfc3339 =
+    System.Text.RegularExpressions.Regex(
+        "^[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt][0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?([Zz]|[+-][0-9]{2}:[0-9]{2})\\z",
+        System.Text.RegularExpressions.RegexOptions.CultureInvariant
+    )
+
+/// An RFC 3339 date-time (JSON Schema `format: date-time`), not whatever
+/// `DateTimeOffset` would accept.
+let private parseDateTime (text: string) =
+    if rfc3339.IsMatch text then Instant.parse text else Error $"'%s{text}' is not an RFC 3339 date-time"
+
+let private extensionProperty =
+    System.Text.RegularExpressions.Regex("^x-[a-z0-9][a-z0-9-]*\\z", System.Text.RegularExpressions.RegexOptions.CultureInvariant)
+
+let private envelopeV1Fields = [ "schema"; "operationId"; "correlationId"; "timestamp"; "actor"; "source" ]
+let private envelopeV2Fields = envelopeV1Fields @ [ "execution"; "provenance" ]
+let private sourceFields = [ "repository"; "branch"; "commit"; "workItem" ]
+let private v1ActorFields = [ "kind"; "provider"; "identity"; "runId"; "sessionId" ]
+
+/// A v1 `knownValue`: `{state: known|unknown|not-applicable, value?: string}`.
+let private knownValueProblems (path: string) (node: JsonNode | null) =
+    match node with
+    | :? JsonObject as o ->
+        [ for pair in o do
+              if pair.Key <> "state" && pair.Key <> "value" then
+                  $"%s{path}.%s{pair.Key} is not a knownValue field"
+          match field o "state" |> Option.bind stringOf with
+          | Some("known" | "unknown" | "not-applicable") -> ()
+          | _ -> $"%s{path}.state must be known, unknown or not-applicable"
+          match field o "value" with
+          | None -> ()
+          | Some node when (stringOf node).IsSome -> ()
+          | Some _ -> $"%s{path}.value must be a string" ]
+    | _ -> [ $"%s{path} must be a knownValue object" ]
+
+/// The registry's structural rules for an envelope
+/// (`schemas/execution-envelope.schema.json`, `execution-envelope.v2.schema.json`
+/// in echelon-registry): no property outside the schema, except `x-...`
+/// extension properties on v2; `source` and the v1 actor use `knownValue`.
+/// Vigila adopts the registry's rule rather than tolerating unknown
+/// properties, so a misspelt field is reported instead of silently ignored.
+let private structureProblems (tag: string) (o: JsonObject) =
+    let allowed = if tag = EnvelopeV2 then envelopeV2Fields else envelopeV1Fields @ [ "provenance" ]
+
+    [ for pair in o do
+          if not (List.contains pair.Key allowed) && not (tag = EnvelopeV2 && extensionProperty.IsMatch pair.Key) then
+              $"envelope.%s{pair.Key} is not a %s{tag} property"
+      match field o "source" with
+      | None -> ()
+      | Some(:? JsonObject as source) ->
+          for pair in source do
+              if List.contains pair.Key sourceFields then
+                  yield! knownValueProblems $"envelope.source.%s{pair.Key}" pair.Value
+              else
+                  $"envelope.source.%s{pair.Key} is not a source property"
+      | Some _ -> "envelope.source must be an object"
+      if tag = EnvelopeV1 then
+          match field o "actor" with
+          | Some(:? JsonObject as actor) ->
+              for pair in actor do
+                  if pair.Key = "kind" then ()
+                  elif List.contains pair.Key v1ActorFields then
+                      yield! knownValueProblems $"envelope.actor.%s{pair.Key}" pair.Value
+                  else
+                      $"envelope.actor.%s{pair.Key} is not a v1 actor property"
+              for required in [ "provider"; "identity" ] do
+                  if (field actor required).IsNone then
+                      $"envelope.actor.%s{required} is required in a v1 envelope"
+          | _ -> () ]
+
 /// `actorFromEnvelopeV1` from the reference library: `system` becomes
 /// `automation`; only a `known` value is used, anything else is the literal
 /// "unknown"; model and runtime, which v1 cannot express, are "unknown".
@@ -150,15 +220,42 @@ let actorFromEnvelopeV1 (actor: JsonObject) =
               Extensions = [] }
     | _ -> Error "envelope.actor.kind must be agent, human, automation or system"
 
-/// `keyFromEnvelopeV1`: `EXT-run.<runId>` when a run id is known, otherwise
-/// `EXT-op.<operationId>`.
-let keyFromEnvelopeV1 (actor: JsonObject) (operationId: string) =
-    match field actor "runId" with
-    | Some(:? JsonObject as run) when (field run "state" |> Option.bind stringOf) = Some "known" ->
-        match field run "value" |> Option.bind stringOf with
-        | Some text when text.Trim().Length > 0 -> $"EXT-run.%s{Provenance.safeSegment text}"
-        | _ -> Provenance.operationKey operationId
-    | _ -> Provenance.operationKey operationId
+/// `keyFromEnvelopeV1`, namespaced as echelon-registry REG-PROV-008 requires
+/// (`keyFromEnvelopeV1Namespaced`):
+///
+///   * run id and `source.repository` both known ->
+///     `EXT-run.<repository>.<runId>`, the repository escaped with `.` as `_2e`;
+///   * run id known -> `EXT-run.<runId>`;
+///   * otherwise `EXT-op.<operationId>`.
+///
+/// Ids are escaped injectively (`Provenance.escapeSegment`, contract 1.1), so
+/// two different senders or runs never share a key.
+let keyFromEnvelopeV1 (envelope: JsonObject) =
+    let known (node: (JsonNode | null) option) =
+        match node with
+        | Some(:? JsonObject as value) when (field value "state" |> Option.bind stringOf) = Some "known" ->
+            match field value "value" |> Option.bind stringOf with
+            | Some text when text.Trim().Length > 0 -> Some text
+            | _ -> None
+        | _ -> None
+
+    let run =
+        match field envelope "actor" with
+        | Some(:? JsonObject as actor) -> known (field actor "runId")
+        | _ -> None
+
+    let repository =
+        match field envelope "source" with
+        | Some(:? JsonObject as source) -> known (field source "repository")
+        | _ -> None
+
+    let operationId = field envelope "operationId" |> Option.bind stringOf |> Option.defaultValue ""
+
+    match run, repository with
+    | Some run, Some repository ->
+        $"EXT-run.%s{Provenance.escapeSegment false repository}.%s{Provenance.escapeSegment true run}"
+    | Some run, None -> $"EXT-run.%s{Provenance.escapeSegment true run}"
+    | None, _ -> Provenance.operationKey operationId
 
 let private parseEnvelope (o: JsonObject) =
     let schema = field o "schema" |> Option.bind stringOf
@@ -176,7 +273,7 @@ let private parseEnvelope (o: JsonObject) =
         let timestamp =
             requiredText o "envelope" "timestamp"
             |> Result.bind (fun text ->
-                Instant.parse text |> Result.mapError (fun _ -> "envelope.timestamp must be an RFC 3339 timestamp"))
+                parseDateTime text |> Result.mapError (fun _ -> "envelope.timestamp must be an RFC 3339 timestamp"))
 
         let actorNode =
             match field o "actor" with
@@ -216,7 +313,7 @@ let private parseEnvelope (o: JsonObject) =
             | _, Some _ -> Error "envelope.execution is not part of a v1 envelope"
             | _ ->
                 match actorNode, operationId with
-                | Ok node, Ok id -> Ok(keyFromEnvelopeV1 node id)
+                | Ok _, Ok _ -> Ok(keyFromEnvelopeV1 o)
                 | _ -> Error "envelope.actor and envelope.operationId are required"
 
         let provenance =
@@ -234,6 +331,7 @@ let private parseEnvelope (o: JsonObject) =
                       Result.map ignore timestamp
                       Result.map ignore actor
                       Result.map ignore key ]
+            @ structureProblems tag o
             @ actorSecrets
             @ (match provenance with Error p -> p | Ok _ -> [])
 
@@ -271,7 +369,7 @@ let private optionalInstant (o: JsonObject) name =
     | Some Null -> Ok None
     | Some node ->
         match stringOf node with
-        | Some text -> Instant.parse text |> Result.map Some |> Result.mapError (fun _ -> $"payload.%s{name} must be a date-time")
+        | Some text -> parseDateTime text |> Result.map Some |> Result.mapError (fun _ -> $"payload.%s{name} must be a date-time")
         | None -> Error $"payload.%s{name} must be a date-time or null"
 
 let private readSource (o: JsonObject) =

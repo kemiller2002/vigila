@@ -33,7 +33,7 @@ type Verdict =
     | Unsupported of schema: string * json: RawJson
     | Malformed of problems: string list
 
-let private majorTag = Regex("^praxis\\.provenance/([1-9][0-9]*)$", RegexOptions.CultureInvariant)
+let private majorTag = Regex("^praxis\\.provenance/([1-9][0-9]*)\\z", RegexOptions.CultureInvariant)
 
 /// A property as JSON distinguishes it: absent, explicitly null, or a value.
 /// The distinction matters: the contract treats `"last": null` as malformed,

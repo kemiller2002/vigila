@@ -1,7 +1,7 @@
 /// Conformance against the shared Praxis fixtures (VIG-PROV-017).
 ///
 /// The fixtures are vendored unchanged from
-/// kemiller2002/praxis@a42c44e8ae0e6e16fdd513141460b700e5fa6648 into
+/// kemiller2002/praxis@c2657efb4d54f11d0fd0617cc1bcd5b8418601d5 (contract 1.1) into
 /// tests/fixtures/praxis-provenance/ with their SHA-256 in SOURCE.json. The
 /// codec must reach the reference library's verdict and warning count on every
 /// case, and the end-to-end chain must replay to the same originators, roles
@@ -63,14 +63,14 @@ let private verdictCode verdict =
 let ``vendored fixtures are byte-identical to the recorded Praxis source`` () =
     let source = fixture "SOURCE.json"
     Assert.Equal("kemiller2002/praxis", str source["repository"])
-    Assert.Equal("a42c44e8ae0e6e16fdd513141460b700e5fa6648", str source["commit"])
+    Assert.Equal("c2657efb4d54f11d0fd0617cc1bcd5b8418601d5", str source["commit"])
 
     let files =
         match source["files"] with
         | :? JsonObject as o -> o |> Seq.map (fun pair -> pair.Key, str pair.Value) |> Seq.toList
         | _ -> failwith "SOURCE.json has no files map"
 
-    Assert.Equal(2, files.Length)
+    Assert.Equal(3, files.Length)
 
     for name, expected in files do
         let actual =

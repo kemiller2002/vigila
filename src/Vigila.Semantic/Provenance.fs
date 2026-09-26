@@ -4,7 +4,7 @@
 /// (DF-ROS-2026-A036, DF-ROS-2026-A037). This module is the typed form of its
 /// interchange block, `praxis.provenance/1`, and the pure rules for appending
 /// to it, mirroring the reference library `lib/provenance-interchange.mjs`
-/// (kemiller2002/praxis@a42c44e). It adds no concept of its own: VIG-PROV-001
+/// (kemiller2002/praxis@c2657ef, contract revision 1.1). It adds no concept of its own: VIG-PROV-001
 /// forbids a second identity model.
 ///
 /// Why typed rather than an opaque JSON string: the append rules (never
@@ -150,7 +150,7 @@ module Operation =
 [<RequireQualifiedAccess>]
 module ActorKind =
 
-    let private extension = Regex("^x-[a-z0-9][a-z0-9-]*$", RegexOptions.CultureInvariant)
+    let private extension = Regex("^x-[a-z0-9][a-z0-9-]*\\z", RegexOptions.CultureInvariant)
 
     let code kind =
         match kind with
@@ -241,22 +241,21 @@ module Provenance =
     [<Literal>]
     let SchemaTag = "praxis.provenance/1"
 
-    let private executionKey = Regex("^EXE-[A-Za-z0-9._-]+$", RegexOptions.CultureInvariant)
-    let private contributorKey = Regex("^CTB-[A-Za-z0-9._-]+$", RegexOptions.CultureInvariant)
+    let private executionKey = Regex("^EXE-[A-Za-z0-9._-]+\\z", RegexOptions.CultureInvariant)
+    let private contributorKey = Regex("^CTB-[A-Za-z0-9._-]+\\z", RegexOptions.CultureInvariant)
 
     let private foreignKey =
-        Regex("^EXT-([a-z][a-z0-9-]*)\\.([A-Za-z0-9._-]+)$", RegexOptions.CultureInvariant)
+        Regex("^EXT-([a-z][a-z0-9-]*)\\.([A-Za-z0-9._-]+)\\z", RegexOptions.CultureInvariant)
 
-    let private operationGrammar = Regex("^[a-z][a-z0-9-]*$", RegexOptions.CultureInvariant)
-    let private extensionCode = Regex("^x-[a-z0-9][a-z0-9-]*$", RegexOptions.CultureInvariant)
+    let private operationGrammar = Regex("^[a-z][a-z0-9-]*\\z", RegexOptions.CultureInvariant)
+    let private extensionCode = Regex("^x-[a-z0-9][a-z0-9-]*\\z", RegexOptions.CultureInvariant)
 
     let private timestamp =
         Regex(
-            "^([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2})(\\.([0-9]{1,9}))?Z$",
+            "^([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2})(\\.([0-9]{1,9}))?Z\\z",
             RegexOptions.CultureInvariant
         )
 
-    let private unsafeKeyCharacter = Regex("[^A-Za-z0-9._-]", RegexOptions.CultureInvariant)
 
     /// Credential shapes (RQ-ROS-2026-A017), identical to the reference
     /// library's. A tripwire for accidents, not a secret scanner.
@@ -295,9 +294,40 @@ module Provenance =
         let m = foreignKey.Match key
         if m.Success then Some m.Groups[1].Value else None
 
-    /// Replaces characters a key cannot carry with '-', as the reference
-    /// library's `keyFromEnvelopeV1` does.
-    let safeSegment (text: string) = unsafeKeyCharacter.Replace(text, "-")
+    /// Escapes an id so it can be carried in a key, injectively (contract 1.1,
+    /// the reference library's `keyFromEnvelopeV1`): `_` and every character
+    /// outside `[A-Za-z0-9.-]` become `_xx` per UTF-8 byte (lower-case hex),
+    /// so two different ids can never map to the same key. "op 1" -> "op_201".
+    ///
+    /// With `keepDots = false`, `.` is escaped too (`_2e`), for a segment that
+    /// must not introduce a separator of its own (echelon-registry
+    /// REG-PROV-008 `escapeKeySegment`).
+    let escapeSegment keepDots (text: string) =
+        let builder = Text.StringBuilder()
+
+        for rune in text.EnumerateRunes() do
+            let value = rune.Value
+
+            let plain =
+                (value >= int 'A' && value <= int 'Z')
+                || (value >= int 'a' && value <= int 'z')
+                || (value >= int '0' && value <= int '9')
+                || (keepDots && value = int '.')
+                || value = int '-'
+
+            if plain then
+                builder.Append(char value) |> ignore
+            else
+                let bytes = Array.zeroCreate<byte> rune.Utf8SequenceLength
+                rune.EncodeToUtf8(Span<byte>(bytes)) |> ignore
+
+                for b in bytes do
+                    builder.Append('_').Append(b.ToString("x2", CultureInfo.InvariantCulture)) |> ignore
+
+        builder.ToString()
+
+    /// `escapeSegment` keeping dots: the Praxis `keyFromEnvelopeV1` escaping.
+    let safeSegment (text: string) = escapeSegment true text
 
     /// `EXT-<system>.<run-id>`, refusing ids it cannot carry.
     let foreignExecutionKey (system: string) (runId: string) =
@@ -312,9 +342,10 @@ module Provenance =
     /// (VIG-PROV-004).
     let operationKey (operationId: string) = $"EXT-op.%s{safeSegment operationId}"
 
-    /// Milliseconds since the epoch, or `None` when the text is not an
-    /// ISO-8601 UTC timestamp. Millisecond precision matches the reference
-    /// library's `Date.parse`.
+    /// Milliseconds since the epoch, or `None` when the text is not a
+    /// calendar-valid ISO-8601 UTC timestamp (year 0001-9999, no February 30,
+    /// no 24:00). Ordering is at millisecond precision: extra fraction digits
+    /// are truncated, never rounded (contract 1.1).
     let private millis (text: string) =
         let m = timestamp.Match text
 
@@ -395,9 +426,9 @@ module Provenance =
           if (List.distinct codes).Length <> codes.Length then
               $"%s{prefix}.operations must not repeat an operation"
           if not (isTimestamp entry.At) then
-              $"%s{prefix}.at must be an ISO-8601 UTC timestamp"
+              $"%s{prefix}.at must be a calendar-valid ISO-8601 UTC timestamp"
           match entry.Last with
-          | Some last when not (timestamp.IsMatch last) -> $"%s{prefix}.last must be an ISO-8601 UTC timestamp"
+          | Some last when not (isTimestamp last) -> $"%s{prefix}.last must be a calendar-valid ISO-8601 UTC timestamp"
           | Some last when instant last < instant entry.At -> $"%s{prefix}.last must not precede at"
           | _ -> ()
           yield! actorProblems $"%s{prefix}.actor" entry.Actor
@@ -470,19 +501,38 @@ module Provenance =
     let private hasCredential strings = strings |> List.exists isCredentialLike
 
     /// Appends one contribution without disturbing any other (RQ-ROS-2026-A004,
-    /// VIG-PROV-005). The same key merges operations and evidence and advances
-    /// `last` only when the actor agrees; a second or late `created` is
-    /// refused; nothing is removed, reordered or re-attributed. Returns the new
-    /// block and whether anything changed: appending an identical contribution
-    /// is a no-op.
+    /// VIG-PROV-005), following the reference library's `appendContribution`
+    /// at contract revision 1.1:
+    ///
+    ///   * the same key merges operations and evidence, keeps the incoming
+    ///     entry's unknown fields (the existing entry wins on conflict), and
+    ///     sets `last` to the later of the two times -- only when the actor
+    ///     agrees, and never for an actor of unknown identity extending an
+    ///     entry a known actor holds;
+    ///   * a second, late or merged-in `created` is refused;
+    ///   * nothing is removed, reordered or re-attributed;
+    ///   * whatever is returned is itself a valid block: an append that would
+    ///     produce a malformed history (for example a contribution dated before
+    ///     the creation) is refused.
+    ///
+    /// Returns the new block and whether anything changed: appending an
+    /// identical contribution is a no-op.
     let append (key: string) (contribution: Contribution) (block: ProvenanceBlock) =
+        let finish (next: ProvenanceBlock) changed =
+            match problems next with
+            | [] -> Ok(next, changed)
+            | found -> Error $"""the resulting history would be malformed: %s{String.concat "; " found}"""
+
+        let isKnown (value: string) =
+            nonEmpty value && value.Trim() <> ProvenanceActor.UnknownValue
+
         match problems block with
         | _ :: _ as found -> Error $"""refusing to append to a malformed provenance block: %s{String.concat "; " found}"""
+        | [] when hasCredential (contributionStrings key contribution) ->
+            Error "a contribution must never carry authentication material"
         | [] ->
             match contributionProblems key contribution with
             | _ :: _ as found -> Error(String.concat "; " found)
-            | [] when hasCredential (contributionStrings key contribution) ->
-                Error "a contribution must never carry authentication material"
             | [] ->
                 let isCreation = contribution.Operations |> List.contains Operation.Created
                 let hasOriginator = not (creators block.Contributions).IsEmpty
@@ -496,15 +546,21 @@ module Provenance =
                             |> List.exists (fun (_, entry) -> instant entry.At < instant contribution.At) then
                         Error "a 'created' contribution cannot follow existing contributions"
                     else
-                        Ok({ block with Contributions = block.Contributions @ [ key, contribution ] }, true)
+                        finish { block with Contributions = block.Contributions @ [ key, contribution ] } true
                 | Some(_, existing) ->
                     if not (actorsAgree existing.Actor contribution.Actor) then
                         Error
                             $"contribution '%s{key}' is already attributed to %s{ActorKind.code existing.Actor.Kind}:%s{existing.Actor.Id}; refusing to re-attribute it"
+                    elif (isKnown existing.Actor.Id && not (isKnown contribution.Actor.Id))
+                         || (existing.Actor.Kind <> ActorKind.Unknown && contribution.Actor.Kind = ActorKind.Unknown) then
+                        Error
+                            $"contribution '%s{key}' belongs to %s{ActorKind.code existing.Actor.Kind}:%s{existing.Actor.Id}; an actor with unknown identity cannot extend it"
                     elif isCreation
                          && not (existing.Operations |> List.contains Operation.Created)
-                         && hasOriginator then
-                        Error "the record already has an originator; record 'modified' instead of 'created'"
+                         && (hasOriginator
+                             || block.Contributions
+                                |> List.exists (fun (other, entry) -> other <> key && instant entry.At < instant existing.At)) then
+                        Error "the record's originator is already recorded or precedes this contribution; record 'modified' instead of 'created'"
                     else
                         let operations =
                             existing.Operations
@@ -518,27 +574,41 @@ module Provenance =
                             @ (Option.defaultValue [] contribution.Evidence
                                |> List.filter (fun item -> not (List.contains item existingEvidence)))
 
-                        let latest = Option.defaultValue existing.At existing.Last
+                        let latest =
+                            let mine = Option.defaultValue existing.At existing.Last
+                            let theirs = Option.defaultValue contribution.At contribution.Last
+                            if instant theirs > instant mine then theirs else mine
+
+                        // Incoming unknown fields are kept; the existing entry
+                        // wins on conflict.
+                        let extensions =
+                            existing.Extensions
+                            @ (contribution.Extensions
+                               |> List.filter (fun (name, _) ->
+                                   not (existing.Extensions |> List.exists (fun (kept, _) -> kept = name))))
 
                         let merged =
                             { existing with
                                 Operations = operations
-                                Evidence = if evidence.IsEmpty then existing.Evidence else Some evidence
+                                Evidence =
+                                    if not evidence.IsEmpty then Some evidence
+                                    elif existing.Evidence.IsSome then existing.Evidence
+                                    else contribution.Evidence
                                 Last =
-                                    if instant contribution.At > instant latest then
-                                        Some contribution.At
-                                    else
-                                        existing.Last
+                                    if instant latest > instant existing.At then Some latest
+                                    elif existing.Last.IsSome then existing.Last
+                                    else contribution.Last
                                 Reason =
                                     match existing.Reason with
                                     | None -> contribution.Reason
-                                    | kept -> kept }
+                                    | kept -> kept
+                                Extensions = extensions }
 
                         let contributions =
                             block.Contributions
                             |> List.map (fun (k, entry) -> if k = key then k, merged else k, entry)
 
-                        Ok({ block with Contributions = contributions }, merged <> existing)
+                        finish { block with Contributions = contributions } (merged <> existing)
 
     /// Adds lineage references (never authorship), preserving existing order
     /// (RQ-ROS-2026-A008, VIG-PROV-010).
