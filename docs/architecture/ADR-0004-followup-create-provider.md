@@ -90,20 +90,74 @@ remove the window entirely and can replace this without changing the port.
 
 Typed ledger failures and unexpected exceptions both become Aegis faults
 (`VIGILA.INTEGRATION.*`). Validation refusals, unsupported versions and
-conflicts are typed domain outcomes, not faults, as the registry's "Shared
-Echelon capability boundaries" section requires.
+conflicts are typed domain outcomes, not faults. The GitHub transport returns
+only typed failures and never response bodies, URLs containing credentials, or
+credentials themselves.
+
+### D6 — The receiving Vigila installation owns the remote transport
+
+`GitHubRepositoryFiles` is the production `RepositoryFiles` adapter. It
+uses GitHub's REST contents API directly against a configured repository and
+branch. It never clones the receiving repository and requires no destination
+working tree.
+
+`CreateNew` issues the create-file PUT first and deliberately omits an
+existing blob SHA. GitHub therefore arbitrates create-if-absent. Only after a
+409/422 refusal may the adapter read the destination to distinguish an
+already-existing file from another branch/write refusal. This preserves the
+atomic claim required by D2.
+
+A 404 read is not blindly treated as absence: because GitHub also uses 404 for
+an invisible repository, the adapter verifies repository visibility before
+returning `None`. Authentication, authorization, rate-limit and transport
+failures remain typed operational failures.
+
+Authentication is a Tier 4/composition concern. The adapter accepts a
+credential provider; the executable resolves an environment-supplied token.
+A GitHub Actions token, GitHub App installation token, fine-grained token, or
+future provider can therefore be used without changing the application
+boundary. Tokens are never persisted in operation records, passed into
+semantic/application records, or emitted in machine results.
+
+The minimum receiving-repository permission is **Contents: read and write**
+(with GitHub's metadata read access). The configured branch must permit the
+installation/token to create files.
+
+### D7 — `vigila follow-up add` is the receiving-system integration boundary
+
+The `Vigila.Cli` executable is the anti-corruption/composition layer owned by
+the receiving Vigila installation. It accepts canonical integration JSON from
+`--input FILE` or `--stdin`, constructs the GitHub adapter and ledger, and
+invokes `IntegrationWire.invoke`. It does not duplicate contract parsing or
+semantic validation.
+
+Configuration is runtime data: `--repository OWNER/REPO`, `--branch`,
+`--workspace`, `--storage-root`, and optional `--token-env NAME`.
+Credential lookup defaults to `VIGILA_GITHUB_TOKEN`, then `GITHUB_TOKEN`,
+then `GH_TOKEN`. No owner or organization is compiled into the executable.
+
+Machine receipts distinguish `created`, `existing`, `conflict`,
+`rejected`, and `failed`. Exit codes are stable: 0 created/idempotent
+existing, 2 rejected/invalid input, 3 conflict, and 4 operational failure.
+
+Registry discovery is intentionally absent. A caller may discover a Vigila
+installation however it chooses, but the receiving executable never contacts
+`echelon-registry`.
 
 ## Consequences
 
 - Durable, concurrency-safe idempotency holds for any `RepositoryFiles`
-  implementation whose `CreateNew` is atomic. It is proven in tests against a
-  store with GitHub's create-only semantics, including across ledger instances
-  (restart) and under 64 simultaneous invocations.
-- **Not yet proven against live GitHub.** `GitHubStore` remains a scaffold
-  that performs no GitHub call (pre-existing; see `aegis-boundaries.json`,
-  "Future direct GitHub host"). The GitHub-backed `RepositoryFiles` is the
-  remaining step, and belongs to the persistence work that implements that
-  host.
-- No transport invokes the boundary yet (no CLI or HTTP entry point). That is
-  a separate delivery decision; the boundary is complete and testable without
-  it.
+  implementation whose `CreateNew` is atomic. The existing 64-way test
+  remains the concurrency proof at the ledger boundary.
+- Controlled HTTP tests exercise existing/missing reads, auth/authorization
+  and transient failures, successful create, already-existing create,
+  repository/branch configuration, and credential containment without live
+  GitHub credentials.
+- A controlled end-to-end CLI test proves canonical JSON flows through
+  `IntegrationWire.invoke`, `FollowUpLedger`, and the GitHub
+  `RepositoryFiles` adapter to both the operation claim and item write.
+- A live GitHub smoke test is optional. The architecture does not depend on
+  one for normal test execution.
+- Independently installed callers such as Praxis need only a configured Vigila
+  executable and a credential for the receiving Vigila repository. They do not
+  need the Vigila source repository or `echelon-registry` at invocation time.
