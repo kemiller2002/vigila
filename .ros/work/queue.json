@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 24,
+  "nextSeq": 29,
   "items": [
     {
       "id": "WI-0001",
@@ -370,6 +370,78 @@
       "createdBy": "agent:chatgpt",
       "source": "agent-discovery",
       "sourceReference": "public-repository-upgrade-2026-09-21"
+    },
+    {
+      "id": "WI-0024",
+      "title": "Re-evaluate the build against the SDE method and record current conformance (follow-up to WI-0015)",
+      "description": null,
+      "tags": [
+        "sde,architecture"
+      ],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-09-25T17:40:51.119Z",
+      "updatedAt": "2026-09-25T17:46:32.000Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0025",
+      "title": "Move connection transitions and effect interpretation into Vigila.Transition, or record a deviation (SDE conformance G-1)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-25T17:46:22.054Z",
+      "updatedAt": "2026-09-25T17:46:22.054Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0026",
+      "title": "Route the Dispatch boundary Aegis scope through Ports.scopeFor or remove scopeFor (SDE conformance G-2)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-25T17:46:22.344Z",
+      "updatedAt": "2026-09-25T17:46:22.344Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0027",
+      "title": "Attribute or declare the 22 unattributed commits on main since 2026-09-23 and restore PR-only path to main (SDE conformance G-3)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-25T17:46:22.626Z",
+      "updatedAt": "2026-09-25T17:46:22.626Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0028",
+      "title": "Bring VIG-SHR requirements into the traceability count and heading convention (SDE conformance G-4)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-09-25T17:46:22.904Z",
+      "updatedAt": "2026-09-25T17:46:22.904Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
     }
   ]
 }
