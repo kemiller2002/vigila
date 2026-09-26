@@ -9,7 +9,6 @@ open System.Text
 open System.Text.Json
 open System.Threading.Tasks
 open Vigila.Host.GitHub.GitHubStore
-open Vigila.Host.GitHub.FollowUpLedger
 
 type GitHubRepositoryConfig =
     { Repository: string
@@ -20,7 +19,7 @@ type GitHubRepositoryConfig =
 /// installation-token, or future providers without changing the application.
 type GitHubCredentialProvider = unit -> string option
 
-let private endpoint (config: GitHubRepositoryConfig) path =
+let private endpoint (config: GitHubRepositoryConfig) (path: string) =
     let escapedPath =
         path.Split('/', StringSplitOptions.RemoveEmptyEntries)
         |> Array.map Uri.EscapeDataString
@@ -102,7 +101,7 @@ let private readContent (response: HttpResponseMessage) =
     | :? JsonException
     | :? FormatException -> Error(StorageCorrupt "GitHub contents response")
 
-let private read (http: HttpClient) credential config path =
+let private read (http: HttpClient) credential config (path: string) =
     let uri = $"%s{endpoint config path}?ref=%s{Uri.EscapeDataString config.Branch}"
     use request = new HttpRequestMessage(HttpMethod.Get, uri)
 
@@ -120,20 +119,20 @@ let private read (http: HttpClient) credential config path =
         else
             Error(classify response)
 
-let private createBody branch content =
+let private createBody (branch: string) (content: string) =
     JsonSerializer.Serialize(
         {| message = "Vigila: persist follow-up integration record"
            content = Convert.ToBase64String(Encoding.UTF8.GetBytes content)
            branch = branch |}
     )
 
-let private existsAfterCreateFailure (http: HttpClient) credential config path =
+let private existsAfterCreateFailure (http: HttpClient) credential config (path: string) =
     match read http credential config path with
     | Ok(Some _) -> Ok true
     | Ok None -> Ok false
     | Error failure -> Error failure
 
-let private createNew (http: HttpClient) credential config path content =
+let private createNew (http: HttpClient) credential config (path: string) (content: string) =
     // Important: this is the first repository operation. No SHA is supplied,
     // so GitHub arbitrates create-if-absent atomically.
     use request = new HttpRequestMessage(HttpMethod.Put, endpoint config path)
