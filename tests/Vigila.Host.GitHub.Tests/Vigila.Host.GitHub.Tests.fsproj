@@ -8,11 +8,13 @@
   <ItemGroup>
     <Compile Include="Tests.fs" />
     <Compile Include="GitHubRepositoryFilesTests.fs" />
+    <Compile Include="CliTests.fs" />
     <Compile Include="FollowUpLedgerTests.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../src/Vigila.Host.GitHub/Vigila.Host.GitHub.fsproj" />
+    <ProjectReference Include="../../src/Vigila.Cli/Vigila.Cli.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
