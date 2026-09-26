@@ -606,8 +606,9 @@ let ``the wire boundary creates, then replays, with structured receipts`` () =
     let first = invoke ledger (invocation "1" "" "")
     let second = invoke ledger (invocation "1" "" "")
 
-    Assert.Equal("success", text first "status")
+    Assert.Equal("created", text first "status")
     Assert.Equal("Created", text first "code")
+    Assert.Equal("existing", text second "status")
     Assert.Equal("OperationAlreadyProcessed", text second "code")
     Assert.Equal(text first "itemId", text second "itemId")
     Assert.Equal("op-wire", text second "operationId")
@@ -620,7 +621,7 @@ let ``an unsupported contract version is refused as SchemaUnsupported`` (version
     let ledger = AtomicLedger()
     let r = invoke ledger (invocation version "" "")
 
-    Assert.Equal("failure", text r "status")
+    Assert.Equal("rejected", text r "status")
     Assert.Equal("SchemaUnsupported", text r "code")
     Assert.Equal<string list>([ "contractVersion" ], errorFields r)
     Assert.Equal(0, ledger.Calls)
@@ -690,7 +691,7 @@ let ``a failure receipt carries an Aegis reference and never claims success`` ()
                   Detail = "RateLimited" })
             (invocation "1" "" "")
 
-    Assert.Equal("failure", text r "status")
+    Assert.Equal("failed", text r "status")
     Assert.Equal("PersistenceFailed", text r "code")
     Assert.StartsWith("AG-", text r "reference")
     Assert.False(r.TryGetProperty("itemId") |> fst)
