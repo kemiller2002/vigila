@@ -22,7 +22,7 @@ type private FakeHandler(respond: HttpRequestMessage -> HttpResponseMessage) =
         let authorization =
             match request.Headers.Authorization with
             | null -> None
-            | value -> Some value.Parameter
+            | value -> value.Parameter |> Option.ofObj
 
         let uri = request.RequestUri |> Option.ofObj |> Option.defaultWith (fun () -> failwith "Request URI is required.")
         requests.Add(request.Method.Method, uri.AbsoluteUri, authorization)
