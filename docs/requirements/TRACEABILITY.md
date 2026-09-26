@@ -3,7 +3,29 @@ id: REQ-TRACE
 title: Source section to requirement traceability
 status: draft
 created: 2026-09-18
-updated: 2026-09-23
+updated: 2026-09-26
+provenance:
+  contributions:
+    EXE-20260926T081409758Z-615c839a:
+      operations: [modified]
+      at: 2026-09-26T08:17:42.022Z
+      actor:
+        kind: agent
+        id: anthropic/claude-code
+        provider: anthropic
+        model: unknown
+        runtime: claude-code
+      reason: "Index and trace the VIG-PROV area (FEAT-ECHELON-PROVENANCE)"
+    EXE-20260926T085500134Z-ac7e0976:
+      operations: [modified]
+      at: 2026-09-26T09:02:59.879Z
+      actor:
+        kind: agent
+        id: anthropic/claude-code
+        provider: anthropic
+        model: unknown
+        runtime: claude-code
+      reason: "Adopt Praxis provenance contract revision 1.1 and registry REG-PROV-008 v1 keys (FEAT-ECHELON-PROVENANCE-R1)"
 ---
 
 # Traceability
@@ -242,3 +264,33 @@ than deriving from one:
 |---|---|
 | [`SEC-005`](SECURITY.md#vig-sec-005) — token containment | §47.4, §66, §69, §70, §76, §86, §87, §118, §128, §134 |
 | [`TST-023`](QUALITY.md#vig-tst-023) — documented behaviours | §61, §67, §70, §81, §86, §89, §113, §116, §118, §128 |
+
+## Cross-system contract — `PROV`
+
+The `PROV` area does not derive from a source section of the input documents.
+It derives from the Praxis provenance contract
+(kemiller2002/praxis@c2657efb4d54f11d0fd0617cc1bcd5b8418601d5, contract revision 1.1) and is traced
+from it here instead. It is not counted in the totals above.
+[`PROVENANCE.md`](PROVENANCE.md#traceability) traces each requirement on to its
+implementation and tests.
+
+| Praxis record | Requirements |
+|---|---|
+| `DF-ROS-2026-A036`, `DF-ROS-2026-A037` | `PROV-001`–`PROV-017` |
+| `RQ-ROS-2026-A001`, `A002` (actor, execution) | `PROV-001`, `PROV-003`, `PROV-015` |
+| `RQ-ROS-2026-A004` (append-only contributions) | `PROV-002`, `PROV-005`, `PROV-011`, `PROV-016` |
+| `RQ-ROS-2026-A007` (legacy compatibility) | `PROV-007`, `PROV-008` |
+| `RQ-ROS-2026-A008` (lineage) | `PROV-010` |
+| `RQ-ROS-2026-A009` (integration boundaries) | `PROV-002`, `PROV-009` |
+| `RQ-ROS-2026-A010`, `A019` (not authority) | `PROV-014` |
+| `RQ-ROS-2026-A013` (foreign execution keys) | `PROV-003`, `PROV-004` |
+| `RQ-ROS-2026-A014` (role vocabulary) | `PROV-003` |
+| `RQ-ROS-2026-A015` (receiving rules) | `PROV-001`, `PROV-006` |
+| `RQ-ROS-2026-A016` (explicit propagation) | `PROV-009` |
+| `RQ-ROS-2026-A017` (no credentials) | `PROV-013` |
+| `RQ-ROS-2026-A018` (conformance) | `PROV-017` |
+
+Existing requirements this area extends, without changing their text:
+`DOM-035`, `DOM-037` (projection, `PROV-015`), `AGT-035` (envelope,
+`PROV-009`, `PROV-011`), `AGT-045` (references, `PROV-010`), `PER-020`–`PER-023`
+(versioning, `PROV-007`).

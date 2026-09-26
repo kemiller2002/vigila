@@ -3,7 +3,8 @@
 /// Notes are append-only: an item's history is told by adding notes, not by
 /// rewriting them (VIG-DOM-019). There is deliberately no edit function here.
 ///
-/// Requirements: VIG-DOM-017, VIG-DOM-018, VIG-DOM-019, VIG-DOM-047.
+/// Requirements: VIG-DOM-017, VIG-DOM-018, VIG-DOM-019, VIG-DOM-047,
+/// VIG-PROV-016.
 module Vigila.Semantic.Notes
 
 open Vigila.Semantic.Identifiers
@@ -20,7 +21,11 @@ type Note =
       ItemId: ItemId
       Text: string
       CreatedAt: Instant
-      CreatedBy: Actor }
+      CreatedBy: Actor
+      /// The provenance contribution this note belongs to, when it was written
+      /// by an attributed operation (VIG-PROV-016). `CreatedBy` is then only
+      /// the display projection of that contribution's actor.
+      Contribution: string option }
 
 [<RequireQualifiedAccess>]
 module Note =
@@ -45,7 +50,8 @@ module Note =
                       ItemId = itemId
                       Text = trimmed
                       CreatedAt = Clock.now clock
-                      CreatedBy = author }
+                      CreatedBy = author
+                      Contribution = None }
 
     /// Notes oldest first, which is the order the UI must display them in
     /// (VIG-DOM-020).

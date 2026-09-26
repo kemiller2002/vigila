@@ -379,9 +379,10 @@ module ItemSerialization =
 
     [<Fact>]
     let ``every record carries its schema version`` () =
-        // VIG-PER-020.
+        // VIG-PER-020. A record with no provenance is still written as the base
+        // version (VIG-PROV-007); ProvenancePersistenceTests covers version 2.
         use doc = JsonDocument.Parse(toJson (newItem ()))
-        Assert.Equal(CurrentSchemaVersion, doc.RootElement.GetProperty("schemaVersion").GetInt32())
+        Assert.Equal(BaseSchemaVersion, doc.RootElement.GetProperty("schemaVersion").GetInt32())
 
     [<Fact>]
     let ``a record from a newer schema is refused, not guessed at`` () =
@@ -389,7 +390,7 @@ module ItemSerialization =
         // version this build does not understand.
         let json =
             (toJson (newItem ())).Replace(
-                $"\"schemaVersion\": {CurrentSchemaVersion}",
+                $"\"schemaVersion\": {BaseSchemaVersion}",
                 $"\"schemaVersion\": {CurrentSchemaVersion + 1}"
             )
 

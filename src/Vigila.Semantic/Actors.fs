@@ -5,15 +5,27 @@
 /// an import may carry a human's name. Neither may hold a secret
 /// (VIG-DOM-037).
 ///
-/// Requirements: VIG-DOM-035, VIG-DOM-037.
+/// When an item carries Praxis provenance (Vigila.Semantic.Provenance), that
+/// block is the identity and an Actor here is only its display projection
+/// (VIG-PROV-002, VIG-PROV-015).
+///
+/// Requirements: VIG-DOM-035, VIG-DOM-037, VIG-PROV-015.
 module Vigila.Semantic.Actors
 
 /// What kind of thing made a change.
+///
+/// `Unknown` exists only as the projection of a Praxis actor whose kind is
+/// `unknown` or an `x-...` extension (VIG-PROV-015): mapping those onto
+/// `Agent` or `AutomatedProcess` would fabricate a fact. It is never produced
+/// from a schema-version-1 record, and a record that contains it is written as
+/// schema version 2 so older readers refuse it rather than misread it
+/// (VIG-PROV-007).
 type ActorType =
     | Human
     | Agent
     | AutomatedProcess
     | Integration
+    | Unknown
 
 /// Who made a change. The name is free text -- a person, an agent's name, a
 /// process identifier -- because Vigila is not a contacts system

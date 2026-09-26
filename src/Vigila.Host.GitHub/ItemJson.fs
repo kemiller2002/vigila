@@ -16,7 +16,20 @@
 /// set - a status, a kind - are still rejected, because guessing there would
 /// fabricate domain state.
 ///
-/// Requirements: VIG-PER-020, VIG-PER-021, VIG-PER-022, VIG-TIME-016.
+/// Schema version 2 adds Praxis provenance (VIG-PROV-007): an item's own
+/// `provenance` block, the `receivedProvenance` it arrived with, a
+/// `contribution` key on history entries and notes, and the `unknown` actor
+/// type. A record is written as version 2 only when it holds one of those;
+/// everything else is still written as version 1, exactly as before, so older
+/// builds keep reading records this change did not touch. Nothing is migrated
+/// (VIG-PER-023): a legacy record changes only when a real operation changes
+/// it. Provenance blocks are never dropped: a supported block keeps every
+/// field this build does not model, an unsupported major is written back as
+/// the exact text it was read as, and a malformed block fails the load with
+/// the problems named (VIG-PROV-006).
+///
+/// Requirements: VIG-PER-020, VIG-PER-021, VIG-PER-022, VIG-TIME-016,
+/// VIG-PROV-006, VIG-PROV-007, VIG-PROV-008.
 module Vigila.Host.GitHub.ItemJson
 
 open System
@@ -30,10 +43,17 @@ open Vigila.Semantic.Tags
 open Vigila.Semantic.Notes
 open Vigila.Semantic.History
 open Vigila.Semantic.Item
+open Vigila.Semantic.Provenance
+open Vigila.Application
 
-/// The schema version this module writes (VIG-PER-020).
+/// The newest schema version this module reads and writes (VIG-PER-020).
 [<Literal>]
-let CurrentSchemaVersion = 1
+let CurrentSchemaVersion = 2
+
+/// The version written for a record that holds nothing version 2 added
+/// (VIG-PROV-007).
+[<Literal>]
+let BaseSchemaVersion = 1
 
 /// Date-only values are written in this form, which carries no time and no
 /// offset at all.
@@ -46,13 +66,17 @@ let private actorTypeName =
     | ActorType.Agent -> "agent"
     | AutomatedProcess -> "automated-process"
     | ActorType.Integration -> "integration"
+    | ActorType.Unknown -> "unknown"
 
-let private parseActorType =
+/// `unknown` exists only from schema version 2 (VIG-PROV-015); a version 1
+/// record that claims it is refused rather than read.
+let private parseActorType version =
     function
     | "human" -> Ok Human
     | "agent" -> Ok ActorType.Agent
     | "automated-process" -> Ok AutomatedProcess
     | "integration" -> Ok ActorType.Integration
+    | "unknown" when version >= 2 -> Ok ActorType.Unknown
     | other -> Error $"'%s{other}' is not a known actor type."
 
 let private viaName =
@@ -202,6 +226,37 @@ let private parseResolution =
     | "other" -> Ok Other
     | other -> Error $"'%s{other}' is not a known resolution."
 
+/// Whether an item holds anything only schema version 2 can express
+/// (VIG-PROV-007).
+let requiresVersion2 (item: Item) =
+    let unknownActor (actor: Actor) = actor.Type = ActorType.Unknown
+
+    item.Provenance.IsSome
+    || item.ReceivedProvenance.IsSome
+    || unknownActor item.CreatedBy
+    || item.History |> List.exists (fun e -> e.Contribution.IsSome || unknownActor e.Actor)
+    || item.Notes |> List.exists (fun n -> n.Contribution.IsSome || unknownActor n.CreatedBy)
+
+/// The schema version an item is written with.
+let schemaVersionFor item =
+    if requiresVersion2 item then CurrentSchemaVersion else BaseSchemaVersion
+
+let private writeOptionalContribution (w: Utf8JsonWriter) (contribution: string option) =
+    contribution |> Option.iter (fun key -> w.WriteString("contribution", key))
+
+/// A supported block is written from its typed form, which keeps every field
+/// this build does not model. An unsupported block is written back as the
+/// exact text it arrived as.
+let private writeProvenance (w: Utf8JsonWriter) (name: string) (value: ItemProvenance option) =
+    match value with
+    | None -> ()
+    | Some(Recorded block) ->
+        w.WritePropertyName name
+        (ProvenanceJson.toNode block).WriteTo w
+    | Some(CarriedVerbatim(_, json)) ->
+        w.WritePropertyName name
+        w.WriteRawValue(json.Text, false)
+
 /// Serialises an item to its persisted form.
 let toJson (item: Item) =
     use stream = new IO.MemoryStream()
@@ -209,7 +264,7 @@ let toJson (item: Item) =
     (use writer = new Utf8JsonWriter(stream, JsonWriterOptions(Indented = true))
 
      writer.WriteStartObject()
-     writer.WriteNumber("schemaVersion", CurrentSchemaVersion)
+     writer.WriteNumber("schemaVersion", schemaVersionFor item)
      writer.WriteString("id", (ItemId.toGuid item.Id).ToString("D"))
      writer.WriteString("title", Title.value item.Title)
      writer.WriteString("kind", kindName item.Kind)
@@ -235,6 +290,7 @@ let toJson (item: Item) =
          writer.WriteString("text", note.Text)
          writeInstant writer "createdAt" note.CreatedAt
          writeActor writer "createdBy" note.CreatedBy
+         writeOptionalContribution writer note.Contribution
          writer.WriteEndObject()
      writer.WriteEndArray()
 
@@ -268,8 +324,12 @@ let toJson (item: Item) =
          writeActor writer "actor" e.Actor
          writer.WriteString("operation", operationName e.Operation)
          writeOperationDetail writer e.Operation
+         writeOptionalContribution writer e.Contribution
          writer.WriteEndObject()
      writer.WriteEndArray()
+
+     writeProvenance writer "provenance" item.Provenance
+     writeProvenance writer "receivedProvenance" item.ReceivedProvenance
 
      writer.WriteEndObject())
 
@@ -339,13 +399,13 @@ let private requiredGuid el name =
             | _ -> Error $"'%s{name}' is not a valid identifier."
     }
 
-let private readActor el name =
+let private readActor version el name =
     match prop el name with
     | None -> Error $"'%s{name}' is required."
     | Some a ->
         result {
             let! typeName = requiredString a "type"
-            let! actorType = parseActorType typeName
+            let! actorType = parseActorType version typeName
             let! actorName = requiredString a "name"
             return! Actor.create actorType actorName
         }
@@ -389,19 +449,21 @@ let private readAll f (el: JsonElement) name =
         |> Result.map List.rev
     | Some _ -> Error $"'%s{name}' must be an array."
 
-let private readNote itemId (e: JsonElement) =
+let private readNote version itemId (e: JsonElement) =
     result {
         let! id = requiredGuid e "id"
         let! text = requiredString e "text"
         let! createdAt = requiredInstant e "createdAt"
-        let! createdBy = readActor e "createdBy"
+        let! createdBy = readActor version e "createdBy"
+        let! contribution = optionalString e "contribution"
 
         return
             { Id = NoteId.ofGuid id
               ItemId = itemId
               Text = text
               CreatedAt = createdAt
-              CreatedBy = createdBy }
+              CreatedBy = createdBy
+              Contribution = contribution }
     }
 
 let private readSource (e: JsonElement) =
@@ -424,10 +486,11 @@ let private readSource (e: JsonElement) =
 /// values; the before/after payloads stay in the persisted record. History is
 /// an immutable account of what happened, and re-typing old payloads against
 /// today's domain would make every domain change rewrite the past.
-let private readHistory (e: JsonElement) =
+let private readHistory version (e: JsonElement) =
     result {
         let! at = requiredInstant e "at"
-        let! actor = readActor e "actor"
+        let! actor = readActor version e "actor"
+        let! contribution = optionalString e "contribution"
         let! name = requiredString e "operation"
 
         let! operation =
@@ -479,8 +542,29 @@ let private readHistory (e: JsonElement) =
             | "review-flag-changed" -> optionalBool e "needsReview" |> Result.map ReviewFlagChanged
             | other -> Error $"'%s{other}' is not a known history operation."
 
-        return { At = at; Actor = actor; Operation = operation }
+        return
+            { At = at
+              Actor = actor
+              Operation = operation
+              Contribution = contribution }
     }
+
+/// Reads a provenance block through the shared codec. Malformed fails the
+/// whole record with the problems named, never silently dropping the block
+/// (VIG-PROV-006). An unsupported major keeps the exact stored text.
+let private readProvenance (el: JsonElement) (name: string) =
+    match el.TryGetProperty name with
+    | false, _ -> Ok None
+    | true, v when v.ValueKind = JsonValueKind.Null -> Ok None
+    | true, v ->
+        match ProvenanceJson.classifyText (v.GetRawText()) with
+        | ProvenanceJson.Unsupported(schema, _) -> Ok(Some(CarriedVerbatim(schema, RawJson(v.GetRawText()))))
+        | verdict ->
+            ProvenanceJson.toItemProvenance verdict
+            |> Result.map Some
+            |> Result.mapError (fun problems ->
+                let detail = String.concat "; " problems
+                $"'%s{name}' is malformed: %s{detail}")
 
 /// Deserialises an item from its persisted form.
 ///
@@ -547,7 +631,7 @@ let fromJson (json: string) =
                     el
                     "tags"
 
-            let! notes = readAll (readNote id) el "notes"
+            let! notes = readAll (readNote version id) el "notes"
             let! sources = readAll readSource el "sources"
             let! important = optionalBool el "important"
             let! needsReview = optionalBool el "needsReview"
@@ -562,14 +646,16 @@ let fromJson (json: string) =
             let! resolutionNote = optionalString el "resolutionNote"
 
             let! createdAt = requiredInstant el "createdAt"
-            let! createdBy = readActor el "createdBy"
+            let! createdBy = readActor version el "createdBy"
             let! viaText = requiredString el "createdVia"
             let! via = parseVia viaText
             let! updatedAt = requiredInstant el "updatedAt"
             let! completedAt = optionalInstant el "completedAt"
             let! cancelledAt = optionalInstant el "cancelledAt"
             let! lastActivityAt = requiredInstant el "lastActivityAt"
-            let! history = readAll readHistory el "history"
+            let! history = readAll (readHistory version) el "history"
+            let! provenance = readProvenance el "provenance"
+            let! receivedProvenance = readProvenance el "receivedProvenance"
 
             return
                 { Id = id
@@ -597,5 +683,7 @@ let fromJson (json: string) =
                   CompletedAt = completedAt
                   CancelledAt = cancelledAt
                   LastActivityAt = lastActivityAt
-                  History = history }
+                  History = history
+                  Provenance = provenance
+                  ReceivedProvenance = receivedProvenance }
         }

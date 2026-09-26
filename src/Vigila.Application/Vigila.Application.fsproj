@@ -17,6 +17,9 @@
     <Compile Include="Ports.fs" />
     <Compile Include="Effects.fs" />
     <Compile Include="Connection.fs" />
+    <Compile Include="ProvenanceJson.fs" />
+    <Compile Include="Attribution.fs" />
+    <Compile Include="FollowUpIntake.fs" />
     <Compile Include="Dispatch.fs" />
   </ItemGroup>
 
