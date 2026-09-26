@@ -4,6 +4,7 @@ open System
 open System.Net
 open System.Net.Http
 open System.Text
+open System.Threading
 open System.Threading.Tasks
 open Xunit
 open Vigila.Host.GitHub.FollowUpLedger
@@ -11,25 +12,28 @@ open Vigila.Host.GitHub.GitHubStore
 open Vigila.Host.GitHub.GitHubRepositoryFiles
 
 type private FakeHandler(respond: HttpRequestMessage -> HttpResponseMessage) =
+    inherit HttpMessageHandler()
+
     let requests = ResizeArray<string * string * string option>()
 
     member _.Requests = requests |> Seq.toList
 
-    override _.SendAsync(request, _cancellationToken) =
+    override _.SendAsync(request: HttpRequestMessage, _cancellationToken: CancellationToken) =
         let authorization =
             match request.Headers.Authorization with
             | null -> None
             | value -> Some value.Parameter
 
-        requests.Add(request.Method.Method, request.RequestUri.AbsoluteUri, authorization)
+        let uri = request.RequestUri |> Option.ofObj |> Option.defaultWith (fun () -> failwith "Request URI is required.")
+        requests.Add(request.Method.Method, uri.AbsoluteUri, authorization)
         Task.FromResult(respond request)
 
-let private response status body =
+let private response (status: HttpStatusCode) (body: string) =
     let r = new HttpResponseMessage(status)
     r.Content <- new StringContent(body, Encoding.UTF8, "application/json")
     r
 
-let private contentResponse text =
+let private contentResponse (text: string) =
     let encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes text)
     response HttpStatusCode.OK ($"""{{"type":"file","encoding":"base64","content":"%s{encoded}"}}""")
 
@@ -45,8 +49,9 @@ let private filesWith handler token =
 let read_existing () =
     let handler =
         FakeHandler(fun request ->
-            Assert.Contains("/repos/acme/vigila/contents/vigila/workspaces/x.json", request.RequestUri.AbsoluteUri)
-            Assert.Contains("ref=integration-data", request.RequestUri.Query)
+            let uri = request.RequestUri |> Option.ofObj |> Option.defaultWith (fun () -> failwith "Request URI is required.")
+            Assert.Contains("/repos/acme/vigila/contents/vigila/workspaces/x.json", uri.AbsoluteUri)
+            Assert.Contains("ref=integration-data", uri.Query)
             contentResponse "hello")
 
     let files = filesWith handler "secret-token"
@@ -56,7 +61,8 @@ let read_existing () =
 let read_missing () =
     let handler =
         FakeHandler(fun request ->
-            if request.RequestUri.AbsolutePath.EndsWith("/repos/acme/vigila") then
+            let uri = request.RequestUri |> Option.ofObj |> Option.defaultWith (fun () -> failwith "Request URI is required.")
+            if uri.AbsolutePath.EndsWith("/repos/acme/vigila") then
                 response HttpStatusCode.OK "{}"
             else
                 response HttpStatusCode.NotFound "{}")
