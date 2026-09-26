@@ -88,13 +88,13 @@ let private aegis () =
 /// remain exclusively in IntegrationWire.invoke.
 let runWith
     (http: HttpClient)
-    (getEnv: string -> string)
+    (getEnv: string -> string | null)
     (clock: Clock)
     (stdin: TextReader)
     (stdout: TextWriter)
     (args: string array)
     =
-    let fail exitCode json =
+    let fail exitCode (json: string) =
         stdout.WriteLine json
         exitCode
 
