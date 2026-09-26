@@ -13,6 +13,8 @@
 ///           workspace.json               display name, created-at
 ///           items/
 ///             <itemId>.json              one file per item
+///           operations/
+///             <sha256(operationId)>.json integration operation record
 ///
 /// Requirements: VIG-PER-003, VIG-PER-004, VIG-PER-005, VIG-PER-006,
 /// VIG-PER-007, VIG-PER-013, VIG-PER-043, VIG-PER-044.
@@ -162,3 +164,26 @@ let isInside (root: StoragePath) (candidate: string | null) =
     | NonNull candidate ->
         let prefix = root.Value + "/"
         candidate = root.Value || candidate.StartsWith(prefix, StringComparison.Ordinal)
+
+/// The directory holding a workspace's integration operation records.
+///
+/// Idempotency is scoped to the workspace: an operation id claims a logical
+/// result inside one workspace's data, not across unrelated repositories
+/// (VIG-AGT-012).
+let operationsPath (root: StoragePath) (workspace: WorkspaceId) =
+    $"%s{workspacePath root workspace}/operations"
+
+/// One operation record's file, named by the SHA-256 of the operation id.
+///
+/// An operation id is caller-supplied text, so it cannot be a filename as it
+/// stands: it may contain '/', '..', or characters that differ across
+/// repository environments. Its digest is fixed-length, lowercase hex, and
+/// derived only from the id, so the same id always names the same file and
+/// that file can be claimed with a create-only write (VIG-PER-043). The id
+/// itself is kept inside the record.
+let operationPath (root: StoragePath) (workspace: WorkspaceId) (operationId: string) =
+    let digest =
+        Security.Cryptography.SHA256.HashData(Text.Encoding.UTF8.GetBytes operationId)
+        |> Convert.ToHexString
+
+    $"%s{operationsPath root workspace}/%s{digest.ToLowerInvariant()}.json"

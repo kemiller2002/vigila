@@ -4,7 +4,7 @@
   "repository": "vigila",
   "actor": "agent:chatgpt",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-09-25T17:46:32.000Z",
+  "updatedAt": "2026-09-26T07:48:04.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -445,6 +445,39 @@
         "EXE-20260925T174055786Z-5fc085f7"
       ],
       "completedAt": "2026-09-25T17:46:32.000Z"
+    },
+    {
+      "id": "VIG-15",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/Vigila.Application/Integration.fs"
+        },
+        {
+          "type": "implementation",
+          "path": "src/Vigila.Host.GitHub/FollowUpLedger.fs"
+        },
+        {
+          "type": "tests",
+          "path": "tests/Vigila.Application.Tests/IntegrationTests.fs"
+        },
+        {
+          "type": "tests",
+          "path": "tests/Vigila.Host.GitHub.Tests/FollowUpLedgerTests.fs"
+        },
+        {
+          "type": "decision",
+          "path": "docs/architecture/ADR-0004-followup-create-provider.md"
+        }
+      ],
+      "updatedAt": "2026-09-26T07:48:04.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20260926T073234182Z-59ab623a"
+      ],
+      "completedAt": "2026-09-26T07:48:04.000Z"
     }
   ]
 }
