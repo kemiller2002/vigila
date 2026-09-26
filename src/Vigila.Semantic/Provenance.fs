@@ -4,7 +4,7 @@
 /// (DF-ROS-2026-A036, DF-ROS-2026-A037). This module is the typed form of its
 /// interchange block, `praxis.provenance/1`, and the pure rules for appending
 /// to it, mirroring the reference library `lib/provenance-interchange.mjs`
-/// (kemiller2002/praxis@c2657ef, contract revision 1.1). It adds no concept of its own: VIG-PROV-001
+/// (kemiller2002/praxis@b003718, contract revision 1.2). It adds no concept of its own: VIG-PROV-001
 /// forbids a second identity model.
 ///
 /// Why typed rather than an opaque JSON string: the append rules (never
@@ -110,6 +110,48 @@ type KeyKind =
     | ForeignExecution
     | ContributorKey
     | InvalidKey
+
+/// Contract 1.2 text rules shared by every check: "blank" is defined over
+/// ASCII whitespace only (tab, LF, VT, FF, CR, space), and a string holding an
+/// unpaired UTF-16 surrogate is not well-formed Unicode. .NET `Trim()` and
+/// `IsNullOrWhiteSpace` also strip U+0085, U+00A0, U+FEFF and others, which
+/// JavaScript and Python disagree about, so they are never used for contract
+/// checks.
+[<RequireQualifiedAccess>]
+module ContractText =
+
+    let private isAsciiSpace (c: char) =
+        c = '\t' || c = '\n' || c = '\u000B' || c = '\u000C' || c = '\r' || c = ' '
+
+    /// Trims only ASCII whitespace from both ends.
+    let asciiTrim (text: string) =
+        let start = text |> Seq.tryFindIndex (isAsciiSpace >> not)
+
+        match start with
+        | None -> ""
+        | Some first ->
+            let last = text |> Seq.findIndexBack (isAsciiSpace >> not)
+            text.Substring(first, last - first + 1)
+
+    /// Empty after trimming ASCII whitespace.
+    let isBlank (text: string) = (asciiTrim text).Length = 0
+
+    /// True when the string holds a surrogate without its partner.
+    let hasLoneSurrogate (text: string) =
+        let rec scan index =
+            if index >= text.Length then
+                false
+            elif Char.IsHighSurrogate text[index] then
+                if index + 1 < text.Length && Char.IsLowSurrogate text[index + 1] then
+                    scan (index + 2)
+                else
+                    true
+            elif Char.IsLowSurrogate text[index] then
+                true
+            else
+                scan (index + 1)
+
+        scan 0
 
 [<RequireQualifiedAccess>]
 module Operation =
@@ -230,7 +272,7 @@ module ProvenanceActor =
             | ActorKind.Unknown
             | ActorKind.Extension _ -> ActorType.Unknown
 
-        let name = actor.Id.Trim()
+        let name = ContractText.asciiTrim actor.Id
 
         { Type = actorType
           Name = if name.Length = 0 then UnknownValue else name }
@@ -258,7 +300,10 @@ module Provenance =
 
 
     /// Credential shapes (RQ-ROS-2026-A017), identical to the reference
-    /// library's. A tripwire for accidents, not a secret scanner.
+    /// library's. A tripwire for accidents, not a secret scanner. Contract
+    /// 1.2: explicit ASCII classes only -- no `\b`, `\s` or case folding,
+    /// whose meaning differs between .NET, JavaScript and Python -- and
+    /// CultureInvariant without IgnoreCase.
     let private credentialPatterns =
         [ "gh[pousr]_[A-Za-z0-9]{20,}"
           "github_pat_[A-Za-z0-9_]{20,}"
@@ -266,7 +311,7 @@ module Provenance =
           "AKIA[0-9A-Z]{16}"
           "xox[abprs]-[A-Za-z0-9-]{10,}"
           "-----BEGIN [A-Z ]*PRIVATE KEY-----"
-          "(?i)\\bbearer\\s+[A-Za-z0-9._~+/=-]{16,}"
+          "(?:^|[^A-Za-z0-9_])[Bb][Ee][Aa][Rr][Ee][Rr][\\t\\n\\v\\f\\r ]+[A-Za-z0-9._~+/=-]{16,}"
           "eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}\\." ]
         |> List.map (fun pattern -> Regex(pattern, RegexOptions.CultureInvariant))
 
@@ -294,40 +339,41 @@ module Provenance =
         let m = foreignKey.Match key
         if m.Success then Some m.Groups[1].Value else None
 
-    /// Escapes an id so it can be carried in a key, injectively (contract 1.1,
-    /// the reference library's `keyFromEnvelopeV1`): `_` and every character
-    /// outside `[A-Za-z0-9.-]` become `_xx` per UTF-8 byte (lower-case hex),
-    /// so two different ids can never map to the same key. "op 1" -> "op_201".
+    /// `escapeKeySegment` (contract 1.2): escapes an id so it can be carried
+    /// in a key, injectively. Per Unicode code point, ASCII letters, digits and
+    /// `-` pass through; everything else -- `.` and `_` included -- becomes
+    /// `_xx` per UTF-8 byte (lower-case hex). "op 1" -> "op_201", "." -> "_2e",
+    /// U+1F600 -> "_f0_9f_98_80". Because `.` is always escaped, a segment
+    /// never contains the key separator, so a namespaced key
+    /// (`EXT-run.<namespace>.<id>`, echelon-registry REG-PROV-008) can never
+    /// equal an un-namespaced one.
     ///
-    /// With `keepDots = false`, `.` is escaped too (`_2e`), for a segment that
-    /// must not introduce a separator of its own (echelon-registry
-    /// REG-PROV-008 `escapeKeySegment`).
-    let escapeSegment keepDots (text: string) =
-        let builder = Text.StringBuilder()
+    /// An empty id, or one that is not well-formed Unicode (an unpaired
+    /// surrogate has no UTF-8 form), cannot form a key.
+    let escapeKeySegment (text: string) : Result<string, string> =
+        if String.IsNullOrEmpty text then
+            Error "a key segment must be a non-empty string"
+        elif ContractText.hasLoneSurrogate text then
+            Error "a key segment must be well-formed Unicode (unpaired surrogate)"
+        else
+            text.EnumerateRunes()
+            |> Seq.map (fun rune ->
+                let value = rune.Value
 
-        for rune in text.EnumerateRunes() do
-            let value = rune.Value
+                if (value >= int 'A' && value <= int 'Z')
+                   || (value >= int 'a' && value <= int 'z')
+                   || (value >= int '0' && value <= int '9')
+                   || value = int '-' then
+                    string (char value)
+                else
+                    let bytes = Array.zeroCreate<byte> rune.Utf8SequenceLength
+                    rune.EncodeToUtf8(Span<byte>(bytes)) |> ignore
 
-            let plain =
-                (value >= int 'A' && value <= int 'Z')
-                || (value >= int 'a' && value <= int 'z')
-                || (value >= int '0' && value <= int '9')
-                || (keepDots && value = int '.')
-                || value = int '-'
-
-            if plain then
-                builder.Append(char value) |> ignore
-            else
-                let bytes = Array.zeroCreate<byte> rune.Utf8SequenceLength
-                rune.EncodeToUtf8(Span<byte>(bytes)) |> ignore
-
-                for b in bytes do
-                    builder.Append('_').Append(b.ToString("x2", CultureInfo.InvariantCulture)) |> ignore
-
-        builder.ToString()
-
-    /// `escapeSegment` keeping dots: the Praxis `keyFromEnvelopeV1` escaping.
-    let safeSegment (text: string) = escapeSegment true text
+                    bytes
+                    |> Array.map (fun b -> "_" + b.ToString("x2", CultureInfo.InvariantCulture))
+                    |> String.concat "")
+            |> String.concat ""
+            |> Ok
 
     /// `EXT-<system>.<run-id>`, refusing ids it cannot carry.
     let foreignExecutionKey (system: string) (runId: string) =
@@ -338,9 +384,11 @@ module Provenance =
         else
             Error $"cannot form a foreign execution key from system '%s{system}' and run '%s{runId}'"
 
-    /// The key for work whose execution is not known: `EXT-op.<operationId>`
-    /// (VIG-PROV-004).
-    let operationKey (operationId: string) = $"EXT-op.%s{safeSegment operationId}"
+    /// The key for work whose execution is not known:
+    /// `EXT-op.<escapeKeySegment operationId>` (VIG-PROV-004), the reference
+    /// `keyFromEnvelopeV1` form. An error when the id cannot form a key.
+    let operationKey (operationId: string) =
+        escapeKeySegment operationId |> Result.map (fun segment -> $"EXT-op.%s{segment}")
 
     /// Milliseconds since the epoch, or `None` when the text is not a
     /// calendar-valid ISO-8601 UTC timestamp (year 0001-9999, no February 30,
@@ -374,7 +422,7 @@ module Provenance =
             .ToUniversalTime()
             .ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture)
 
-    let private nonEmpty (text: string) = text.Trim().Length > 0
+    let private nonEmpty (text: string) = not (ContractText.isBlank text)
 
     let actorProblems prefix (actor: ProvenanceActor) =
         [ match actor.Kind with
@@ -395,7 +443,7 @@ module Provenance =
     let actorsAgree (left: ProvenanceActor) (right: ProvenanceActor) =
         let isKnown (value: string option) =
             match value with
-            | Some text -> nonEmpty text && text.Trim() <> ProvenanceActor.UnknownValue
+            | Some text -> nonEmpty text && ContractText.asciiTrim text <> ProvenanceActor.UnknownValue
             | None -> false
 
         let compatible a b = not (isKnown a && isKnown b) || a = b
@@ -524,12 +572,14 @@ module Provenance =
             | found -> Error $"""the resulting history would be malformed: %s{String.concat "; " found}"""
 
         let isKnown (value: string) =
-            nonEmpty value && value.Trim() <> ProvenanceActor.UnknownValue
+            nonEmpty value && ContractText.asciiTrim value <> ProvenanceActor.UnknownValue
 
         match problems block with
         | _ :: _ as found -> Error $"""refusing to append to a malformed provenance block: %s{String.concat "; " found}"""
         | [] when hasCredential (contributionStrings key contribution) ->
             Error "a contribution must never carry authentication material"
+        | [] when contributionStrings key contribution |> List.exists ContractText.hasLoneSurrogate ->
+            Error "a contribution must be well-formed Unicode (unpaired UTF-16 surrogate)"
         | [] ->
             match contributionProblems key contribution with
             | _ :: _ as found -> Error(String.concat "; " found)
@@ -610,20 +660,61 @@ module Provenance =
 
                         finish { block with Contributions = contributions } (merged <> existing)
 
+    /// Every string a block carries, for the credential and surrogate checks.
+    let private blockStrings (block: ProvenanceBlock) =
+        List.concat
+            [ Option.toList block.Schema
+              block.Contributions |> List.collect (fun (key, entry) -> contributionStrings key entry)
+              Option.defaultValue [] block.DerivedFrom
+              extensionStrings block.Extensions ]
+
     /// Adds lineage references (never authorship), preserving existing order
-    /// (RQ-ROS-2026-A008, VIG-PROV-010).
-    let addLineage (references: string list) (block: ProvenanceBlock) =
+    /// (RQ-ROS-2026-A008, VIG-PROV-010), following the reference library's
+    /// `addLineage` at contract revision 1.2: lineage is held to the same rules
+    /// as a contribution. It refuses
+    ///
+    ///   * a block that is not valid;
+    ///   * a blank reference (ASCII whitespace only), one holding an unpaired
+    ///     surrogate, or one that looks like a credential (VIG-PROV-013);
+    ///   * any result that would not itself be valid.
+    ///
+    /// Duplicates are dropped, keeping the first occurrence. Returns the new
+    /// block and whether anything changed. A refusal is never silent: a
+    /// receiver that derives lineage from a request rejects the request.
+    let addLineage (references: string list) (block: ProvenanceBlock) : Result<ProvenanceBlock * bool, string> =
         let current = Option.defaultValue [] block.DerivedFrom
 
-        let additions =
-            references
-            |> List.distinct
-            |> List.filter (fun reference -> not (List.contains reference current))
+        let blockFaults =
+            problems block
+            @ (if blockStrings block |> List.exists ContractText.hasLoneSurrogate then
+                   [ "an unpaired UTF-16 surrogate" ]
+               else
+                   [])
+            @ (if hasCredential (blockStrings block) then [ "a credential-like value" ] else [])
 
-        if additions.IsEmpty then
-            block
-        else
-            { block with DerivedFrom = Some(current @ additions) }
+        match blockFaults with
+        | _ :: _ as found ->
+            Error $"""refusing to add lineage to a malformed provenance block: %s{String.concat "; " found}"""
+        | [] when references |> List.exists ContractText.isBlank ->
+            Error "lineage references must be non-empty strings"
+        | [] when references |> List.exists ContractText.hasLoneSurrogate ->
+            Error "a lineage reference holds an unpaired UTF-16 surrogate; provenance must be well-formed Unicode"
+        | [] when hasCredential references ->
+            Error "a lineage reference is credential-like; provenance must never carry authentication material"
+        | [] ->
+            let additions =
+                references
+                |> List.distinct
+                |> List.filter (fun reference -> not (List.contains reference current))
+
+            if additions.IsEmpty then
+                Ok(block, false)
+            else
+                let next = { block with DerivedFrom = Some(current @ additions) }
+
+                match problems next with
+                | [] -> Ok(next, true)
+                | found -> Error $"""the resulting lineage would be malformed: %s{String.concat "; " found}"""
 
     /// The originating (`created`) contribution, or `None` when origin is not
     /// recorded: a legacy record, or one whose history starts later.

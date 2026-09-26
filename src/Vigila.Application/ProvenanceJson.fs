@@ -70,26 +70,96 @@ let private extras (o: JsonObject) (known: string list) : Extensions =
     |> Seq.map (fun pair -> pair.Key, raw pair.Value)
     |> Seq.toList
 
-/// Dotted paths of every key or string value that looks like a credential
-/// (VIG-PROV-013).
-let credentialFindings (node: JsonNode | null) =
+/// Dotted paths of every member name or string value that matches `test`.
+let private stringFindings (test: string -> bool) (node: JsonNode | null) =
     let rec walk (path: string) (current: JsonNode | null) : string list =
         match current with
         | :? JsonObject as o ->
             o
             |> Seq.collect (fun pair ->
                 let child = if path.Length = 0 then pair.Key else $"%s{path}.%s{pair.Key}"
-                (if Provenance.isCredentialLike pair.Key then [ child ] else []) @ walk child pair.Value)
+                (if test pair.Key then [ child ] else []) @ walk child pair.Value)
             |> Seq.toList
         | :? JsonArray as items ->
             items |> Seq.mapi (fun index item -> walk $"%s{path}[%d{index}]" item) |> Seq.concat |> Seq.toList
         | :? JsonValue as value ->
             match stringOf value with
-            | Some text when Provenance.isCredentialLike text -> [ path ]
+            | Some text when test text -> [ path ]
             | _ -> []
         | _ -> []
 
     walk "" node
+
+/// Dotted paths of every key or string value that looks like a credential
+/// (VIG-PROV-013).
+let credentialFindings (node: JsonNode | null) = stringFindings Provenance.isCredentialLike node
+
+/// Dotted paths of every key or string value holding an unpaired UTF-16
+/// surrogate (contract 1.2). A surrogate escaped in parsed JSON text throws
+/// when read, which `classify` also reports as malformed.
+let surrogateFindings (node: JsonNode | null) = stringFindings ContractText.hasLoneSurrogate node
+
+let private notWellFormed = "provenance must be well-formed Unicode (unpaired UTF-16 surrogate)"
+
+/// Why JSON text is not well-formed provenance text (contract 1.2 rule 1),
+/// checked on the text itself, whatever its major version:
+///
+///   * it is not valid JSON (no comments, no trailing commas);
+///   * any one object repeats a member name -- readers disagree about which
+///     duplicate wins, so a second `created` could be smuggled past one of
+///     them. Detected with `Utf8JsonReader` and a set per object, because
+///     `JsonNode` accepts duplicates and throws `ArgumentException` only
+///     when the object is walked;
+///   * any member name or string holds an unpaired UTF-16 surrogate, raw or
+///     escaped.
+///
+/// Never throws. Empty when the text is well-formed.
+let textProblems (text: string) : string list =
+    if isNull (box text) then
+        [ "provenance text must be a string" ]
+    elif ContractText.hasLoneSurrogate text then
+        [ notWellFormed ]
+    else
+        try
+            let bytes = Text.Encoding.UTF8.GetBytes text
+
+            let mutable reader =
+                Utf8JsonReader(
+                    ReadOnlySpan<byte>(bytes),
+                    JsonReaderOptions(CommentHandling = JsonCommentHandling.Disallow, AllowTrailingCommas = false)
+                )
+
+            // Innermost container first: its member-name set (None for an
+            // array) and its path.
+            let mutable frames: (Collections.Generic.HashSet<string> option * string) list = []
+            let mutable pending = ""
+            let mutable repeated: string list = []
+
+            while reader.Read() do
+                match reader.TokenType with
+                | JsonTokenType.StartObject -> frames <- (Some(Collections.Generic.HashSet<string>(StringComparer.Ordinal)), pending) :: frames
+                | JsonTokenType.StartArray -> frames <- (None, pending) :: frames
+                | JsonTokenType.EndObject
+                | JsonTokenType.EndArray ->
+                    frames <- List.tail frames
+                    pending <- (match frames with (_, path) :: _ -> path | [] -> "")
+                | JsonTokenType.PropertyName ->
+                    let name = reader.GetString() |> Option.ofObj |> Option.defaultValue ""
+
+                    match frames with
+                    | (Some seen, path) :: _ ->
+                        let child = if path.Length = 0 then name else $"%s{path}.%s{name}"
+                        if not (seen.Add name) then repeated <- child :: repeated
+                        pending <- child
+                    | _ -> ()
+                | JsonTokenType.String -> reader.GetString() |> ignore
+                | _ -> ()
+
+            repeated |> List.rev |> List.map (fun path -> $"%s{path}: member name repeated within one object")
+        with
+        | :? JsonException as ex -> [ $"provenance is not valid JSON: %s{ex.Message}" ]
+        | :? InvalidOperationException -> [ notWellFormed ]
+        | :? ArgumentException as ex -> [ $"provenance is not valid JSON: %s{ex.Message}" ]
 
 let private optionalString prefix name (o: JsonObject) message =
     match field o name with
@@ -254,36 +324,45 @@ let private classifyObject (block: JsonObject) =
             | problems, _ -> Malformed problems
         | _ -> Malformed [ "contributions must be an object keyed by EXE-, EXT-, or CTB- keys" ]
 
-/// Classifies a received block (VIG-PROV-006). A credential-like value
-/// anywhere, even inside another major version, makes it malformed
-/// (VIG-PROV-013).
+/// Classifies a received block (VIG-PROV-006). An unpaired surrogate or a
+/// credential-like value anywhere, even inside another major version, makes it
+/// malformed (contract 1.2, VIG-PROV-013). Never throws: a parsed object that
+/// repeats a member name (`ArgumentException` when walked), an escaped lone
+/// surrogate (`InvalidOperationException` when read) or any other JSON fault
+/// is malformed. Text should go through `classifyText`, which also sees
+/// duplicates the parsed form has already lost.
 let classify (node: JsonNode | null) : Verdict =
     try
         match node with
         | :? JsonObject as block ->
-            match credentialFindings block with
-            | [] -> classifyObject block
-            | paths ->
+            match surrogateFindings block, credentialFindings block with
+            | (_ :: _ as paths), _ ->
+                Malformed(paths |> List.map (fun path -> $"%s{path}: unpaired UTF-16 surrogate; %s{notWellFormed}"))
+            | [], [] -> classifyObject block
+            | [], paths ->
                 Malformed(
                     paths
                     |> List.map (fun path -> $"%s{path}: credential-like value; provenance must never carry authentication material")
                 )
         | _ -> Malformed [ "provenance must be a JSON object" ]
-    with :? InvalidOperationException as ex ->
-        // Duplicate property names surface here when the object is walked.
-        Malformed [ $"provenance is not a valid JSON object: %s{ex.Message}" ]
+    with
+    | :? ArgumentException as ex -> Malformed [ $"provenance is not a valid JSON object: %s{ex.Message}" ]
+    | :? InvalidOperationException -> Malformed [ notWellFormed ]
+    | :? JsonException as ex -> Malformed [ $"provenance is not valid JSON: %s{ex.Message}" ]
 
-/// Parses and classifies JSON text.
+/// Classifies a block received as JSON text (contract 1.2 rule 1): the text
+/// is checked first (`textProblems`), then parsed and classified. Never
+/// throws.
 let classifyText (json: string) =
-    let parsed =
+    match textProblems json with
+    | _ :: _ as problems -> Malformed problems
+    | [] ->
         try
-            Ok(JsonNode.Parse json)
-        with :? JsonException as ex ->
-            Error ex.Message
-
-    match parsed with
-    | Ok node -> classify node
-    | Error message -> Malformed [ $"provenance is not valid JSON: %s{message}" ]
+            classify (JsonNode.Parse json)
+        with
+        | :? JsonException as ex -> Malformed [ $"provenance is not valid JSON: %s{ex.Message}" ]
+        | :? ArgumentException as ex -> Malformed [ $"provenance is not valid JSON: %s{ex.Message}" ]
+        | :? InvalidOperationException -> Malformed [ notWellFormed ]
 
 /// The item form of a verdict: `None` when the block must be rejected.
 let toItemProvenance verdict =

@@ -204,6 +204,36 @@ let ``a stored malformed block fails the load with the problem named, never drop
     | Ok _ -> failwith "a malformed provenance block must fail the load"
 
 [<Fact>]
+let ``a stored null provenance is malformed, never read as absent`` () =
+    // Review finding 13: "provenance": null loaded as absent and was dropped
+    // on the next write. Null is not absence (contract 1.1 rule 3, 1.2 rule 6).
+    let item = intake "op-null" aegis "EXT-aegis.review-null" None
+    let node = JsonNode.Parse(toJson item) |> Option.ofObj |> Option.get
+
+    for name in [ "provenance"; "receivedProvenance" ] do
+        let edited = node.DeepClone()
+        edited[name] <- null
+
+        match fromJson (edited.ToJsonString()) with
+        | Error message -> Assert.Contains(name, message)
+        | Ok _ -> failwith $"a stored null %s{name} must fail the load"
+
+[<Fact>]
+let ``a stored block that repeats a member name fails the load, never throws`` () =
+    // Review finding 5: detected on the text, whatever the major version.
+    let item = intake "op-dup" aegis "EXT-aegis.review-dup" None
+    let json = toJson item
+
+    for block in
+        [ """{"schema":"praxis.provenance/1","contributions":{"EXE-A":{"operations":["created"],"at":"2026-09-26T08:00:00.000Z","actor":{"kind":"human","id":"mallory"}},"EXE-A":{"operations":["modified"],"at":"2026-09-26T09:00:00.000Z","actor":{"kind":"human","id":"alice"}}}}"""
+          """{"schema":"praxis.provenance/2","x":1,"x":2}"""
+          """{"schema":"praxis.provenance/2","x-a":"\ud800"}""" ] do
+        let edited = json.TrimEnd().TrimEnd('}') + $""","receivedProvenance":%s{block}}}"""
+        match fromJson edited with
+        | Error message -> Assert.Contains("receivedProvenance", message)
+        | Ok _ -> failwith $"loaded a stored block that is not well-formed: %s{block}"
+
+[<Fact>]
 let ``an unknown actor is persisted as version 2`` () =
     let item = intake "op-5" ProvenanceActor.unknown "EXT-op.op-5" None
     let json = toJson item

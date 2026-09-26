@@ -110,16 +110,25 @@ let private stringOf (node: JsonNode | null) =
 
 let private requiredText (o: JsonObject) prefix name =
     match field o name |> Option.bind stringOf with
-    | Some text when text.Trim().Length > 0 -> Ok text
+    | Some text when not (ContractText.isBlank text) -> Ok text
     | _ -> Error $"%s{prefix}.%s{name} must be a non-empty string"
 
+/// Parses a request document. The text is checked as text first (contract
+/// 1.2 rule 1): a member name repeated within one object, or an unpaired
+/// surrogate, rejects the document, so no reader has to guess which duplicate
+/// wins and nothing that cannot be written back as UTF-8 is ever stored.
+/// Never throws.
 let private parseObject label (json: string) =
-    try
-        match JsonNode.Parse json with
-        | :? JsonObject as o -> Ok o
-        | _ -> Error $"%s{label} must be a JSON object"
-    with :? JsonException as ex ->
-        Error $"%s{label} is not valid JSON: %s{ex.Message}"
+    match ProvenanceJson.textProblems json with
+    | problem :: _ -> Error $"%s{label} is not well-formed JSON text: %s{problem}"
+    | [] ->
+        try
+            match JsonNode.Parse json with
+            | :? JsonObject as o -> Ok o
+            | _ -> Error $"%s{label} must be a JSON object"
+        with
+        | :? JsonException as ex -> Error $"%s{label} is not valid JSON: %s{ex.Message}"
+        | :? ArgumentException as ex -> Error $"%s{label} is not valid JSON: %s{ex.Message}"
 
 let private collect results =
     results |> List.choose (function Error e -> Some e | Ok _ -> None)
@@ -204,7 +213,7 @@ let actorFromEnvelopeV1 (actor: JsonObject) =
         match field actor name with
         | Some(:? JsonObject as known) when (field known "state" |> Option.bind stringOf) = Some "known" ->
             match field known "value" |> Option.bind stringOf with
-            | Some text when text.Trim().Length > 0 -> text
+            | Some text when not (ContractText.isBlank text) -> text
             | _ -> ProvenanceActor.UnknownValue
         | _ -> ProvenanceActor.UnknownValue
 
@@ -224,18 +233,20 @@ let actorFromEnvelopeV1 (actor: JsonObject) =
 /// (`keyFromEnvelopeV1Namespaced`):
 ///
 ///   * run id and `source.repository` both known ->
-///     `EXT-run.<repository>.<runId>`, the repository escaped with `.` as `_2e`;
-///   * run id known -> `EXT-run.<runId>`;
-///   * otherwise `EXT-op.<operationId>`.
+///     `EXT-run.<seg(repository)>.<seg(runId)>`;
+///   * run id known -> `EXT-run.<seg(runId)>`;
+///   * otherwise `EXT-op.<seg(operationId)>`.
 ///
-/// Ids are escaped injectively (`Provenance.escapeSegment`, contract 1.1), so
-/// two different senders or runs never share a key.
-let keyFromEnvelopeV1 (envelope: JsonObject) =
+/// `seg` is `Provenance.escapeKeySegment` (contract 1.2), which escapes `.`
+/// in every segment, so a namespaced key never equals an un-namespaced one and
+/// two different senders or runs never share a key. An id that is empty or
+/// not well-formed Unicode cannot form a key: the envelope is rejected.
+let keyFromEnvelopeV1 (envelope: JsonObject) : Result<string, string> =
     let known (node: (JsonNode | null) option) =
         match node with
         | Some(:? JsonObject as value) when (field value "state" |> Option.bind stringOf) = Some "known" ->
             match field value "value" |> Option.bind stringOf with
-            | Some text when text.Trim().Length > 0 -> Some text
+            | Some text when not (ContractText.isBlank text) -> Some text
             | _ -> None
         | _ -> None
 
@@ -250,12 +261,16 @@ let keyFromEnvelopeV1 (envelope: JsonObject) =
         | _ -> None
 
     let operationId = field envelope "operationId" |> Option.bind stringOf |> Option.defaultValue ""
+    let segment label text = Provenance.escapeKeySegment text |> Result.mapError (sprintf "%s: %s" label)
 
     match run, repository with
     | Some run, Some repository ->
-        $"EXT-run.%s{Provenance.escapeSegment false repository}.%s{Provenance.escapeSegment true run}"
-    | Some run, None -> $"EXT-run.%s{Provenance.escapeSegment true run}"
-    | None, _ -> Provenance.operationKey operationId
+        segment "envelope.source.repository" repository
+        |> Result.bind (fun namespaceSegment ->
+            segment "envelope.actor.runId" run
+            |> Result.map (fun runSegment -> $"EXT-run.%s{namespaceSegment}.%s{runSegment}"))
+    | Some run, None -> segment "envelope.actor.runId" run |> Result.map (sprintf "EXT-run.%s")
+    | None, _ -> Provenance.operationKey operationId |> Result.mapError (sprintf "envelope.operationId: %s")
 
 let private parseEnvelope (o: JsonObject) =
     let schema = field o "schema" |> Option.bind stringOf
@@ -299,7 +314,9 @@ let private parseEnvelope (o: JsonObject) =
 
         let key =
             match tag, field o "execution" with
-            | EnvelopeV2, None -> operationId |> Result.map Provenance.operationKey
+            | EnvelopeV2, None ->
+                operationId
+                |> Result.bind (Provenance.operationKey >> Result.mapError (sprintf "envelope.operationId: %s"))
             | EnvelopeV2, Some node ->
                 match stringOf node with
                 | Some execution when
@@ -313,7 +330,7 @@ let private parseEnvelope (o: JsonObject) =
             | _, Some _ -> Error "envelope.execution is not part of a v1 envelope"
             | _ ->
                 match actorNode, operationId with
-                | Ok _, Ok _ -> Ok(keyFromEnvelopeV1 o)
+                | Ok _, Ok _ -> keyFromEnvelopeV1 o
                 | _ -> Error "envelope.actor and envelope.operationId are required"
 
         let provenance =
@@ -381,12 +398,16 @@ let private readSource (o: JsonObject) =
         | None
         | Some Null -> Ok None
         | Some(:? JsonObject as source) ->
+            // The canonical `{ref}` shape (echelon-registry reads the same
+            // member). Blank and trimmed over ASCII whitespace only
+            // (contract 1.2), as the registry does, so both derive the same
+            // lineage. The reference is checked again by `addLineage`.
             match field source "ref" |> Option.bind stringOf with
-            | Some reference when reference.Trim().Length > 0 ->
+            | Some reference when not (ContractText.isBlank reference) ->
                 let optional name = field source name |> Option.bind stringOf
-                Ok(Some { Ref = reference.Trim(); Url = optional "url"; DisplayName = optional "displayName" })
+                Ok(Some { Ref = ContractText.asciiTrim reference; Url = optional "url"; DisplayName = optional "displayName" })
             | _ -> Error "payload.context.source.ref must be a non-empty string such as 'aegis:finding/SF-0001'"
-        | Some _ -> Error "payload.context.source must be an object"
+        | Some _ -> Error "payload.context.source must be an object { \"ref\": \"...\" } such as { \"ref\": \"aegis:finding/SF-0001\" }"
     | Some _ -> Error "payload.context must be an object or null"
 
 let private parsePayload (o: JsonObject) =
@@ -486,7 +507,8 @@ let itemIdFor (operationId: string) =
 
 /// The key of Vigila's own `transformed` contribution (VIG-PROV-012).
 let transformationKey (operationId: string) =
-    Provenance.foreignExecutionKey "vigila" (Provenance.safeSegment operationId)
+    Provenance.escapeKeySegment operationId
+    |> Result.bind (Provenance.foreignExecutionKey "vigila")
 
 let private nextActionFor requestedAction =
     match requestedAction with
@@ -515,11 +537,20 @@ let private ownProvenance options (envelope: Envelope) (request: FollowUpRequest
         else
             Ok None
 
+    // Lineage from the request payload is checked exactly like lineage from a
+    // block (contract 1.2): a refused reference -- a credential, an unpaired
+    // surrogate -- rejects the request. It is never stored and never dropped
+    // silently (VIG-PROV-010, VIG-PROV-013).
     let lineage =
         (match envelope.Provenance with
          | Some(ProvenanceJson.Supported(block, _)) -> Option.defaultValue [] block.DerivedFrom
          | _ -> [])
         @ (request.Source |> Option.map (fun source -> source.Ref) |> Option.toList)
+
+    let addLineage block =
+        Provenance.addLineage lineage block
+        |> Result.map fst
+        |> Result.mapError (sprintf "payload.context.source.ref: lineage refused: %s")
 
     Provenance.empty
     |> Provenance.append envelope.ContributionKey created
@@ -528,7 +559,7 @@ let private ownProvenance options (envelope: Envelope) (request: FollowUpRequest
         |> Result.bind (function
             | Some(key, entry) -> Provenance.append key entry block |> Result.map fst
             | None -> Ok block))
-    |> Result.map (Provenance.addLineage lineage)
+    |> Result.bind addLineage
 
 let private sourceReference (link: SourceLink) =
     let system =
@@ -542,8 +573,19 @@ let private sourceReference (link: SourceLink) =
       Url = link.Url }
 
 /// Builds the follow-up item for a request. Pure and deterministic.
+/// The stored form must load again: the block, written as it will be
+/// persisted, has to classify as supported. Anything else is refused here
+/// rather than stored as an item nobody can read back.
+let private reloadable (block: ProvenanceBlock) =
+    match ProvenanceJson.classifyText (ProvenanceJson.toJsonText block) with
+    | ProvenanceJson.Supported _ -> Ok block
+    | ProvenanceJson.Unsupported(schema, _) -> Error $"the item's provenance would be written as %s{schema}"
+    | ProvenanceJson.Malformed problems ->
+        Error("the item's provenance would not load again: " + String.concat "; " problems)
+
 let build options (envelope: Envelope) (request: FollowUpRequest) =
     ownProvenance options envelope request
+    |> Result.bind reloadable
     |> Result.mapError (fun problem -> { Code = "ValidationFailed"; Problems = [ problem ] })
     |> Result.map (fun block ->
         let clock = Clock.fixedAt envelope.Timestamp

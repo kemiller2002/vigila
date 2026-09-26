@@ -26,6 +26,16 @@ provenance:
         model: unknown
         runtime: claude-code
       reason: "Adopt Praxis provenance contract revision 1.1 and registry REG-PROV-008 v1 keys (FEAT-ECHELON-PROVENANCE-R1)"
+    EXE-20260926T094839079Z-2d14d1c6:
+      operations: [modified]
+      at: 2026-09-26T20:52:21.817Z
+      actor:
+        kind: agent
+        id: anthropic/claude-code
+        provider: anthropic
+        model: unknown
+        runtime: claude-code
+      reason: "Adopt Praxis provenance contract revision 1.2 from the second adversarial review (FEAT-ECHELON-PROVENANCE-R12)"
 ---
 
 # Traceability
@@ -289,6 +299,7 @@ implementation and tests.
 | `RQ-ROS-2026-A016` (explicit propagation) | `PROV-009` |
 | `RQ-ROS-2026-A017` (no credentials) | `PROV-013` |
 | `RQ-ROS-2026-A018` (conformance) | `PROV-017` |
+| Contract revision 1.2 (praxis@b003718): well-formed text, ASCII whitespace, checked lineage, key segments, stored `null` | `PROV-004`, `PROV-006`, `PROV-009`, `PROV-010`, `PROV-012`, `PROV-013`, `PROV-017` (REQ-PROV 0.2.0) |
 
 Existing requirements this area extends, without changing their text:
 `DOM-035`, `DOM-037` (projection, `PROV-015`), `AGT-035` (envelope,

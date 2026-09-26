@@ -27,6 +27,16 @@ provenance:
         model: unknown
         runtime: claude-code
       reason: "Adopt Praxis provenance contract revision 1.1 and registry REG-PROV-008 v1 keys (FEAT-ECHELON-PROVENANCE-R1)"
+    EXE-20260926T094839079Z-2d14d1c6:
+      operations: [modified]
+      at: 2026-09-26T20:52:21.324Z
+      actor:
+        kind: agent
+        id: anthropic/claude-code
+        provider: anthropic
+        model: unknown
+        runtime: claude-code
+      reason: "Adopt Praxis provenance contract revision 1.2 from the second adversarial review (FEAT-ECHELON-PROVENANCE-R12)"
 ---
 
 # ADR-0004 — Praxis provenance in Vigila
@@ -40,7 +50,7 @@ requires Vigila to keep apart the agent that discovered something, the system
 that generated the follow-up, the agents that later handled it, the human who
 reviewed or resolved it, and the execution behind each. Praxis already defines
 that model and its interchange block (`DF-ROS-2026-A036`, `DF-ROS-2026-A037`,
-kemiller2002/praxis@a42c44e, revised to contract 1.1 at c2657ef); a Vigila-specific model would be the schema fork
+kemiller2002/praxis@a42c44e, revised to contract 1.1 at c2657ef and 1.2 at b003718); a Vigila-specific model would be the schema fork
 `DF-ROS-2026-A037` rejects.
 
 ## Decision
@@ -87,13 +97,20 @@ kemiller2002/praxis@a42c44e, revised to contract 1.1 at c2657ef); a Vigila-speci
    properties on v2, and checks `source` and the v1 actor's `knownValue`
    shapes. Reason: the registry schema says so (`additionalProperties: false`),
    and a misspelt `execution` or `provenance` silently ignored would drop
-   identity. v1 keys follow REG-PROV-008 (`EXT-run.<repository>.<runId>` when
-   the repository is known) with the Praxis 1.1 injective escaping.
+   identity. v1 keys follow REG-PROV-008 (`EXT-run.<seg(repository)>.<seg(runId)>`
+   when the repository is known), where `seg` is the Praxis 1.2
+   `escapeKeySegment`: per code point, with `.` escaped, so a namespaced key
+   never equals an un-namespaced one. Envelope and payload are read as text
+   first; a repeated member name or an unpaired surrogate rejects them.
 7. **Source reference convention.** `followup.create` v1 leaves `context` open.
    Vigila reads `context.source` as `{ref, url?, displayName?}`, where `ref` is
    a namespaced record reference (`aegis:finding/SF-0001`). It becomes both a
    `SourceReference` and a `derivedFrom` entry. Other `context` fields are not
-   stored.
+   stored. This object shape is canonical across Echelon (second review,
+   finding 3); echelon-registry reads `context.source.ref` too. The reference
+   goes through the checked `addLineage` (contract 1.2): a credential, a blank
+   or not well-formed reference rejects the request, so it is never stored and
+   the item always reloads (second review, finding 1).
 
 ## Consequences
 

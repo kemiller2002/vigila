@@ -46,10 +46,15 @@ type AttributionError =
 [<RequireQualifiedAccess>]
 module Attribution =
 
-    /// The contribution key this attribution files under (VIG-PROV-004).
+    /// The contribution key this attribution files under (VIG-PROV-004). An
+    /// operation id that cannot form a key (empty, or not well-formed
+    /// Unicode; contract 1.2) is refused rather than turned into a key.
     let key (attribution: Attribution) =
-        attribution.Execution
-        |> Option.defaultWith (fun () -> Provenance.operationKey attribution.OperationId)
+        match attribution.Execution with
+        | Some execution -> Ok execution
+        | None ->
+            Provenance.operationKey attribution.OperationId
+            |> Result.mapError (fun problem -> Invalid $"operationId: %s{problem}")
 
     let private clock attribution = Clock.fixedAt attribution.At
 
@@ -70,10 +75,12 @@ module Attribution =
             { Provenance.contribution operations attribution.At attribution.Actor with
                 Reason = attribution.Reason }
 
-        block
-        |> Result.bind (Provenance.append (key attribution) entry)
-        |> Result.map (fun (updated, _) -> { item with Provenance = Some(Recorded updated) })
-        |> Result.mapError ProvenanceRefused
+        key attribution
+        |> Result.bind (fun contributionKey ->
+            block
+            |> Result.bind (Provenance.append contributionKey entry)
+            |> Result.map (fun (updated, _) -> { item with Provenance = Some(Recorded updated) })
+            |> Result.mapError ProvenanceRefused)
 
     /// Changes status. Closing (Completed or Cancelled) is recorded as
     /// `resolved`; any other change as `modified`.
@@ -84,15 +91,17 @@ module Attribution =
             | Cancelled -> Operation.Resolved
             | _ -> Operation.Modified
 
-        Transitions.changeStatus
-            (clock attribution)
-            (legacyActor attribution)
-            (Some(key attribution))
-            target
-            resolution
-            resolutionNote
-            item
-        |> Result.mapError TransitionRefused
+        key attribution
+        |> Result.bind (fun contributionKey ->
+            Transitions.changeStatus
+                (clock attribution)
+                (legacyActor attribution)
+                (Some contributionKey)
+                target
+                resolution
+                resolutionNote
+                item
+            |> Result.mapError TransitionRefused)
         |> Result.bind (contribute [ operation ] attribution)
 
     /// Resolves an item: completes or cancels it, recorded as `resolved`.
@@ -105,16 +114,19 @@ module Attribution =
     /// Adds a note, recorded as `modified`. The note and its history entry
     /// point at the contribution (VIG-PROV-016).
     let addNote attribution text (item: Item) =
-        Note.create (clock attribution) (legacyActor attribution) item.Id text
-        |> Result.mapError Invalid
-        |> Result.bind (fun note ->
-            let attributed = { note with Contribution = Some(key attribution) }
+        key attribution
+        |> Result.bind (fun contributionKey ->
+            Note.create (clock attribution) (legacyActor attribution) item.Id text
+            |> Result.mapError Invalid
+            |> Result.map (fun note -> { note with Contribution = Some contributionKey }))
+        |> Result.bind (fun attributed ->
             Item.addNote (clock attribution) (legacyActor attribution) attributed item
             |> contribute [ Operation.Modified ] attribution)
 
     /// Records a review, `reviewed`, and clears the review flag if it was set.
     /// Reviewing does not modify the item's content (RQ-ROS-2026-A014).
     let review attribution (item: Item) =
-        item
-        |> Item.setNeedsReview (clock attribution) (legacyActor attribution) (Some(key attribution)) false
-        |> contribute [ Operation.Reviewed ] attribution
+        key attribution
+        |> Result.map (fun contributionKey ->
+            Item.setNeedsReview (clock attribution) (legacyActor attribution) (Some contributionKey) false item)
+        |> Result.bind (contribute [ Operation.Reviewed ] attribution)

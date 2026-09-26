@@ -2,10 +2,10 @@
 id: REQ-PROV
 title: Actor identity and provenance across the Echelon boundary
 status: draft
-version: 0.1.0
+version: 0.2.0
 created: 2026-09-26
 updated: 2026-09-26
-sources: Praxis DF-ROS-2026-A036, DF-ROS-2026-A037, RQ-ROS-2026-A001..A019 (kemiller2002/praxis@c2657efb4d54f11d0fd0617cc1bcd5b8418601d5, contract revision 1.1); echelon-registry REG-PROV-006..REG-PROV-008 (commit 1788a35); work items FEAT-ECHELON-PROVENANCE, FEAT-ECHELON-PROVENANCE-R1
+sources: Praxis DF-ROS-2026-A036, DF-ROS-2026-A037, RQ-ROS-2026-A001..A019 (kemiller2002/praxis@b0037183389c8b9392919f58521b9487d1b4d5c6, contract revision 1.2); echelon-registry REG-PROV-006..REG-PROV-008 (contract 1.2 key form); work items FEAT-ECHELON-PROVENANCE, FEAT-ECHELON-PROVENANCE-R1, FEAT-ECHELON-PROVENANCE-R12
 provenance:
   contributions:
     EXE-20260926T081409758Z-615c839a:
@@ -29,6 +29,16 @@ provenance:
         model: unknown
         runtime: claude-code
       reason: "Adopt Praxis provenance contract revision 1.1 and registry REG-PROV-008 v1 keys (FEAT-ECHELON-PROVENANCE-R1)"
+    EXE-20260926T094839079Z-2d14d1c6:
+      operations: [modified]
+      at: 2026-09-26T20:52:20.825Z
+      actor:
+        kind: agent
+        id: anthropic/claude-code
+        provider: anthropic
+        model: unknown
+        runtime: claude-code
+      reason: "Adopt Praxis provenance contract revision 1.2 from the second adversarial review (FEAT-ECHELON-PROVENANCE-R12)"
 ---
 
 # Actor identity and provenance
@@ -99,9 +109,14 @@ A contribution is keyed by `EXE-…` (a Praxis execution), `EXT-<system>.<run-id
 any execution). An agent contribution MUST be keyed by an execution. When only
 an operation id is known, the key MUST be `EXT-op.<operationId>`. Vigila MUST
 NOT invent `EXE-` identifiers. An id carried inside a key MUST be escaped
-injectively (contract revision 1.1): `_` and every character outside
-`[A-Za-z0-9.-]` become `_xx` per UTF-8 byte, so `op 1` is `EXT-op.op_201` and
-two different ids never share a key.
+injectively by `escapeKeySegment` (contract revision 1.2): per Unicode code
+point (never per UTF-16 unit), ASCII letters, digits and `-` pass through and
+everything else -- `.` and `_` included -- becomes `_xx` per UTF-8 byte in
+lower-case hex. So `op 1` is `EXT-op.op_201`, `vigila.7` is `vigila_2e7`, U+1F600
+is `_f0_9f_98_80`, and two different ids never share a key. An id that is
+empty or holds an unpaired UTF-16 surrogate cannot form a key: the envelope or
+attributed operation MUST be rejected, never keyed by a substitute. Keys
+already stored are never rewritten.
 
 ## Receiving and appending
 
@@ -137,6 +152,16 @@ Every received or loaded block MUST be classified as:
   (`ValidationFailed`, `VIG-AGT-050`) that names the problems. A malformed block
   MUST NOT be dropped or repaired silently.
 
+Under contract revision 1.2, a block is read as JSON text, and the text is
+malformed, whatever its major version, when it is not valid JSON, when any one
+object repeats a member name (detected on the text, because parsed forms keep
+only one of the duplicates), or when any member name or string holds an
+unpaired UTF-16 surrogate. Classification MUST NOT throw. "Blank" means empty
+after trimming ASCII whitespace only (tab, LF, VT, FF, CR, space); U+0085,
+U+FEFF, U+001C, U+00A0 and every other character are content. A stored
+`"provenance": null` or `"receivedProvenance": null` is malformed, not absent:
+the load fails with the problem named, so the next write cannot drop it.
+
 #### VIG-PROV-007 — Persisted schema version 2
 **Level:** MUST · **Release:** v1 · **Source:** VIG-PER-020, VIG-PER-021, VIG-PER-022, VIG-PER-023, RQ-ROS-2026-A007
 
@@ -169,11 +194,15 @@ Vigila MUST accept `followup.create` with an `echelon.execution-envelope/v2`,
 and with a `v1` envelope mapped losslessly by the Praxis rules
 (`actorFromEnvelopeV1`: `system` → `automation`; an unknown value → the literal
 `unknown`; not-applicable omitted for humans; `model`/`runtime` `unknown`;
-key `EXT-run.<runId>` or `EXT-op.<operationId>`, namespaced as
-`EXT-run.<repository>.<runId>` when `source.repository` is known, with `.` in the
-repository also escaped, exactly as echelon-registry REG-PROV-008 defines).
+key `EXT-run.<seg(runId)>` or `EXT-op.<seg(operationId)>`, namespaced as
+`EXT-run.<seg(repository)>.<seg(runId)>` when `source.repository` is known,
+exactly as echelon-registry REG-PROV-008 defines, where `seg` is
+`escapeKeySegment` (`VIG-PROV-004`); because `.` is escaped in every segment, a
+namespaced key never equals an un-namespaced one).
 Envelopes MUST meet the registry schemas: a property outside the schema is
-rejected, except `x-...` extension properties on v2. The invoking actor is taken
+rejected, except `x-...` extension properties on v2. The envelope and payload
+are read as text first: a member name repeated within one object, or an
+unpaired surrogate, anywhere in either rejects the request (contract 1.2). The invoking actor is taken
 only from the envelope; nothing is guessed from ambient signals. The resulting
 item's `provenance` records the invoking actor's `created` contribution keyed by
 `envelope.execution` or, when that is absent, `EXT-op.<operationId>`.
@@ -183,7 +212,14 @@ item's `provenance` records the invoking actor's `created` contribution keyed by
 
 The item's `derivedFrom` MUST be the received block's `derivedFrom` followed by
 the request's source reference (for example `aegis:finding/SF-0001`, read from
-the payload's `context.source.ref`; see ADR-0004). The
+the payload's `context.source.ref`; see ADR-0004). The object shape
+`context.source: {ref, url?, displayName?}` is canonical for `followup.create`
+(echelon-registry reads the same member); any other shape is rejected with a
+clear error. The reference is trimmed of ASCII whitespace only. Every lineage
+reference MUST pass the contract 1.2 `addLineage` checks -- non-blank,
+well-formed Unicode, not credential-like, and the result a valid block -- and a
+refused reference MUST reject the request: it is never stored and never
+dropped silently. The
 received `envelope.provenance` describes the payload's upstream origin (for
 example the agent that discovered a finding). It MUST be kept verbatim as the
 item's `receivedProvenance` — supported or unsupported — and MUST NOT be merged
@@ -204,7 +240,7 @@ refused as `OperationAlreadyProcessed`.
 
 Vigila MAY record its own `transformed` contribution as the automation actor
 `echelon/vigila` (`provider: echelon`, `model: unknown`, `runtime: vigila`) keyed
-`EXT-vigila.<operationId>`, because it changes the request's representation into
+`EXT-vigila.<seg(operationId)>` (`VIG-PROV-004`), because it changes the request's representation into
 an item. It MUST NOT record itself as `created` for a request another actor
 invoked.
 
@@ -213,7 +249,15 @@ invoked.
 
 A block or envelope actor containing a credential-like value anywhere MUST be
 rejected as malformed. Vigila MUST NOT write authentication material into
-provenance.
+provenance. This includes lineage derived from a request payload
+(`context.source.ref`): a credential there rejects the request
+(`ValidationFailed`). Credential patterns use explicit ASCII classes only --
+no `\b`, `\s` or case folding, `CultureInvariant` without `IgnoreCase` -- and
+the bearer pattern is
+`(?:^|[^A-Za-z0-9_])[Bb][Ee][Aa][Rr][Ee][Rr][\t\n\v\f\r ]+[A-Za-z0-9._~+/=-]{16,}`
+(contract 1.2). Before an item built at the boundary is accepted, its own block,
+written as it will be persisted, MUST classify as supported, so Vigila never
+stores an item it cannot load again.
 
 #### VIG-PROV-014 — Identity is not authority
 **Level:** MUST · **Release:** v1 · **Source:** RQ-ROS-2026-A010, RQ-ROS-2026-A019
@@ -253,7 +297,11 @@ execution without duplicating the actor.
 **Level:** MUST · **Release:** v1 · **Source:** RQ-ROS-2026-A018, DF-ROS-2026-A037 §7
 
 Vigila's codec MUST reach the reference library's verdict and warning count on
-every case in the vendored Praxis `cases.json`, and replaying the
+every case in the vendored Praxis `cases.json` (70 cases at contract 1.2), both
+as a parsed object and as text; MUST reach the reference verdict on every
+`text-cases.json` case; MUST derive the reference key, or refuse, on every
+`envelope-key-cases.json` case; and MUST add or refuse lineage as the reference
+does on every `lineage-cases.json` case. Replaying the
 `vigila:followup/FU-0001` record of `echelon-chain.json` MUST reproduce its
 originator and roles. The fixtures are vendored unchanged with their source
 commit and SHA-256, and a test MUST detect any local edit.
@@ -267,3 +315,26 @@ commit and SHA-256, and a test MUST detect any local edit.
 | `PROV-006`, `PROV-013`, `PROV-017` | `src/Vigila.Application/ProvenanceJson.fs` | `tests/Vigila.Application.Tests/ProvenanceConformanceTests.fs` |
 | `PROV-007`, `PROV-008` | `src/Vigila.Host.GitHub/ItemJson.fs` | `tests/Vigila.Host.GitHub.Tests/ProvenancePersistenceTests.fs` |
 | `PROV-009`..`PROV-012`, `PROV-014` | `src/Vigila.Application/FollowUpIntake.fs` | `tests/Vigila.Application.Tests/ProvenanceIntakeTests.fs` |
+| `PROV-004` (1.2 key escaping), `PROV-006` (ASCII whitespace), `PROV-010`, `PROV-013` (checked lineage, ASCII credential patterns) | `src/Vigila.Semantic/Provenance.fs` (`ContractText`, `escapeKeySegment`, `addLineage`, `isCredentialLike`) | `tests/Vigila.Semantic.Tests/ProvenanceTests.fs`; `lineage-cases.json`, `envelope-key-cases.json` in `ProvenanceConformanceTests.fs` |
+| `PROV-006` (well-formed text, never throws) | `src/Vigila.Application/ProvenanceJson.fs` (`textProblems`, `classify`, `classifyText`) | `text-cases.json` in `ProvenanceConformanceTests.fs`; `ProvenanceIntakeTests.fs` |
+| `PROV-006` (stored null), `PROV-013` (reloadable item) | `src/Vigila.Host.GitHub/ItemJson.fs`; `FollowUpIntake.fs` (`reloadable`) | `ProvenancePersistenceTests.fs`; `ProvenanceIntakeTests.fs` |
+
+## Revision notes
+
+- **0.2.0** (2026-09-26, `FEAT-ECHELON-PROVENANCE-R12`) -- adopts Praxis
+  contract revision 1.2 (kemiller2002/praxis@b003718) after the second
+  adversarial review. `VIG-PROV-004`: keys escape per code point and escape
+  `.` (`escapeKeySegment`); an id that cannot form a key is rejected.
+  `VIG-PROV-006`: text-level malformed (repeated member names, unpaired
+  surrogates), classification never throws, ASCII-only blankness, stored
+  `null` is malformed. `VIG-PROV-009`: REG-PROV-008 namespaced key
+  `EXT-run.<seg(repository)>.<seg(runId)>`; envelope and payload read as
+  text. `VIG-PROV-010`: `{ref}` is the canonical `context.source` shape and
+  lineage is checked, rejecting the request on refusal. `VIG-PROV-012`:
+  `EXT-vigila.<seg(operationId)>`. `VIG-PROV-013`: payload lineage is
+  credential-checked; ASCII-only credential patterns; an item is accepted
+  only when its block reloads. `VIG-PROV-017`: the three new fixtures.
+  Review findings 1, 5, 6, 10, 11 and 13.
+- **0.1.0** (2026-09-26, `FEAT-ECHELON-PROVENANCE`, `FEAT-ECHELON-PROVENANCE-R1`)
+  -- initial VIG-PROV area, then contract revision 1.1 and registry
+  REG-PROV-008 v1 keys.

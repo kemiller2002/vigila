@@ -549,13 +549,17 @@ let private readHistory version (e: JsonElement) =
               Contribution = contribution }
     }
 
-/// Reads a provenance block through the shared codec. Malformed fails the
-/// whole record with the problems named, never silently dropping the block
-/// (VIG-PROV-006). An unsupported major keeps the exact stored text.
+/// Reads a provenance block through the shared codec, as text (contract 1.2:
+/// a repeated member name or an unpaired surrogate is malformed). Malformed
+/// fails the whole record with the problems named, never silently dropping
+/// the block (VIG-PROV-006). An unsupported major keeps the exact stored
+/// text. A stored `null` is malformed, not absent (contract 1.1 rule 3): read
+/// as absent it would be dropped on the next write.
 let private readProvenance (el: JsonElement) (name: string) =
     match el.TryGetProperty name with
     | false, _ -> Ok None
-    | true, v when v.ValueKind = JsonValueKind.Null -> Ok None
+    | true, v when v.ValueKind = JsonValueKind.Null ->
+        Error $"'%s{name}' is malformed: a stored provenance block must not be null; omit it when there is none"
     | true, v ->
         match ProvenanceJson.classifyText (v.GetRawText()) with
         | ProvenanceJson.Unsupported(schema, _) -> Ok(Some(CarriedVerbatim(schema, RawJson(v.GetRawText()))))

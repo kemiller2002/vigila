@@ -113,8 +113,8 @@ let ``a credential in a contribution is refused`` () =
 
 [<Fact>]
 let ``an operation-only key is formed without inventing an execution`` () =
-    Assert.Equal("EXT-op.op_201_2f2", Provenance.operationKey "op 1/2")
-    Assert.Equal(ForeignExecution, Provenance.keyKind (Provenance.operationKey "op 1/2"))
+    Assert.Equal(Ok "EXT-op.op_201_2f2", Provenance.operationKey "op 1/2")
+    Assert.Equal(Ok ForeignExecution, Provenance.operationKey "op 1/2" |> Result.map Provenance.keyKind)
     Assert.Equal(Ok "EXT-vigila.op-1", Provenance.foreignExecutionKey "vigila" "op-1")
 
 [<Fact>]
@@ -122,10 +122,62 @@ let ``lineage is added without duplicates and never becomes authorship`` () =
     let block =
         created
         |> Provenance.addLineage [ "aegis:finding/SF-0001"; "aegis:finding/SF-0001" ]
-        |> Provenance.addLineage [ "aegis:finding/SF-0001"; "git:commit/5e1f0c2" ]
+        |> Result.bind (fst >> Provenance.addLineage [ "aegis:finding/SF-0001"; "git:commit/5e1f0c2" ])
+        |> ok
 
     Assert.Equal(Some [ "aegis:finding/SF-0001"; "git:commit/5e1f0c2" ], block.DerivedFrom)
     Assert.Equal(1, block.Contributions.Length)
+
+[<Fact>]
+let ``adding lineage that is already there changes nothing`` () =
+    let once = created |> Provenance.addLineage [ "RQ-1" ] |> ok
+    Assert.Equal(Ok(once, false), Provenance.addLineage [ "RQ-1" ] once)
+
+[<Theory>]
+[<InlineData("ghp_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")>]
+[<InlineData("see Bearer abcdefghijklmnopqrstuvwxyz")>]
+[<InlineData(" \t")>]
+[<InlineData("")>]
+let ``lineage that is blank, credential-like or not well-formed is refused`` (reference: string) =
+    // Contract 1.2 rule 3; review finding 1: lineage was added unchecked.
+    Assert.True(Result.isError (Provenance.addLineage [ "RQ-1"; reference ] created))
+
+[<Fact>]
+let ``lineage is never added to a malformed block`` () =
+    let broken = { created with Contributions = created.Contributions @ [ "bad", snd created.Contributions.Head ] }
+    Assert.True(Result.isError (Provenance.addLineage [ "RQ-1" ] broken))
+
+[<Theory>]
+[<InlineData("\u0085")>]
+[<InlineData("\uFEFF")>]
+[<InlineData("\u001C")>]
+[<InlineData("\u00A0")>]
+let ``only ASCII whitespace is blank`` (text: string) =
+    // Contract 1.2 rule 2: .NET Trim() would call these blank; the contract
+    // counts them as content.
+    Assert.False(ContractText.isBlank text)
+    Assert.True(Result.isOk (Provenance.addLineage [ text ] created))
+    let actor = ProvenanceActor.human text
+    Assert.Empty(Provenance.actorProblems "actor" actor)
+
+[<Fact>]
+let ``ASCII whitespace is blank`` () =
+    Assert.True(ContractText.isBlank " \t\n\u000B\u000C\r")
+    Assert.Equal("a b", ContractText.asciiTrim "\t a b \r\n")
+    Assert.NotEmpty(Provenance.actorProblems "actor" (ProvenanceActor.human " \t"))
+
+[<Theory>]
+[<InlineData("Bearer abcdefghijklmnop", true)>]
+[<InlineData("BEARER\tabcdefghijklmnop", true)>]
+[<InlineData("x:bearer abcdefghijklmnop", true)>]
+[<InlineData("\u00e9bearer abcdefghijklmnop", true)>]
+[<InlineData("mybearer abcdefghijklmnop", false)>]
+[<InlineData("my_bearer abcdefghijklmnop", false)>]
+[<InlineData("bearer\u0085abcdefghijklmnop", false)>]
+[<InlineData("bearer \u212A\u212A\u212A\u212A\u212A\u212A\u212A\u212A\u212A\u212A\u212A\u212A\u212A\u212A\u212A\u212A\u212A\u212A\u212A\u212A", false)>]
+let ``the bearer pattern uses ASCII classes only`` (text: string) (expected: bool) =
+    // Contract 1.2 rule 2 / review finding 11: no \b, \s or case folding.
+    Assert.Equal(expected, Provenance.isCredentialLike text)
 
 [<Theory>]
 [<InlineData("agent", "Agent")>]
@@ -258,14 +310,32 @@ let ``an actor of unknown identity cannot extend an entry a known actor holds`` 
 [<InlineData("op 1", "op_201")>]
 [<InlineData("gh/99", "gh_2f99")>]
 [<InlineData("a_b", "a_5fb")>]
-[<InlineData("a-b.c", "a-b.c")>]
+[<InlineData("a-b.c", "a-b_2ec")>]
+[<InlineData("vigila.7", "vigila_2e7")>]
 [<InlineData("é", "_c3_a9")>]
-let ``key segments are escaped injectively`` (text: string) (expected: string) =
-    Assert.Equal(expected, Provenance.safeSegment text)
+[<InlineData("op-\U0001F600", "op-_f0_9f_98_80")>]
+[<InlineData("op-\U0001F601", "op-_f0_9f_98_81")>]
+[<InlineData("op-\uFFFD", "op-_ef_bf_bd")>]
+let ``key segments are escaped per code point`` (text: string) (expected: string) =
+    // Contract 1.2 rule 4 / review finding 6: '.' is escaped, and characters
+    // outside the BMP are escaped as one code point, never as two halves.
+    Assert.Equal(Ok expected, Provenance.escapeKeySegment text)
 
 [<Fact>]
 let ``escaping is injective where replacement was not`` () =
     // Under the old '-' replacement all three collapsed to "a-b".
-    let escaped = [ "a b"; "a/b"; "a-b"; "a_2fb" ] |> List.map Provenance.safeSegment
+    let escaped = [ "a b"; "a/b"; "a-b"; "a_2fb"; "a.b"; "a_2eb" ] |> List.map Provenance.escapeKeySegment
     Assert.Equal(escaped.Length, (List.distinct escaped).Length)
-    Assert.Equal("a_2eb", Provenance.escapeSegment false "a.b")
+
+[<Fact>]
+let ``an id that is empty or not well-formed Unicode cannot form a key`` () =
+    // Built in code: xUnit replaces a lone surrogate in attribute data.
+    for text in [ ""; "op-" + string (char 0xD83D); string (char 0xDE00) + "x" ] do
+        Assert.True(Result.isError (Provenance.escapeKeySegment text))
+        Assert.True(Result.isError (Provenance.operationKey text))
+
+[<Fact>]
+let ``lineage holding an unpaired surrogate is refused`` () =
+    Assert.True(Result.isError (Provenance.addLineage [ "op-" + string (char 0xD800) ] created))
+    Assert.True(ContractText.hasLoneSurrogate ("a" + string (char 0xDC00)))
+    Assert.False(ContractText.hasLoneSurrogate "op-\U0001F600")

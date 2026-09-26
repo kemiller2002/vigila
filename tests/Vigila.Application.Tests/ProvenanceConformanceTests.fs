@@ -1,11 +1,12 @@
 /// Conformance against the shared Praxis fixtures (VIG-PROV-017).
 ///
 /// The fixtures are vendored unchanged from
-/// kemiller2002/praxis@c2657efb4d54f11d0fd0617cc1bcd5b8418601d5 (contract 1.1) into
+/// kemiller2002/praxis@b0037183389c8b9392919f58521b9487d1b4d5c6 (contract 1.2) into
 /// tests/fixtures/praxis-provenance/ with their SHA-256 in SOURCE.json. The
 /// codec must reach the reference library's verdict and warning count on every
 /// case, and the end-to-end chain must replay to the same originators, roles
-/// and lineage.
+/// and lineage. Contract 1.2 adds text cases (`classifyText`), envelope key
+/// cases (`keyFromEnvelopeV1`) and lineage cases (`addLineage`).
 module Vigila.Application.ProvenanceConformanceTests
 
 open System
@@ -48,10 +49,12 @@ let private str (node: JsonNode | null) =
     | null -> failwith "expected a string"
     | value -> value.GetValue<string>()
 
-let private cases () =
-    match (fixture "cases.json")["cases"] with
+let private casesOf name =
+    match (fixture name)["cases"] with
     | :? JsonArray as items -> items |> Seq.map (fun item -> Option.get (Option.ofObj item)) |> Seq.toList
-    | _ -> failwith "cases.json has no cases array"
+    | _ -> failwith $"%s{name} has no cases array"
+
+let private cases () = casesOf "cases.json"
 
 let private verdictCode verdict =
     match verdict with
@@ -63,14 +66,14 @@ let private verdictCode verdict =
 let ``vendored fixtures are byte-identical to the recorded Praxis source`` () =
     let source = fixture "SOURCE.json"
     Assert.Equal("kemiller2002/praxis", str source["repository"])
-    Assert.Equal("c2657efb4d54f11d0fd0617cc1bcd5b8418601d5", str source["commit"])
+    Assert.Equal("b0037183389c8b9392919f58521b9487d1b4d5c6", str source["commit"])
 
     let files =
         match source["files"] with
         | :? JsonObject as o -> o |> Seq.map (fun pair -> pair.Key, str pair.Value) |> Seq.toList
         | _ -> failwith "SOURCE.json has no files map"
 
-    Assert.Equal(3, files.Length)
+    Assert.Equal(6, files.Length)
 
     for name, expected in files do
         let actual =
@@ -83,7 +86,9 @@ let ``vendored fixtures are byte-identical to the recorded Praxis source`` () =
 [<Fact>]
 let ``every conformance case reaches the reference verdict and warning count`` () =
     let all = cases ()
-    Assert.True(all.Length >= 40, "expected the full conformance set")
+    Assert.True(all.Length >= 70, "expected the full contract 1.2 conformance set")
+    let revision = (fixture "cases.json")["contractRevision"]
+    Assert.Equal("1.2", str revision)
 
     let mismatches =
         all
@@ -94,6 +99,114 @@ let ``every conformance case reaches the reference verdict and warning count`` (
             let actual = verdictCode verdict
 
             if actual = expected then None else Some $"%s{name}: expected %A{expected}, got %A{actual} (%A{verdict})")
+
+    Assert.True(mismatches.IsEmpty, String.concat "\n" mismatches)
+
+[<Fact>]
+let ``every conformance case reaches the same verdict when received as text`` () =
+    let mismatches =
+        cases ()
+        |> List.choose (fun case ->
+            let name = str case["name"]
+            let expected = str case["expect"]
+            let actual = fst (verdictCode (ProvenanceJson.classifyText ((get case "block").ToJsonString())))
+            if actual = expected then None else Some $"%s{name}: expected %s{expected}, got %s{actual}")
+
+    Assert.True(mismatches.IsEmpty, String.concat "\n" mismatches)
+
+[<Fact>]
+let ``every text case reaches the reference verdict`` () =
+    // Contract 1.2 rule 1: invalid JSON, a repeated member name in any one
+    // object, or an unpaired surrogate is malformed, whatever the major.
+    let all = casesOf "text-cases.json"
+    Assert.True(all.Length >= 14, "expected the full text case set")
+
+    let mismatches =
+        all
+        |> List.choose (fun case ->
+            let name = str case["name"]
+            let expected = str case["expect"]
+            let actual = fst (verdictCode (ProvenanceJson.classifyText (str case["text"])))
+            if actual = expected then None else Some $"%s{name}: expected %s{expected}, got %s{actual}")
+
+    Assert.True(mismatches.IsEmpty, String.concat "\n" mismatches)
+
+/// The key a receiver derives for an envelope given as text: the text is
+/// checked first, as `FollowUpIntake.readEnvelope` does, then keyed.
+let private envelopeKey (text: string) =
+    match ProvenanceJson.textProblems text with
+    | problem :: _ -> Error problem
+    | [] ->
+        match JsonNode.Parse text with
+        | :? JsonObject as envelope -> FollowUpIntake.keyFromEnvelopeV1 envelope
+        | _ -> Error "not an object"
+
+[<Fact>]
+let ``every envelope key case derives the reference key or is refused`` () =
+    let all = casesOf "envelope-key-cases.json"
+    Assert.True(all.Length >= 12, "expected the full envelope key set")
+
+    let mismatches =
+        all
+        |> List.choose (fun case ->
+            let name = str case["name"]
+
+            let text =
+                match case["envelopeText"] with
+                | null -> (get case "envelope").ToJsonString()
+                | node -> str node
+
+            let expectError = case["error"] |> Option.ofObj |> Option.map (fun n -> n.GetValue<bool>()) |> Option.defaultValue false
+
+            match envelopeKey text, expectError with
+            | Error _, true -> None
+            | Ok key, false when key = str case["key"] -> None
+            | actual, _ -> Some $"%s{name}: got %A{actual}")
+
+    Assert.True(mismatches.IsEmpty, String.concat "\n" mismatches)
+
+[<Fact>]
+let ``every lineage case is added or refused as the reference does`` () =
+    let all = casesOf "lineage-cases.json"
+    Assert.True(all.Length >= 8, "expected the full lineage set")
+
+    let mismatches =
+        all
+        |> List.choose (fun case ->
+            let name = str case["name"]
+            let expectOk = (get case "ok").GetValue<bool>()
+
+            let references =
+                match case["references"] with
+                | :? JsonArray as items ->
+                    items
+                    |> Seq.map (fun item ->
+                        match item with
+                        | :? JsonValue as value when value.GetValueKind() = Text.Json.JsonValueKind.String ->
+                            Some(value.GetValue<string>())
+                        | _ -> None)
+                    |> Seq.toList
+                | _ -> []
+
+            // Vigila's typed API holds only strings, so a non-string
+            // reference is refused where it is read, before addLineage.
+            let result =
+                match ProvenanceJson.classify case["block"] with
+                | ProvenanceJson.Supported(block, _) when references |> List.forall Option.isSome ->
+                    Provenance.addLineage (references |> List.choose id) block |> Result.map fst
+                | ProvenanceJson.Supported _ -> Error "a lineage reference must be a string"
+                | other -> Error $"block is %A{other}"
+
+            match result, expectOk with
+            | Error _, false -> None
+            | Ok block, true ->
+                let expected =
+                    match case["derivedFrom"] with
+                    | :? JsonArray as items -> items |> Seq.map str |> Seq.toList
+                    | _ -> []
+
+                if block.DerivedFrom = Some expected then None else Some $"%s{name}: got %A{block.DerivedFrom}"
+            | actual, _ -> Some $"%s{name}: got %A{actual}")
 
     Assert.True(mismatches.IsEmpty, String.concat "\n" mismatches)
 
@@ -162,7 +275,10 @@ let replayChain () =
                     match Provenance.append (str append["key"]) (parseContribution append["contribution"]) current with
                     | Ok(block, _) -> block
                     | Error e -> failwith $"%s{record}: %s{e}"
-                | _, (:? JsonArray as lineage) -> Provenance.addLineage (lineage |> Seq.map str |> Seq.toList) current
+                | _, (:? JsonArray as lineage) ->
+                    match Provenance.addLineage (lineage |> Seq.map str |> Seq.toList) current with
+                    | Ok(block, _) -> block
+                    | Error e -> failwith $"%s{record}: %s{e}"
                 | _ -> failwith "unknown step"
 
             Map.add record next records)

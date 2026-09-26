@@ -473,3 +473,121 @@ let ``an operation id is escaped injectively in every derived key`` () =
     let item = (receive defaultOptions noneStored (envelope "op_1" aegis None None) payload |> received).Item
     let keys = (ownBlock item).Contributions |> List.map fst
     Assert.Equal<string list>([ "EXT-op.op_5f1"; "EXT-vigila.op_5f1" ], keys)
+
+// --- contract revision 1.2 (second adversarial review) ----------------------
+
+let private tokenLike = "ghp_" + String.replicate 36 "A"
+
+let private payloadWithSource (reference: string) =
+    $"""{{"title":"t","reason":"r","requestedAction":"review","priority":"normal","context":{{"source":{{"ref":"%s{reference}"}}}}}}"""
+
+[<Fact>]
+let ``a credential in the payload's source reference rejects the request and is never stored`` () =
+    // Review finding 1 (HIGH): context.source.ref became derivedFrom with no
+    // credential check, and the stored item could not be reloaded.
+    match receive defaultOptions noneStored (envelope "op-cred" claude (Some "EXE-1") None) (payloadWithSource tokenLike) with
+    | Error e ->
+        Assert.Equal("ValidationFailed", e.Code)
+        Assert.Contains(e.Problems, fun p -> p.Contains "payload.context.source.ref")
+        Assert.DoesNotContain(e.Problems, fun p -> p.Contains tokenLike)
+    | Ok intake -> failwith $"accepted a credential as lineage: %A{(ownBlock intake.Item).DerivedFrom}"
+
+[<Fact>]
+let ``a bearer credential in the source reference is refused too`` () =
+    let result =
+        receive defaultOptions noneStored (envelope "op-bearer" claude (Some "EXE-1") None) (payloadWithSource "x Bearer abcdefghijklmnopqrstu")
+
+    Assert.True(Result.isError result)
+
+[<Fact>]
+let ``an accepted source reference is lineage, and the stored provenance reloads`` () =
+    let item = (receive defaultOptions noneStored (envelope "op-ok" claude (Some "EXE-1") None) (payloadWithSource "aegis:finding/SF-0009") |> received).Item
+    let block = ownBlock item
+    Assert.Equal(Some [ "aegis:finding/SF-0009" ], block.DerivedFrom)
+
+    match ProvenanceJson.classifyText (ProvenanceJson.toJsonText block) with
+    | ProvenanceJson.Supported(again, _) -> Assert.Equal(block, again)
+    | other -> failwith $"the stored block would not reload: %A{other}"
+
+[<Fact>]
+let ``the source reference is trimmed of ASCII whitespace only`` () =
+    // Contract 1.2 rule 2: U+0085 is content, not whitespace.
+    let item = (receive defaultOptions noneStored (envelope "op-nel" claude (Some "EXE-1") None) (payloadWithSource " \\u0085ref ") |> received).Item
+    Assert.Equal(Some [ "\u0085ref" ], (ownBlock item).DerivedFrom)
+    Assert.True(Result.isError (receive defaultOptions noneStored (envelope "op-blank" claude (Some "EXE-1") None) (payloadWithSource " \\t")))
+
+[<Fact>]
+let ``the registry's string form of context.source is not the canonical shape`` () =
+    // Review finding 3: Vigila's {ref} object is canonical; a bare string is
+    // rejected with a clear error rather than silently losing the lineage.
+    let stringSource = """{"title":"t","reason":"r","requestedAction":"review","priority":"normal","context":{"source":"aegis:finding/SF-0001"}}"""
+
+    match receive defaultOptions noneStored (envelope "op-str" claude (Some "EXE-1") None) stringSource with
+    | Error e -> Assert.Contains(e.Problems, fun p -> p.Contains "payload.context.source")
+    | Ok _ -> failwith "a string source was accepted"
+
+let private duplicatedProvenance =
+    """{"schema":"praxis.provenance/1","contributions":{
+        "EXE-A":{"operations":["created"],"at":"2026-09-26T08:00:00.000Z","actor":{"kind":"human","id":"mallory"}},
+        "EXE-A":{"operations":["modified"],"at":"2026-09-26T09:00:00.000Z","actor":{"kind":"human","id":"alice"}}}}"""
+
+[<Fact>]
+let ``a repeated member name anywhere in a request is rejected, never thrown`` () =
+    // Review finding 5: JsonNode throws ArgumentException when it meets a
+    // duplicate; the text is now checked for duplicates first.
+    let inProvenance = envelope "op-dup" claude (Some "EXE-1") (Some duplicatedProvenance)
+    Assert.Contains(rejected inProvenance, fun p -> p.Contains "repeated")
+
+    let inActor = (envelope "op-dup2" claude (Some "EXE-1") None).Replace("\"kind\":\"agent\"", "\"kind\":\"agent\",\"kind\":\"human\"")
+    Assert.Contains(rejected inActor, fun p -> p.Contains "repeated")
+
+    let inPayload = payload.Replace("\"priority\":\"high\"", "\"priority\":\"high\",\"priority\":\"low\"")
+
+    match receive defaultOptions noneStored (envelope "op-dup3" claude (Some "EXE-1") None) inPayload with
+    | Error e -> Assert.Contains(e.Problems, fun p -> p.Contains "repeated")
+    | Ok _ -> failwith "a duplicated payload member was accepted"
+
+[<Fact>]
+let ``an unpaired surrogate anywhere in a request is rejected, never thrown`` () =
+    Assert.NotEmpty(rejected ((envelope "op-s" claude (Some "EXE-1") None).Replace("\"t-1\"", "\"\\ud800\"")))
+
+    match receive defaultOptions noneStored (envelope "op-s2" claude (Some "EXE-1") None) (payloadWithSource "ref-\\udc00") with
+    | Error _ -> ()
+    | Ok _ -> failwith "an unpaired surrogate was accepted"
+
+[<Fact>]
+let ``a namespaced v1 run key can never equal an un-namespaced one`` () =
+    // Review findings 6 and 14: '.' is escaped in every segment (contract 1.2).
+    let namespaced = v1Key (Some(Some "vigila")) (Some(Some "7")) "op-1"
+    let plain = v1Key None (Some(Some "vigila.7")) "op-1"
+    Assert.Equal("EXT-run.vigila.7", namespaced)
+    Assert.Equal("EXT-run.vigila_2e7", plain)
+    Assert.NotEqual<string>(namespaced, plain)
+    Assert.Equal("EXT-run.octo_2frepo.run_2e1", v1Key (Some(Some "octo/repo")) (Some(Some "run.1")) "op-1")
+
+[<Fact>]
+let ``keys escape characters outside the BMP as one code point`` () =
+    let first = v1Key None (Some(Some "\U0001F600")) "op-1"
+    let second = v1Key None (Some(Some "\U0001F601")) "op-1"
+    Assert.Equal("EXT-run._f0_9f_98_80", first)
+    Assert.Equal("EXT-run._f0_9f_98_81", second)
+
+[<Fact>]
+let ``an operation id with a dot is escaped in every derived key`` () =
+    let item = (receive defaultOptions noneStored (envelope "op.1" aegis None None) payload |> received).Item
+    let keys = (ownBlock item).Contributions |> List.map fst
+    Assert.Equal<string list>([ "EXT-op.op_2e1"; "EXT-vigila.op_2e1" ], keys)
+
+[<Fact>]
+let ``an operation id of Unicode whitespace is content, not blank`` () =
+    // Contract 1.2 rule 2 / review finding 11.
+    let item = (receive defaultOptions noneStored (envelope "\\u0085" aegis None None) payload |> received).Item
+    Assert.Equal("EXT-op._c2_85", fst (ownBlock item).Contributions.Head)
+
+[<Fact>]
+let ``an attribution whose operation id cannot form a key is refused`` () =
+    let item = (aegisIntake ()).Item
+
+    match Attribution.review (attribution claude None "" "2026-09-26T10:00:00Z") item with
+    | Error(Invalid problem) -> Assert.Contains("operationId", problem)
+    | other -> failwith $"expected Invalid, got %A{other}"
