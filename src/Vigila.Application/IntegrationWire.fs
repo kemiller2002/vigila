@@ -404,14 +404,25 @@ let encode (outcome: CreateOutcome) =
      w.WriteStartObject()
      w.WriteString("capability", Capability)
      w.WriteNumber("contractVersion", ContractVersion)
-     w.WriteString("status", (if CreateOutcome.isSuccess outcome then "success" else "failure"))
+     let status =
+         match outcome with
+         | Created _ -> "created"
+         | Replayed _ -> "existing"
+         | Conflicted _ -> "conflict"
+         | Rejected _ -> "rejected"
+         | Failed _ -> "failed"
+
+     w.WriteString("status", status)
      w.WriteString("code", CreateOutcome.code outcome)
 
      match outcome with
      | Created record
      | Replayed record
-     | Conflicted record -> writeRecord w record
+     | Conflicted record ->
+         writeRecord w record
+         w.WriteBoolean("retryable", false)
      | Rejected refusals ->
+         w.WriteBoolean("retryable", false)
          w.WriteStartArray("errors")
 
          refusals
@@ -426,7 +437,9 @@ let encode (outcome: CreateOutcome) =
      | Failed fault ->
          w.WriteString("reference", Presentation.reference fault)
          w.WriteString("message", fault.UserMessage)
-         w.WriteBoolean("retrySafe", true)
+         // Replaying the same operation id is always safe after an operational
+         // failure, even when the underlying condition itself is persistent.
+         w.WriteBoolean("retryable", true)
 
      w.WriteEndObject())
 
