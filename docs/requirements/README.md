@@ -4,7 +4,7 @@ title: Vigila requirements — index and conventions
 status: draft
 version: 0.1.0
 created: 2026-09-17
-updated: 2026-09-23
+updated: 2026-09-26
 sources:
   - input-documents/vigila_requirements_v0.1.txt
   - input-documents/Vigila_Requirements_v0.2.txt
@@ -43,6 +43,18 @@ disagree, or because a statement was ambiguous — that call is recorded in
 | [`SCOPE.md`](SCOPE.md) | v1 scope, non-goals, deferred backlog | §52, §53, §54, §97, §98, §141, §142 |
 | [`TRACEABILITY.md`](TRACEABILITY.md) | Source section → requirement ID map, both directions | all |
 | [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md) | Decisions taken where the sources conflicted or were silent (all resolved) | — |
+
+## External contract: Echelon provenance
+
+Ten requirements (`DOM-050`–`DOM-055`, `PER-024`, `PER-025`, `AGT-036`,
+`AGT-037`) derive from the Echelon provenance contract that Praxis owns
+(`RQ-ROS-2026-A001`, `A004`, `A013`–`A015`, `DF-ROS-2026-A037`), not from the
+input documents. They were added on 2026-09-26 at the owner's direction.
+Vigila had to keep apart the agent that discovered a finding, the system that
+generated the follow-up, and the agents and humans that later handled,
+resolved or validated it. Each cites its Praxis source, and
+[`TRACEABILITY.md`](TRACEABILITY.md) maps them. The representation mapping is
+[ADR-0004](../architecture/ADR-0004-praxis-provenance-mapping.md).
 
 ## Identifier scheme
 

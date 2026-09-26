@@ -16,7 +16,15 @@
 /// set - a status, a kind - are still rejected, because guessing there would
 /// fabricate domain state.
 ///
-/// Requirements: VIG-PER-020, VIG-PER-021, VIG-PER-022, VIG-TIME-016.
+/// Identity and provenance are the exception to "ignored": an actor's
+/// unknown fields and the whole provenance record are preserved, because
+/// dropping them on a rewrite would silently strip who did what (VIG-PER-025).
+/// Schema version 2 added them; version 1 records still load, and nothing is
+/// invented for them (VIG-PER-024, ADR-0004).
+///
+/// Requirements: VIG-PER-020, VIG-PER-021, VIG-PER-022, VIG-PER-024,
+/// VIG-PER-025, VIG-TIME-016, VIG-DOM-050, VIG-DOM-051, VIG-DOM-052,
+/// VIG-DOM-054.
 module Vigila.Host.GitHub.ItemJson
 
 open System
@@ -24,16 +32,28 @@ open System.Text
 open System.Text.Json
 open Vigila.Semantic.Identifiers
 open Vigila.Semantic.Time
+open Vigila.Semantic.Carried
 open Vigila.Semantic.Actors
+open Vigila.Semantic.Provenance
 open Vigila.Semantic.Items
 open Vigila.Semantic.Tags
 open Vigila.Semantic.Notes
 open Vigila.Semantic.History
 open Vigila.Semantic.Item
+open Vigila.Host.GitHub.ProvenanceJson
 
 /// The schema version this module writes (VIG-PER-020).
+///
+/// 2 since actors carry provider, model and runtime, history records carry
+/// their execution, and items carry provenance (VIG-PER-024). The fields are
+/// additive, but a version 1 reader ignores unknown fields and would strip
+/// them on its next write; raising the version makes it refuse instead.
 [<Literal>]
-let CurrentSchemaVersion = 1
+let CurrentSchemaVersion = 2
+
+/// The oldest schema version this module still reads (VIG-PER-021).
+[<Literal>]
+let OldestSchemaVersion = 1
 
 /// Date-only values are written in this form, which carries no time and no
 /// offset at all.
@@ -102,10 +122,28 @@ let private parseStatus =
 
 // --- writing --------------------------------------------------------------
 
+/// An actor is written as Vigila's `type` and `name`, and as the Praxis actor
+/// beside them (`kind`, `id`, and `provider`/`model`/`runtime` for a
+/// non-human), so the persisted object is itself a conforming Praxis actor
+/// and `type` keeps an Integration distinguishable from an AutomatedProcess
+/// (VIG-DOM-050, VIG-DOM-051). Fields Vigila does not model follow, as read.
 let private writeActor (w: Utf8JsonWriter) (name: string) (actor: Actor) =
     w.WriteStartObject name
     w.WriteString("type", actorTypeName actor.Type)
     w.WriteString("name", actor.Name)
+    w.WriteString("kind", PraxisActor.kindOf actor.Type)
+    w.WriteString("id", actor.Name)
+
+    match actor.Tooling with
+    | Some tooling ->
+        w.WriteString("provider", tooling.Provider)
+        w.WriteString("model", tooling.Model)
+        w.WriteString("runtime", tooling.Runtime)
+    | None -> ()
+
+    for field, value in actor.Extensions do
+        CarriedJson.writeProperty w field value
+
     w.WriteEndObject()
 
 let private writeInstant (w: Utf8JsonWriter) (name: string) instant =
@@ -155,6 +193,7 @@ let private operationName =
     | NoteAdded -> "note-added"
     | ImportanceChanged _ -> "importance-changed"
     | ReviewFlagChanged _ -> "review-flag-changed"
+    | Contributed _ -> "contributed"
 
 /// History detail is written as loosely-typed before/after strings.
 ///
@@ -177,6 +216,21 @@ let private writeOperationDetail (w: Utf8JsonWriter) operation =
     | Snoozed until -> w.WriteString("until", Instant.toIso8601 until)
     | ImportanceChanged v -> w.WriteBoolean("important", v)
     | ReviewFlagChanged v -> w.WriteBoolean("needsReview", v)
+    | Contributed(operations, reason, evidence) ->
+        w.WriteStartArray "operations"
+        for operation in operations do
+            w.WriteStringValue(ContributionOperation.code operation)
+        w.WriteEndArray()
+
+        match reason with
+        | Some text -> w.WriteString("reason", text)
+        | None -> ()
+
+        if not evidence.IsEmpty then
+            w.WriteStartArray "evidence"
+            for item in evidence do
+                w.WriteStringValue item
+            w.WriteEndArray()
     | Created
     | DescriptionChanged
     | DueDateChanged
@@ -266,10 +320,21 @@ let toJson (item: Item) =
          writer.WriteStartObject()
          writeInstant writer "at" e.At
          writeActor writer "actor" e.Actor
+
+         match e.Execution with
+         | Some key -> writer.WriteString("execution", ContributionKey.value key)
+         | None -> ()
+
          writer.WriteString("operation", operationName e.Operation)
          writeOperationDetail writer e.Operation
          writer.WriteEndObject()
      writer.WriteEndArray()
+
+     // Written exactly as held: the record is someone else's data as much as
+     // Vigila's, and fields Vigila does not model must survive (VIG-PER-025).
+     match item.Provenance with
+     | Some record -> CarriedJson.writeProperty writer "provenance" record
+     | None -> writer.WriteNull "provenance"
 
      writer.WriteEndObject())
 
@@ -339,16 +404,93 @@ let private requiredGuid el name =
             | _ -> Error $"'%s{name}' is not a valid identifier."
     }
 
+/// The actor fields Vigila models; everything else is kept as an extension.
+let private modelledActorFields = set [ "type"; "name"; "kind"; "id"; "provider"; "model"; "runtime" ]
+
+/// Reads an actor, from either schema version.
+///
+/// A version 1 actor has only `type` and `name`. It is read without inventing
+/// anything: a non-human actor's provider, model and runtime are "unknown",
+/// which is what they are, and a human has none (VIG-PER-024). When `kind` or
+/// `id` is present it must agree with `type` and `name`: a contradiction is
+/// refused rather than reconciled by guessing which is right (VIG-DOM-051).
 let private readActor el name =
     match prop el name with
     | None -> Error $"'%s{name}' is required."
+    | Some a when a.ValueKind <> JsonValueKind.Object -> Error $"'%s{name}' must be an object."
     | Some a ->
         result {
             let! typeName = requiredString a "type"
             let! actorType = parseActorType typeName
             let! actorName = requiredString a "name"
-            return! Actor.create actorType actorName
+            let! actor = Actor.create actorType actorName
+            let! kind = optionalString a "kind"
+            let! id = optionalString a "id"
+            let! provider = optionalString a "provider"
+            let! model = optionalString a "model"
+            let! runtime = optionalString a "runtime"
+
+            do!
+                match kind with
+                | Some stated when stated <> PraxisActor.kindOf actorType ->
+                    Error $"Actor kind '%s{stated}' contradicts actor type '%s{typeName}'."
+                | _ -> Ok()
+
+            do!
+                match id with
+                | Some stated when stated <> actor.Name ->
+                    Error $"Actor id '%s{stated}' contradicts actor name '%s{actor.Name}'."
+                | _ -> Ok()
+
+            let! tooling =
+                match actorType, provider, model, runtime with
+                | Human, None, None, None -> Ok None
+                | Human, _, _, _ -> Error "A human actor has no provider, model or runtime."
+                | _ ->
+                    let orUnknown value = defaultArg value Tooling.UnknownValue
+
+                    let stated =
+                        { Provider = orUnknown provider
+                          Model = orUnknown model
+                          Runtime = orUnknown runtime }
+
+                    if [ stated.Provider; stated.Model; stated.Runtime ] |> List.exists (fun v -> v.Trim().Length = 0) then
+                        Error "An actor's provider, model and runtime must not be empty; \"unknown\" says they are not known."
+                    else
+                        Ok(Some stated)
+
+            let! extensions =
+                a.EnumerateObject()
+                |> Seq.filter (fun p -> not (modelledActorFields.Contains p.Name))
+                |> Seq.toList
+                |> List.fold
+                    (fun acc p ->
+                        match acc, CarriedJson.ofElement p.Value with
+                        | Error message, _ -> Error message
+                        | Ok _, Error message -> Error message
+                        | Ok items, Ok value -> Ok((p.Name, value) :: items))
+                    (Ok [])
+                |> Result.map List.rev
+
+            return
+                { actor with
+                    Tooling = tooling
+                    Extensions = extensions }
         }
+
+/// A history record's execution: absent means not recorded, never inferred
+/// (VIG-DOM-052). An agent is never keyed outside an execution.
+let private readExecution (actor: Actor) el =
+    result {
+        let! text = optionalString el "execution"
+
+        match text with
+        | None -> return None
+        | Some key ->
+            let! parsed = ContributionKey.parse key
+            let! attribution = Attribution.create actor (Some parsed)
+            return attribution.Execution
+    }
 
 /// Reads a tagged when-value.
 ///
@@ -428,6 +570,7 @@ let private readHistory (e: JsonElement) =
     result {
         let! at = requiredInstant e "at"
         let! actor = readActor e "actor"
+        let! execution = readExecution actor e
         let! name = requiredString e "operation"
 
         let! operation =
@@ -477,9 +620,44 @@ let private readHistory (e: JsonElement) =
             | "snoozed" -> requiredInstant e "until" |> Result.map Snoozed
             | "importance-changed" -> optionalBool e "important" |> Result.map ImportanceChanged
             | "review-flag-changed" -> optionalBool e "needsReview" |> Result.map ReviewFlagChanged
+            | "contributed" ->
+                result {
+                    let! texts =
+                        readAll
+                            (fun (o: JsonElement) ->
+                                match o.ValueKind, (if o.ValueKind = JsonValueKind.String then o.GetString() else null) with
+                                | JsonValueKind.String, NonNull text ->
+                                    ContributionOperation.tryParse text
+                                    |> Option.map Ok
+                                    |> Option.defaultValue (Error $"'%s{text}' is not a contribution operation.")
+                                | _ -> Error "A contribution operation must be a string.")
+                            e
+                            "operations"
+
+                    let! reason = optionalString e "reason"
+
+                    let! evidence =
+                        readAll
+                            (fun (o: JsonElement) ->
+                                match o.ValueKind, (if o.ValueKind = JsonValueKind.String then o.GetString() else null) with
+                                | JsonValueKind.String, NonNull text -> Ok text
+                                | _ -> Error "Evidence must be a string.")
+                            e
+                            "evidence"
+
+                    return!
+                        if texts.IsEmpty then
+                            Error "A contribution records at least one operation."
+                        else
+                            Ok(Contributed(texts, reason, evidence))
+                }
             | other -> Error $"'%s{other}' is not a known history operation."
 
-        return { At = at; Actor = actor; Operation = operation }
+        return
+            { At = at
+              Actor = actor
+              Execution = execution
+              Operation = operation }
     }
 
 /// Deserialises an item from its persisted form.
@@ -514,7 +692,7 @@ let fromJson (json: string) =
                 if version > CurrentSchemaVersion then
                     Error
                         $"The record uses schema version %d{version}, but this build understands at most %d{CurrentSchemaVersion}."
-                elif version < 1 then
+                elif version < OldestSchemaVersion then
                     Error $"Schema version %d{version} is not valid."
                 else
                     Ok()
@@ -571,6 +749,25 @@ let fromJson (json: string) =
             let! lastActivityAt = requiredInstant el "lastActivityAt"
             let! history = readAll readHistory el "history"
 
+            // A malformed record fails the item, never silently disappears
+            // (VIG-PER-025). An unsupported major version is not malformed: it
+            // is carried as it is.
+            let! provenance =
+                match prop el "provenance" with
+                | None -> Ok None
+                | Some p ->
+                    match CarriedJson.ofElement p with
+                    | Error message -> Error $"'provenance' could not be read: %s{message}"
+                    | Ok value ->
+                        match ProvenanceRecord.validate value with
+                        | Ok _ -> Ok(Some value)
+                        | Error problems ->
+                            problems
+                            |> List.map (fun item -> $"%s{item.Field}: %s{item.Message}")
+                            |> String.concat "; "
+                            |> sprintf "'provenance' is malformed: %s"
+                            |> Error
+
             return
                 { Id = id
                   Title = title
@@ -597,5 +794,6 @@ let fromJson (json: string) =
                   CompletedAt = completedAt
                   CancelledAt = cancelledAt
                   LastActivityAt = lastActivityAt
-                  History = history }
+                  History = history
+                  Provenance = provenance }
         }

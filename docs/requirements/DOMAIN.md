@@ -2,7 +2,7 @@
 id: REQ-DOM
 title: Domain model — items, kinds, states, fields
 status: draft
-sources: v0.2 §1–§15, v0.3 §85, v0.4 §100, §102, §104–§107, §109, §110
+sources: v0.2 §1–§15, v0.3 §85, v0.4 §100, §102, §104–§107, §109, §110, Echelon provenance contract (Praxis RQ-ROS-2026-A001, A004, A013–A015)
 ---
 
 # Domain model
@@ -151,6 +151,7 @@ others are optional.
 | NeedsReview | no | [VIG-AGT-023](AGENT.md#vig-agt-023) |
 | Resolution note | no | [VIG-DOM-039](#vig-dom-039) |
 | Resolution classification | no | [VIG-DOM-040](#vig-dom-040) |
+| Provenance (interchange record) | no | [VIG-DOM-054](#vig-dom-054) |
 
 > v0.2 §4 lists the base set and adds "version/concurrency value where needed".
 > `CreatedVia`, `LastActivityAt`, `WaitingSince`, `Important`, `NeedsReview`,
@@ -320,6 +321,9 @@ added, Completed, Reopened, Cancelled.
 Each history record MUST contain: Timestamp, Actor, Operation, and relevant
 old/new values where appropriate.
 
+> Refined by [VIG-DOM-052](#vig-dom-052): a record also names the execution
+> that performed the operation, when one is known.
+
 #### VIG-DOM-034 — Git history is not the semantic history
 **Level:** MUST · **Release:** v1 · **Source:** v0.2 §14
 
@@ -344,6 +348,10 @@ the GitHub token. User history MUST remain understandable to humans.
 Changes SHOULD identify their origin. An actor SHOULD have both an actor type
 (Human, ChatGPT, Claude, automated process, integration) and an actor
 identifier/name.
+
+> Refined by [VIG-DOM-050](#vig-dom-050) and [VIG-DOM-051](#vig-dom-051). The
+> actor is the Praxis provenance actor. "ChatGPT" and "Claude" are not types:
+> they are an `Agent` whose provider, model and runtime say which one.
 
 #### VIG-DOM-036 — LastActivityAt
 **Level:** MUST · **Release:** v1 · **Source:** v0.3 §73, §97
@@ -488,3 +496,114 @@ Empty or whitespace-only titles MUST be rejected.
 **Level:** MUST · **Release:** v1 · **Source:** v0.3 §89
 
 Invalid URL or source formats MUST NOT corrupt item data.
+
+## Agent identity and provenance
+
+These requirements adopt the Echelon provenance contract that Praxis owns
+(`RQ-ROS-2026-A001` actor, `RQ-ROS-2026-A004` contributions,
+`RQ-ROS-2026-A013` interchange record, `RQ-ROS-2026-A014` execution
+propagation, `RQ-ROS-2026-A015` no silent stripping). They state what Vigila
+must do with that contract; they do not restate it. The representation
+mapping is recorded in
+[ADR-0004](../architecture/ADR-0004-praxis-provenance-mapping.md).
+
+They refine [VIG-DOM-033](#vig-dom-033) and [VIG-DOM-035](#vig-dom-035): an
+actor was a type and a free-text name, and a history record named the actor but
+not the run that acted.
+
+#### VIG-DOM-050 — The actor is the Praxis provenance actor
+**Level:** MUST · **Release:** v1 · **Source:** Praxis RQ-ROS-2026-A001, v0.2 §15
+
+Every Vigila actor MUST be expressible as a Praxis actor without loss. Its name
+is the Praxis stable `id`. A non-human actor MUST carry `provider`, `model` and
+`runtime`, each the literal `unknown` when it is not known. A human actor MUST
+NOT carry them, because they do not apply. "Unknown" and "not applicable" MUST
+NOT be conflated. Vigila MUST NOT guess any of these values. An actor value MUST
+NOT carry a credential.
+
+Recorded identity is self-reported provenance. It MUST NOT be used as
+authentication, authorization, evidence, or evidence weight.
+
+#### VIG-DOM-051 — Actor type maps to Praxis kind explicitly and losslessly
+**Level:** MUST · **Release:** v1 · **Source:** Praxis RQ-ROS-2026-A001, v0.2 §15
+
+Vigila's actor type MUST map to the Praxis actor `kind` as follows:
+
+| Vigila type | Praxis kind |
+|---|---|
+| `Human` | `human` |
+| `Agent` | `agent` |
+| `AutomatedProcess` | `automation` |
+| `Integration` | `automation`, with the Vigila type preserved |
+
+The mapping MUST round-trip. An `Integration` actor MUST NOT come back as an
+`AutomatedProcess`, so the Vigila type MUST travel with the actor wherever the
+Praxis kind alone would lose it. A persisted actor whose `kind` contradicts its
+Vigila type MUST be rejected rather than reconciled by guessing.
+
+#### VIG-DOM-052 — History records the execution that acted
+**Level:** MUST · **Release:** v1 · **Source:** Praxis RQ-ROS-2026-A004, RQ-ROS-2026-A014, v0.2 §14
+
+A history record MUST record, beside its actor, the execution that performed the
+operation when one is known:
+
+- an `EXE-...` key for a run, either the propagated Praxis execution or the
+  acting system's own namespaced run `EXE-<system>.<run>`;
+- a `CTB-...` key for a human or automation acting outside any run.
+
+An agent's operation MUST be keyed by an execution, never by a `CTB-...` key.
+Vigila MUST NOT mint a Praxis-shaped `EXE-<timestamp>-<random>` key itself, and
+MUST NOT key an operation by an execution it did not perform. When no execution
+is known, the record MUST say nothing about one. Vigila MUST NOT infer it.
+
+#### VIG-DOM-053 — Distinct roles keep distinct identities
+**Level:** MUST · **Release:** v1 · **Source:** Praxis RQ-ROS-2026-A015, v0.2 §15
+
+Vigila MUST NOT collapse the identities involved in one follow-up or finding:
+
+- the **agent that discovered** the underlying finding stays in the lineage
+  snapshot of the item's provenance, never in the item's own contributions;
+- the **system that generated** the follow-up is the item's creator, recorded
+  as that system (for Vigila itself, an `automation` actor) in its own run;
+- each **agent that later handled** it, and each **human that reviewed,
+  resolved or validated** it, is a separate history record and contribution
+  with its own actor and execution.
+
+A later actor MUST NOT overwrite the creator or any earlier contributor. Each
+contribution MUST remain attributable to exactly one actor and one execution.
+
+#### VIG-DOM-054 — Items carry their interchange provenance
+**Level:** MUST · **Release:** v1 · **Source:** Praxis RQ-ROS-2026-A013, RQ-ROS-2026-A015
+
+An item MAY carry one Praxis provenance interchange record
+(`praxis.provenance-record`). The item MUST carry that record without loss:
+
+- fields Vigila does not model, at every level, MUST survive;
+- lineage snapshots in `sources` MUST be carried verbatim;
+- a record in an unsupported major version MUST be carried verbatim and never
+  extended;
+- a malformed record MUST be rejected, never silently dropped.
+
+An item that Vigila generates from another subject MUST start a new record. Its
+own `created` contribution MUST name the generating actor. The source MUST be
+listed in `derivedFrom`, and the source's record MUST be carried in `sources`
+when Vigila holds it. The item's subject is `vigila:item/<ItemId>`.
+
+#### VIG-DOM-055 — Contributions to an item are append-only
+**Level:** MUST · **Release:** v1 · **Source:** Praxis RQ-ROS-2026-A004, RQ-ROS-2026-A015
+
+A contribution to an item that carries provenance MUST:
+
+- append a history record ([VIG-DOM-052](#vig-dom-052));
+- extend the item's provenance record under the same rules as Praxis.
+
+Those rules are:
+
+- add an entry, or extend the same execution's own entry;
+- refuse to re-attribute an execution to another actor;
+- refuse a second or late `created`.
+
+A contribution MUST use the interchange extension operations (`x-handled`,
+`x-resolved`, `x-remediated`, `x-validated`, `x-dismissed`) or the Praxis
+operations. It MUST NOT use synonyms. A refused contribution MUST leave the item
+unchanged.

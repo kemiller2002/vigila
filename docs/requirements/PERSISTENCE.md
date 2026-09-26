@@ -2,7 +2,7 @@
 id: REQ-PER
 title: Persistence, repository layout, schema, and Git semantics
 status: draft
-sources: v0.2 §26–§29, v0.3 §59–§61, §69, §70, §79–§81, §90–§92, v0.4 §124, §125, §132, §133
+sources: v0.2 §26–§29, v0.3 §59–§61, §69, §70, §79–§81, §90–§92, v0.4 §124, §125, §132, §133, Echelon provenance contract (Praxis RQ-ROS-2026-A013, A015)
 ---
 
 # Persistence
@@ -189,6 +189,46 @@ Data migrations MUST be explicit and deterministic:
 - Destructive migrations MUST have explicit handling and documentation.
 - The system MUST NOT partially migrate a repository and then report success.
 - Migration version progression MUST be monotonic and auditable.
+
+#### VIG-PER-024 — Item schema version 2 carries identity and provenance
+**Level:** MUST · **Release:** v1 · **Source:** Praxis RQ-ROS-2026-A013, RQ-ROS-2026-A015, v0.3 §80, §81
+
+The item record's schema version MUST be `2` once it carries these fields:
+
+- the Praxis-aligned actor ([VIG-DOM-050](DOMAIN.md#vig-dom-050));
+- a history record's execution ([VIG-DOM-052](DOMAIN.md#vig-dom-052));
+- the item's provenance record ([VIG-DOM-054](DOMAIN.md#vig-dom-054)).
+
+The fields are additive, but the version still changes. A version 1 reader
+ignores unknown fields ([VIG-PER-022](#vig-per-022)). It would therefore load a
+version 2 item and silently strip its provenance on the next write. With the
+version raised, that reader refuses the record instead
+([VIG-PER-014](#vig-per-014)).
+
+A reader MUST still load version 1 records. It MUST NOT invent anything for
+them:
+
+- no execution;
+- no provenance record;
+- no provider, model or runtime beyond the literal `unknown` for a non-human
+  actor;
+- no identity inferred from Git, file metadata or free text.
+
+Rewriting a version 1 record as version 2 is a representation change only.
+
+#### VIG-PER-025 — Identity and provenance are preserved, not ignored
+**Level:** MUST · **Release:** v1 · **Source:** Praxis RQ-ROS-2026-A013, RQ-ROS-2026-A015, v0.3 §80
+
+[VIG-PER-022](#vig-per-022) lets a reader ignore or preserve unknown fields.
+For identity and provenance, Vigila MUST preserve them:
+
+- fields a persisted actor carries that Vigila does not model MUST survive a
+  read and rewrite;
+- an item's provenance record MUST be written back exactly as read, apart from
+  contributions Vigila appends under [VIG-DOM-055](DOMAIN.md#vig-dom-055).
+
+A malformed actor or provenance record MUST fail the read of that item. It MUST
+NOT be dropped.
 
 ## Malformed data
 

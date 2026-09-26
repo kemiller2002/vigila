@@ -322,7 +322,9 @@ module ItemSerialization =
               TagRemoved tag
               NoteAdded
               ImportanceChanged true
-              ReviewFlagChanged true ]
+              ReviewFlagChanged true
+              Contributed([ Vigila.Semantic.Provenance.ContributionOperation.Handled ], Some "Picked up", [ "git:commit/def456" ])
+              Contributed([ Vigila.Semantic.Provenance.ContributionOperation.Extension "x-triaged" ], None, []) ]
 
         let original =
             { newItem () with

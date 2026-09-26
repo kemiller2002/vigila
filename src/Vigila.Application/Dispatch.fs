@@ -130,11 +130,18 @@ let private classifyBoundaryFailure scope (ex: exn) =
         userMessage
         ex
 
-/// Who the engine attributes changes to.
+/// Who the engine attributes UI changes to.
 ///
 /// A placeholder until the connection flow identifies the user
 /// (VIG-SEC-001). It is deliberately not "unknown": VIG-DOM-035 wants an actor
 /// type and a name, and "the person at this browser" is what this is.
+///
+/// A UI capture really is a human action at this browser, so it is a human
+/// actor: no provider, model or runtime (they do not apply to a human), and no
+/// execution, because a UI action runs in none (VIG-AGT-036, VIG-DOM-052).
+/// Nothing here guesses an agent or reads ambient identity. An agent or a
+/// system acting through Vigila is attributed by its own command, with its own
+/// actor and execution, never by this value.
 let private localUser =
     match Actor.human "local" with
     | Ok actor -> actor
