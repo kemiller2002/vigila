@@ -21,10 +21,11 @@ type private RepositoryHandler() =
     member _.Requests = requests |> Seq.toList
 
     override _.SendAsync(request, _cancellationToken) =
-        let uri = request.RequestUri
+        let uri = request.RequestUri |> Option.ofObj |> Option.defaultWith (fun () -> failwith "Request URI is required.")
         let body =
-            if isNull request.Content then ""
-            else request.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+            match request.Content with
+            | null -> ""
+            | content -> content.ReadAsStringAsync().GetAwaiter().GetResult()
 
         requests.Add(request.Method.Method, uri.AbsoluteUri, body)
 
@@ -38,7 +39,7 @@ type private RepositoryHandler() =
 
                 if request.Method = HttpMethod.Put then
                     use document = JsonDocument.Parse body
-                    let encoded = document.RootElement.GetProperty("content").GetString()
+                    let encoded = document.RootElement.GetProperty("content").GetString() |> Option.ofObj |> Option.defaultValue ""
                     let text = Encoding.UTF8.GetString(Convert.FromBase64String encoded)
 
                     if files.TryAdd(path, text) then
@@ -92,7 +93,7 @@ let private run handler input =
     use http = new HttpClient(handler)
     use stdin = new StringReader(input)
     use stdout = new StringWriter()
-    let env name = if name = "VIGILA_GITHUB_TOKEN" then "ghs_test_secret" else null
+    let env (name: string) : string | null = if name = "VIGILA_GITHUB_TOKEN" then "ghs_test_secret" else null
 
     let exitCode =
         Vigila.Cli.Program.runWith
@@ -112,7 +113,7 @@ let private run handler input =
 
 [<Fact>]
 let cli_end_to_end_created () =
-    let handler = RepositoryHandler()
+    let handler = new RepositoryHandler()
     let exitCode, output = run handler (invocation "Review provider")
 
     Assert.Equal(0, exitCode)
@@ -136,7 +137,7 @@ let cli_end_to_end_created () =
 
 [<Fact>]
 let cli_replay_and_conflict () =
-    let handler = RepositoryHandler()
+    let handler = new RepositoryHandler()
     let firstExit, _ = run handler (invocation "Review provider")
     let replayExit, replay = run handler (invocation "Review provider")
     let conflictExit, conflict = run handler (invocation "Different request")
