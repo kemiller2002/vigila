@@ -15,6 +15,17 @@
       "$comment": "The JSON message parser and authority-side Limen dispatcher are captured by Aegis. Programming defects still fail loudly under Aegis semantics."
     },
     {
+      "name": "Echelon followup.create provider boundary",
+      "kind": "integration",
+      "owner": "Vigila.Application",
+      "codes": [
+        "VIGILA.INTEGRATION.UNEXPECTED",
+        "VIGILA.INTEGRATION.<ledger failure code>"
+      ],
+      "guarded": true,
+      "$comment": "Integration.create captures unexpected ledger exceptions with Aegis and maps typed ledger failures (VIG-AGT-050 codes such as RepositoryUnavailable, RateLimited, StorageCorrupt, PersistenceFailed) to VIGILA.INTEGRATION.<CODE> faults. Validation refusals, unsupported contract versions and operation-id conflicts are typed outcomes, not faults. See ADR-0004."
+    },
+    {
       "name": "Browser HTTP and storage effects",
       "kind": "browser-capability",
       "owner": "Limen BrowserKernel",

@@ -16,6 +16,7 @@
   <ItemGroup>
     <Compile Include="Ports.fs" />
     <Compile Include="Integration.fs" />
+    <Compile Include="IntegrationWire.fs" />
     <Compile Include="Effects.fs" />
     <Compile Include="Connection.fs" />
     <Compile Include="Dispatch.fs" />
