@@ -34,12 +34,12 @@
       "$comment": "Execution occurs browser-side. Observed HTTP/storage outcomes cross the Limen protocol as explicit typed outcomes; this declaration does not pretend the .NET Aegis runtime guards JavaScript fetch/localStorage."
     },
     {
-      "name": "Future direct GitHub host",
+      "name": "GitHub repository transport",
       "kind": "external-service",
       "owner": "Vigila.Host.GitHub",
       "codes": [],
-      "guarded": false,
-      "$comment": "The host currently defines typed failure vocabulary but performs no direct GitHub call. A real host call must add Aegis capture and stable code mapping before this boundary can be marked guarded."
+      "guarded": true,
+      "$comment": "GitHubRepositoryFiles performs the remote contents-API calls and returns typed failures only. FollowUpLedger is invoked inside Integration.create\u0027s Aegis capture, which maps those failures to stable VIGILA.INTEGRATION.* faults; credentials and response bodies are not diagnostic context."
     }
   ],
   "persistence": {
