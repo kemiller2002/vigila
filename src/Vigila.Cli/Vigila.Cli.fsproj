@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>vigila</AssemblyName>
+    <RootNamespace>Vigila.Cli</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Vigila.Host.GitHub/Vigila.Host.GitHub.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="EchelonFoundry.Aegis.Core" />
+  </ItemGroup>
+</Project>
