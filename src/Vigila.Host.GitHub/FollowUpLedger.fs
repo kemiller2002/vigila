@@ -24,25 +24,6 @@ open Vigila.Application.Integration
 open Vigila.Host.GitHub.StorageLayout
 open Vigila.Host.GitHub.GitHubStore
 
-/// The outcome of a create-only write.
-type FileWrite =
-    | FileCreated
-    | FileAlreadyExists
-
-/// The repository file operations the ledger needs, as Tier 4 sees them.
-///
-/// `CreateNew` MUST be atomic: it writes only if no file exists at the path,
-/// and of concurrent callers exactly one observes FileCreated. GitHub's
-/// contents API provides this -- a PUT without a blob SHA is refused when the
-/// file already exists -- and so does any store with create-if-absent.
-///
-/// Paths are repository-relative paths inside the configured storage area.
-/// Credentials, branch and repository identity belong to the implementation,
-/// never to this interface (VIG-SEC-020).
-type RepositoryFiles =
-    abstract Read: path: string -> Result<string option, GitHubFailure>
-    abstract CreateNew: path: string * content: string -> Result<FileWrite, GitHubFailure>
-
 /// A GitHub failure in the ledger's vocabulary. Carries the stable code only:
 /// no token, URL or response body (VIG-AGT-013).
 let failureOf (failure: GitHubFailure) =
