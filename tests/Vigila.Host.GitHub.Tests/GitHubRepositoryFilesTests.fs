@@ -48,7 +48,7 @@ let private filesWith handler token =
 [<Fact>]
 let read_existing () =
     let handler =
-        FakeHandler(fun request ->
+        new FakeHandler(fun request ->
             let uri = request.RequestUri |> Option.ofObj |> Option.defaultWith (fun () -> failwith "Request URI is required.")
             Assert.Contains("/repos/acme/vigila/contents/vigila/workspaces/x.json", uri.AbsoluteUri)
             Assert.Contains("ref=integration-data", uri.Query)
@@ -60,7 +60,7 @@ let read_existing () =
 [<Fact>]
 let read_missing () =
     let handler =
-        FakeHandler(fun request ->
+        new FakeHandler(fun request ->
             let uri = request.RequestUri |> Option.ofObj |> Option.defaultWith (fun () -> failwith "Request URI is required.")
             if uri.AbsolutePath.EndsWith("/repos/acme/vigila") then
                 response HttpStatusCode.OK "{}"
@@ -76,7 +76,7 @@ let read_missing () =
 [<InlineData(403, "Forbidden")>]
 [<InlineData(500, "RepositoryUnavailable")>]
 let read_failures (status: int, expected: string) =
-    let handler = FakeHandler(fun _ -> response (enum<HttpStatusCode> status) "{}")
+    let handler = new FakeHandler(fun _ -> response (enum<HttpStatusCode> status) "{}")
     let files = filesWith handler "secret-token"
 
     match files.Read "vigila/x.json" with
@@ -85,7 +85,7 @@ let read_failures (status: int, expected: string) =
 
 [<Fact>]
 let create_without_read () =
-    let handler = FakeHandler(fun _ -> response HttpStatusCode.Created "{}")
+    let handler = new FakeHandler(fun _ -> response HttpStatusCode.Created "{}")
     let files = filesWith handler "secret-token"
 
     Assert.Equal(Ok FileCreated, files.CreateNew("vigila/new.json", "{}"))
@@ -97,7 +97,7 @@ let create_without_read () =
 [<Fact>]
 let create_existing () =
     let handler =
-        FakeHandler(fun request ->
+        new FakeHandler(fun request ->
             if request.Method = HttpMethod.Put then response HttpStatusCode.UnprocessableEntity "{}"
             else contentResponse "existing")
 
@@ -108,7 +108,7 @@ let create_existing () =
 [<Fact>]
 let token_is_not_returned () =
     let token = "ghs_super_secret"
-    let handler = FakeHandler(fun _ -> response HttpStatusCode.Unauthorized "{}")
+    let handler = new FakeHandler(fun _ -> response HttpStatusCode.Unauthorized "{}")
     let files = filesWith handler token
 
     let result = files.Read "vigila/x.json"
