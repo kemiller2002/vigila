@@ -7,6 +7,7 @@ open System.Net.Http
 open System.Net.Http.Headers
 open System.Text
 open System.Text.Json
+open System.Threading.Tasks
 open Vigila.Host.GitHub.GitHubStore
 open Vigila.Host.GitHub.FollowUpLedger
 
@@ -67,7 +68,7 @@ let private classify (response: HttpResponseMessage) =
 let private send (http: HttpClient) credential (request: HttpRequestMessage) =
     try
         addHeaders credential request
-        Ok(http.Send request)
+        Ok(http.SendAsync(request).GetAwaiter().GetResult())
     with
     | :? HttpRequestException
     | :? TaskCanceledException -> Error RepositoryUnavailable
