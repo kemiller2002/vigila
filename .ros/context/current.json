@@ -4,7 +4,7 @@
   "repository": "vigila",
   "actor": "agent:chatgpt",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-09-21T19:10:19Z",
+  "updatedAt": "2026-09-25T17:46:32.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -424,6 +424,27 @@
         "EXE-20260921T190951383Z-102b562b"
       ],
       "completedAt": "2026-09-21T19:10:19Z"
+    },
+    {
+      "id": "WI-0024",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "docs/architecture/SDE-CONFORMANCE-2026-09-25.md"
+        },
+        {
+          "type": "tests",
+          "path": "docs/architecture/SDE-CONFORMANCE-2026-09-25.md"
+        }
+      ],
+      "updatedAt": "2026-09-25T17:46:32.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20260925T174055786Z-5fc085f7"
+      ],
+      "completedAt": "2026-09-25T17:46:32.000Z"
     }
   ]
 }
