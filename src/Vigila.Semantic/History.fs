@@ -5,7 +5,8 @@
 /// never transport detail -- VIG-DOM-034a keeps retries and status codes in
 /// diagnostic logs instead.
 ///
-/// Requirements: VIG-DOM-032, VIG-DOM-033, VIG-DOM-034, VIG-DOM-034a.
+/// Requirements: VIG-DOM-032, VIG-DOM-033, VIG-DOM-034, VIG-DOM-034a,
+/// VIG-PROV-016.
 module Vigila.Semantic.History
 
 open Vigila.Semantic.Time
@@ -38,17 +39,31 @@ type HistoryOperation =
     | ReviewFlagChanged of needsReview: bool
 
 /// One history record (VIG-DOM-033).
+///
+/// `Contribution` names the provenance contribution (an `EXE-`, `EXT-` or
+/// `CTB-` key in the item's provenance block) that this entry belongs to, when
+/// the operation was attributed (VIG-PROV-016). The identity lives in that
+/// block; `Actor` is only its display projection (VIG-PROV-015), and is all a
+/// legacy or unattributed entry has.
 [<NoComparison>]
 type HistoryEntry =
     { At: Instant
       Actor: Actor
-      Operation: HistoryOperation }
+      Operation: HistoryOperation
+      Contribution: string option }
 
 [<RequireQualifiedAccess>]
 module History =
 
     let entry at actor operation =
-        { At = at; Actor = actor; Operation = operation }
+        { At = at
+          Actor = actor
+          Operation = operation
+          Contribution = None }
+
+    /// An entry that belongs to a provenance contribution (VIG-PROV-016).
+    let attributedEntry at actor contribution operation =
+        { entry at actor operation with Contribution = contribution }
 
     /// Oldest first.
     let chronological (entries: HistoryEntry list) = entries |> List.sortBy (fun e -> e.At)

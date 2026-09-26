@@ -7,6 +7,8 @@
     <Compile Include="Tests.fs" />
     <Compile Include="ConnectionTests.fs" />
     <Compile Include="ViewBindingTests.fs" />
+    <Compile Include="ProvenanceConformanceTests.fs" />
+    <Compile Include="ProvenanceIntakeTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/Vigila.Application/Vigila.Application.fsproj" />

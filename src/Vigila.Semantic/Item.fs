@@ -7,7 +7,8 @@
 /// requires a title to be enough to create an item -- conversational capture
 /// cannot pause to fill a form.
 ///
-/// Requirements: VIG-DOM-013 and the field requirements it indexes.
+/// Requirements: VIG-DOM-013 and the field requirements it indexes,
+/// VIG-PROV-002, VIG-PROV-010.
 module Vigila.Semantic.Item
 
 open Vigila.Semantic.Identifiers
@@ -17,6 +18,7 @@ open Vigila.Semantic.Items
 open Vigila.Semantic.Tags
 open Vigila.Semantic.Notes
 open Vigila.Semantic.History
+open Vigila.Semantic.Provenance
 
 /// How a closed item was resolved (VIG-DOM-040). Optional metadata that never
 /// replaces state history.
@@ -98,7 +100,22 @@ type Item =
       /// Meaningful activity only; never moved by a read (VIG-DOM-036).
       LastActivityAt: Instant
 
-      History: HistoryEntry list }
+      History: HistoryEntry list
+
+      /// This item's own Praxis provenance: who created, handled, resolved and
+      /// reviewed it, each keyed by the execution that did it. Authoritative
+      /// for identity when present; `CreatedBy`, `CreatedVia` and the history
+      /// actors are then its display projection (VIG-PROV-002). `None` for a
+      /// legacy item, which reads as unattributed and is never backfilled
+      /// (VIG-PROV-008).
+      Provenance: ItemProvenance option
+
+      /// The provenance block that arrived with the request that created this
+      /// item (for example the finding it follows up), kept exactly as
+      /// received. It describes the item's upstream origin -- who discovered
+      /// the issue -- and is lineage context, never this item's authorship
+      /// (VIG-PROV-010).
+      ReceivedProvenance: ItemProvenance option }
 
 [<RequireQualifiedAccess>]
 module Item =
@@ -152,23 +169,42 @@ module Item =
           CancelledAt = None
           LastActivityAt = now
 
-          History = [ History.entry now author Created ] }
+          History = [ History.entry now author Created ]
+          Provenance = None
+          ReceivedProvenance = None }
 
     /// Records an operation: appends history, and advances UpdatedAt and
     /// LastActivityAt together (VIG-DOM-036).
     ///
     /// Everything that changes an item goes through here, so history cannot be
     /// forgotten at one call site and remembered at another.
-    let private record clock author operation item =
+    ///
+    /// `contribution` links the history entry to the provenance contribution
+    /// the change belongs to (VIG-PROV-016); `None` for an unattributed change.
+    /// Public so Tier 2 can record a status change it has decided is legal.
+    let recordAttributed clock author contribution operation item =
         let now = Clock.now clock
 
         { item with
             UpdatedAt = now
             LastActivityAt = if History.isActivity operation then now else item.LastActivityAt
-            History = item.History @ [ History.entry now author operation ] }
+            History = item.History @ [ History.attributedEntry now author contribution operation ] }
 
-    let addNote clock author note item =
-        { record clock author NoteAdded item with Notes = item.Notes @ [ note ] }
+    let private record clock author operation item =
+        recordAttributed clock author None operation item
+
+    /// The history entry takes the note's own contribution link, so a note and
+    /// the history row that announces it cannot disagree about who wrote it.
+    let addNote clock author (note: Note) item =
+        { recordAttributed clock author note.Contribution NoteAdded item with Notes = item.Notes @ [ note ] }
+
+    /// Sets or clears the review flag (VIG-AGT-023).
+    let setNeedsReview clock author contribution needsReview item =
+        if needsReview = item.NeedsReview then
+            item
+        else
+            { recordAttributed clock author contribution (ReviewFlagChanged needsReview) item with
+                NeedsReview = needsReview }
 
     let addTag clock author tag item =
         if TagSet.contains tag item.Tags then
