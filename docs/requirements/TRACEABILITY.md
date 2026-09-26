@@ -3,7 +3,7 @@ id: REQ-TRACE
 title: Source section to requirement traceability
 status: draft
 created: 2026-09-18
-updated: 2026-09-23
+updated: 2026-09-26
 ---
 
 # Traceability
@@ -199,21 +199,52 @@ Sections §55–§99 are v0.3. Sections §100–§143 are v0.4. Sections §144�
 | §150 | Folio usage | `PLAT-042`–`PLAT-048` |
 | §151 | Cross-platform composition and enforcement | `PLAT-050`–`PLAT-053` |
 
+## Echelon provenance contract (Praxis)
+
+These requirements trace to an external contract rather than to a numbered
+section of the input documents. Praxis owns the contract; Vigila adopts it.
+They also refine §14 (history) and §15 (actor), and §28 and §80 (record
+format and unknown fields).
+
+| Praxis source | Topic | Requirements |
+|---|---|---|
+| `RQ-ROS-2026-A001` | Portable actor | `DOM-050`, `DOM-051`, `AGT-036` |
+| `RQ-ROS-2026-A004` | Execution-keyed, append-only contributions | `DOM-052`, `DOM-055` |
+| `RQ-ROS-2026-A013` | Versioned interchange record | `DOM-054`, `PER-024`, `PER-025`, `AGT-037` |
+| `RQ-ROS-2026-A014` | Execution propagation, namespaced foreign runs | `DOM-052`, `AGT-036` |
+| `RQ-ROS-2026-A015` | No silent stripping; derivation; interchange operations | `DOM-053`, `DOM-054`, `DOM-055`, `PER-024`, `PER-025`, `AGT-061` |
+| `DF-ROS-2026-A037` | Shared fixtures, not a shared library | `AGT-037` |
+
+### Requirement → implementation → verification
+
+| Requirement | Implementation | Verification |
+|---|---|---|
+| `DOM-050` | `Vigila.Semantic.Actors` (`Tooling`, `Actor.identify`, `Actor.problems`); `ItemJson.writeActor`/`readActor` | Semantic `ProvenanceTests`: human has no tooling; unknown, not guessed; no credential. Host `ProvenanceTests`: agent round trip; human omits tooling; human claiming a provider refused |
+| `DOM-051` | `Provenance.PraxisActor.kindOf`/`vigilaTypeOf`/`typeOf`/`valueOf`; `ItemJson.readActor` kind/id checks | Semantic: every type maps to a kind and back; unknown kinds not coerced. Host: integration stays an integration; kind contradicting type refused |
+| `DOM-052` | `Provenance.ContributionKey`, `Attribution`; `History.HistoryEntry.Execution`, `History.attributed`; `ItemJson` `execution` | Semantic: namespaced runs; key forms; agent acts within an execution. Host: agent round trip with execution; agent never keyed outside an execution |
+| `DOM-053` | `Item.generate`, `Item.contribute`, `ProvenanceRecord.derive`/`chain` | Host: roles stay distinct and recoverable; generated item names its system as creator; e2e/05 derives e2e/06 |
+| `DOM-054` | `Item.Provenance`; `Carried.Verbatim`; `ProvenanceJson.CarriedJson`; `ItemJson` `provenance` | Host: unsupported major carried verbatim; malformed provenance refused; unknown record fields survive |
+| `DOM-055` | `Item.contribute`, `ProvenanceRecord.append`, `ContributionOperation` | Host: e2e/06→09 through Vigila's operations; re-attribution refused and unchanged; same run extends its own entry; no second `created` |
+| `PER-024` | `ItemJson.CurrentSchemaVersion = 2`, `OldestSchemaVersion = 1` | Host: version 1 item loads without invented identity or history; newer schema refused |
+| `PER-025` | `Actor.Extensions`; `ItemJson.readActor`; verbatim `provenance` | Host: unknown actor fields survive read and rewrite; legacy unversioned block gains the envelope only when extended |
+| `AGT-036` | `Dispatch.localUser` (UI captures are human, no execution); envelope not yet built | Documented; envelope pending [`AGT-035`](AGENT.md#vig-agt-035) |
+| `AGT-037` | `Provenance.ProvenanceRecord` (`read`, `validate`, `append`, `derive`, `successorProblems`, `chain`); `ProvenanceJson.ProvenanceRecordJson`; `tests/fixtures/praxis-provenance-record/` | Host: fixture digests; every case; every successor pair; every e2e hop; the chain |
+
 ## Coverage
 
 | | Count |
 |---|---|
 | Source sections | 151 (plus 11 `§47.x` subsections and 3 `§0.x` subsections) |
 | Sections with no mapped requirement | **0** |
-| Distinct requirements | 301 |
+| Distinct requirements | 311 (301 from the source documents, 10 from the Echelon provenance contract) |
 
 ### By area
 
 | Area | Requirements |
 |---|---|
-| `DOM` — domain model | 50 |
-| `AGT` — agent and integration | 36 |
-| `PER` — persistence | 34 |
+| `DOM` — domain model | 56 |
+| `AGT` — agent and integration | 38 |
+| `PER` — persistence | 36 |
 | `UI` — user interface | 26 |
 | `TIME` — time and scheduling | 22 |
 | `GOV` — governance | 21 |
@@ -223,7 +254,7 @@ Sections §55–§99 are v0.3. Sections §100–§143 are v0.4. Sections §144�
 | `TST` — testing and documentation | 13 |
 | `SCOPE` — scope | 6 |
 | `PLAT` — shared platform dependencies | 35 |
-| **Total** | **301** |
+| **Total** | **311** |
 
 ### By release
 

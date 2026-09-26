@@ -32,3 +32,4 @@
 | WI-0026 | Route the Dispatch boundary Aegis scope through Ports.scopeFor or remove scopeFor (SDE conformance G-2) | captured |  | medium |
 | WI-0027 | Attribute or declare the 22 unattributed commits on main since 2026-09-23 and restore PR-only path to main (SDE conformance G-3) | captured |  | medium |
 | WI-0028 | Bring VIG-SHR requirements into the traceability count and heading convention (SDE conformance G-4) | captured |  | medium |
+| WI-0029 | Preserve agent/system identity and Praxis provenance on Vigila items (Echelon provenance upgrade) | complete | provenance,echelon | high |

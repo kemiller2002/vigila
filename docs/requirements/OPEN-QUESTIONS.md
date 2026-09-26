@@ -3,7 +3,7 @@ id: REQ-OQ
 title: Open questions from requirements derivation
 status: resolved
 created: 2026-09-18
-updated: 2026-09-18
+updated: 2026-09-26
 ---
 
 # Open questions
@@ -11,7 +11,7 @@ updated: 2026-09-18
 Points where deriving the requirements needed a judgement the source documents
 do not settle. Each records what the sources said, what was decided, and why.
 
-**All eleven are resolved.** The file is kept rather than deleted: each entry is
+**All twelve are resolved.** The file is kept rather than deleted: each entry is
 the reasoning behind a decision that is now load-bearing elsewhere, and the
 alternatives that were rejected are the part hardest to reconstruct later.
 
@@ -411,3 +411,32 @@ alone.
 
 **Applied.** [VIG-QRY-003](QUERY.md#vig-qry-003) carries the definition, so the
 "ranking behaviour MUST be documented" clause is now discharged.
+
+---
+
+<a id="oq-12"></a>
+
+## OQ-12 — Which Praxis kind is an `Integration` actor? — **RESOLVED**
+
+**Resolved 2026-09-26.** `automation`, with the Vigila type carried beside it.
+See [ADR-0004](../architecture/ADR-0004-praxis-provenance-mapping.md).
+
+**Was.** v0.2 §15 lists five actor types. Vigila models four: `Human`, `Agent`,
+`AutomatedProcess` and `Integration`. The Praxis actor
+(`RQ-ROS-2026-A001`), which [VIG-DOM-050](DOMAIN.md#vig-dom-050) adopts, has
+the kinds `agent`, `human`, `automation`, `unknown` and `x-...`. `Integration`
+has no kind of its own.
+
+**Why `automation` plus the preserved type.**
+
+1. An integration is a deterministic, non-agent process, which is what
+   `automation` means. Every other Echelon consumer then reads it correctly
+   without knowing anything about Vigila.
+2. Plain `automation` would come back as `AutomatedProcess`, which breaks
+   [VIG-DOM-051](DOMAIN.md#vig-dom-051). The item file already records `type`,
+   and a provenance record carries `x-vigila-type: "integration"`. That field is
+   namespaced, and conforming consumers must preserve it.
+3. `x-integration` was rejected. It is legal, but it would make every other
+   consumer treat the actor as an unknown category rather than as automation.
+   That trades interoperability for a spelling.
+

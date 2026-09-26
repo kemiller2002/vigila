@@ -7,12 +7,15 @@
 /// requires a title to be enough to create an item -- conversational capture
 /// cannot pause to fill a form.
 ///
-/// Requirements: VIG-DOM-013 and the field requirements it indexes.
+/// Requirements: VIG-DOM-013 and the field requirements it indexes;
+/// VIG-DOM-053, VIG-DOM-054 and VIG-DOM-055 for generation and contributions.
 module Vigila.Semantic.Item
 
 open Vigila.Semantic.Identifiers
 open Vigila.Semantic.Time
+open Vigila.Semantic.Carried
 open Vigila.Semantic.Actors
+open Vigila.Semantic.Provenance
 open Vigila.Semantic.Items
 open Vigila.Semantic.Tags
 open Vigila.Semantic.Notes
@@ -98,7 +101,13 @@ type Item =
       /// Meaningful activity only; never moved by a read (VIG-DOM-036).
       LastActivityAt: Instant
 
-      History: HistoryEntry list }
+      History: HistoryEntry list
+
+      /// The item's Praxis provenance interchange record, exactly as held
+      /// (VIG-DOM-054). `None` for an item with no recorded provenance, which
+      /// includes every item written before it existed: nothing is invented
+      /// for those.
+      Provenance: Verbatim option }
 
 [<RequireQualifiedAccess>]
 module Item =
@@ -152,7 +161,8 @@ module Item =
           CancelledAt = None
           LastActivityAt = now
 
-          History = [ History.entry now author Created ] }
+          History = [ History.entry now author Created ]
+          Provenance = None }
 
     /// Records an operation: appends history, and advances UpdatedAt and
     /// LastActivityAt together (VIG-DOM-036).
@@ -209,3 +219,78 @@ module Item =
         match item.SnoozedUntil with
         | Some until -> Instant.isBefore now until
         | None -> false
+
+    /// Generates an item from another system's subject -- a follow-up from a
+    /// finding, say (VIG-DOM-053, VIG-DOM-054).
+    ///
+    /// `creator` is whoever generated the item, in the run that did it: for
+    /// Vigila itself, an automation actor keyed `EXE-vigila.<run>`. It is the
+    /// item's creator, in `CreatedBy`, in the first history record and as the
+    /// record's only `created` contribution. Each source is lineage: named in
+    /// `derivedFrom`, its record carried verbatim when held. The actor that
+    /// discovered the source therefore stays in that snapshot and never
+    /// becomes a contributor to the item.
+    let generate clock (creator: Attribution) via title (reason: string option) (sources: (string * Verbatim option) list) =
+        let item = create clock creator.Actor via title
+        let now = item.CreatedAt
+
+        let contribution =
+            { Attribution = creator
+              Operations = [ ContributionOperation.Created ]
+              At = now
+              Reason = reason
+              Evidence = [] }
+
+        match ProvenanceRecord.derive (ProvenanceRecord.subjectOf item.Id) contribution sources with
+        | Error problems -> Error(problems |> List.map (fun p -> $"%s{p.Field}: %s{p.Message}") |> String.concat "; ")
+        | Ok record ->
+            Ok
+                { item with
+                    History = [ History.attributed now creator Created ]
+                    Provenance = Some record }
+
+    /// Records a contribution by an identified actor in an identified run
+    /// (VIG-DOM-055): a follow-up handled, resolved, validated, dismissed.
+    ///
+    /// The history record keeps the actor and the execution. When the item
+    /// carries a provenance record, the contribution is appended to it under
+    /// the Praxis rules; a refusal (re-attribution, a second `created`)
+    /// refuses the whole operation and leaves the item unchanged. A record in
+    /// an unsupported major version is carried as it is and not extended.
+    let contribute clock (attribution: Attribution) (operations: ContributionOperation list) (reason: string option) (evidence: string list) item =
+        let now = Clock.now clock
+        let distinct = operations |> List.distinct
+
+        let contribution =
+            { Attribution = attribution
+              Operations = distinct
+              At = now
+              Reason = reason
+              Evidence = evidence |> List.distinct }
+
+        let record =
+            match item.Provenance with
+            | None -> Ok None
+            | Some raw ->
+                match ProvenanceRecord.read raw with
+                | Ok(Reading.Unsupported _) -> Ok(Some raw)
+                | _ -> ProvenanceRecord.append contribution raw |> Result.map Some |> Result.mapError (List.map (fun p -> $"%s{p.Field}: %s{p.Message}") >> String.concat "; ")
+
+        if distinct.IsEmpty then
+            Error "A contribution records at least one operation."
+        elif Option.toList reason @ evidence |> List.exists Credentials.looksLikeCredential then
+            Error "A reason or evidence reference looks like a credential; provenance never carries one."
+        elif evidence |> List.exists (fun item -> item.Trim().Length = 0) then
+            Error "An evidence reference must not be empty."
+        elif List.contains ContributionOperation.Created distinct then
+            Error "An item is created once; a later contribution cannot claim 'created'."
+        elif attribution.Execution.IsNone then
+            Error "A contribution is recorded under the execution (EXE-...) or contribution (CTB-...) key it was made in."
+        else
+            record
+            |> Result.map (fun provenance ->
+                { item with
+                    UpdatedAt = now
+                    LastActivityAt = now
+                    History = item.History @ [ History.attributed now attribution (Contributed(distinct, reason, contribution.Evidence)) ]
+                    Provenance = provenance })

@@ -2,7 +2,7 @@
 id: REQ-AGT
 title: Agent and integration interface
 status: draft
-sources: v0.2 §22–§25, §30–§33, v0.3 §64–§68, §74, §75, v0.4 §114, §115, §126–§130, §138–§140
+sources: v0.2 §22–§25, §30–§33, v0.3 §64–§68, §74, §75, v0.4 §114, §115, §126–§130, §138–§140, Echelon provenance contract (Praxis RQ-ROS-2026-A013, A014)
 ---
 
 # Agent and integration interface
@@ -244,6 +244,41 @@ Command metadata MUST be consistent across operations. The envelope MUST never
 include the GitHub token. `Actor` and `CreatedVia` semantics MUST be documented,
 and `OperationId` idempotency behaviour MUST be uniform.
 
+#### VIG-AGT-036 — The envelope's actor and execution
+**Level:** MUST · **Release:** v1 · **Source:** Praxis RQ-ROS-2026-A001, RQ-ROS-2026-A014, v0.4 §128
+
+The `Actor` in the command envelope ([VIG-AGT-035](#vig-agt-035)) MUST be the
+Praxis actor ([VIG-DOM-050](DOMAIN.md#vig-dom-050)). The envelope MUST also
+carry the execution that issues the command:
+
+- the propagated `ROS_EXECUTION_ID` when the caller has one;
+- otherwise the caller's own namespaced run `EXE-<system>.<run>`;
+- otherwise, for a human or automation outside any run, a `CTB-...` key.
+
+The actor MUST come only from explicit declarations and the whitelisted,
+non-secret identity sources (`ROS_ACTOR_KIND`, `ROS_ACTOR`,
+`ROS_TELEMETRY_PROVIDER`, `ROS_TELEMETRY_MODEL`, `ROS_TELEMETRY_RUNTIME`). An
+unset value MUST be recorded as `unknown`. A UI action is a human action at that
+browser. It MUST be attributed to a human actor and to no execution, never to
+an agent or a guessed identity.
+
+#### VIG-AGT-037 — Provenance interchange conformance
+**Level:** MUST · **Release:** v1 · **Source:** Praxis RQ-ROS-2026-A013, RQ-ROS-2026-A015, DF-ROS-2026-A037
+
+Vigila MUST read, validate, extend and derive `praxis.provenance-record`
+records with a codec of its own. It MUST NOT take a package or project
+dependency on Praxis. The codec MUST:
+
+- interpret any minor or patch version of major version 1;
+- read a bare `{"contributions": ...}` block as version 1;
+- carry an unsupported major version verbatim;
+- reject a malformed record;
+- detect a destructive successor.
+
+Vigila MUST vendor the Praxis conformance fixtures with the Praxis commit and
+per-file digests they came from. Vigila MUST test its codec against every case,
+every successor pair and the end-to-end chain.
+
 ## Errors
 
 #### VIG-AGT-050 — Machine-readable error taxonomy
@@ -350,7 +385,7 @@ Vigila and ROS MUST remain separate systems. A Vigila item MAY reference a ROS
 work item.
 
 #### VIG-AGT-061 — Promote-to-ROS contract
-**Level:** MUST · **Release:** future · **Source:** v0.4 §138, v0.2 §32
+**Level:** MUST · **Release:** future · **Source:** v0.4 §138, v0.2 §32, Praxis RQ-ROS-2026-A015
 
 Promotion MUST record: Vigila `ItemId`, ROS `WorkItemId`, promotion timestamp,
 actor, `OperationId`.
@@ -361,6 +396,10 @@ actor, `OperationId`.
 - Promotion MUST NOT erase Vigila notes or history.
 - The resulting Vigila state/resolution MUST follow an explicit policy.
 - A failed ROS creation MUST NOT leave Vigila falsely marked as promoted.
+- Promotion MUST carry the item's provenance record
+  ([VIG-DOM-054](DOMAIN.md#vig-dom-054)) and MUST record the promoting actor
+  and its execution ([VIG-DOM-052](DOMAIN.md#vig-dom-052)). The ROS work item
+  derives from the Vigila item. It does not inherit the item's contributors.
 
 #### VIG-AGT-062 — ROS state does not implicitly control Vigila
 **Level:** MUST · **Release:** future · **Source:** v0.4 §139
