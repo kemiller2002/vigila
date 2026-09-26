@@ -156,7 +156,7 @@ let cli_replay_and_conflict () =
 [<InlineData("{ not json")>]
 [<InlineData("")>]
 let cli_rejects_bad_input (input: string) =
-    let handler = RepositoryHandler()
+    let handler = new RepositoryHandler()
     let actual = if input = "" then invocation "" else input
     let exitCode, output = run handler actual
 
