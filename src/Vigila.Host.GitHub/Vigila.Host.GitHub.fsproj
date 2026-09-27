@@ -16,6 +16,9 @@
     <Compile Include="StorageLayout.fs" />
     <Compile Include="ItemJson.fs" />
     <Compile Include="GitHubStore.fs" />
+    <Compile Include="GitHubRepositoryFiles.fs" />
+    <Compile Include="OperationJson.fs" />
+    <Compile Include="FollowUpLedger.fs" />
   </ItemGroup>
 
   <ItemGroup>

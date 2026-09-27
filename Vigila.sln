@@ -25,6 +25,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vigila.Application.Tests", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vigila.Wasm", "src\Vigila.Wasm\Vigila.Wasm.csproj", "{EB2ED22D-AE75-43BD-AC5A-6A6F21863B25}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Vigila.Cli", "src\Vigila.Cli\Vigila.Cli.fsproj", "{C4A15E8A-9C8E-4C57-A115-15F015C11515}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,18 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C4A15E8A-9C8E-4C57-A115-15F015C11515}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4A15E8A-9C8E-4C57-A115-15F015C11515}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4A15E8A-9C8E-4C57-A115-15F015C11515}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C4A15E8A-9C8E-4C57-A115-15F015C11515}.Debug|x64.Build.0 = Debug|Any CPU
+		{C4A15E8A-9C8E-4C57-A115-15F015C11515}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C4A15E8A-9C8E-4C57-A115-15F015C11515}.Debug|x86.Build.0 = Debug|Any CPU
+		{C4A15E8A-9C8E-4C57-A115-15F015C11515}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4A15E8A-9C8E-4C57-A115-15F015C11515}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4A15E8A-9C8E-4C57-A115-15F015C11515}.Release|x64.ActiveCfg = Release|Any CPU
+		{C4A15E8A-9C8E-4C57-A115-15F015C11515}.Release|x64.Build.0 = Release|Any CPU
+		{C4A15E8A-9C8E-4C57-A115-15F015C11515}.Release|x86.ActiveCfg = Release|Any CPU
+		{C4A15E8A-9C8E-4C57-A115-15F015C11515}.Release|x86.Build.0 = Release|Any CPU
 		{6C2BB441-A33F-47E9-BDAB-69EEFFABE681}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6C2BB441-A33F-47E9-BDAB-69EEFFABE681}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C2BB441-A33F-47E9-BDAB-69EEFFABE681}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -148,6 +162,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{C4A15E8A-9C8E-4C57-A115-15F015C11515} = {346ECB2B-955A-4337-BBE1-5DE291EB6B1A}
 		{6C2BB441-A33F-47E9-BDAB-69EEFFABE681} = {346ECB2B-955A-4337-BBE1-5DE291EB6B1A}
 		{5D88263F-AD6D-4403-B73A-729B3AE342FB} = {346ECB2B-955A-4337-BBE1-5DE291EB6B1A}
 		{B25B1FE2-B21D-474E-A51D-4DD1A1663751} = {346ECB2B-955A-4337-BBE1-5DE291EB6B1A}

@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Tests.fs" />
+    <Compile Include="IntegrationTests.fs" />
     <Compile Include="ConnectionTests.fs" />
     <Compile Include="ViewBindingTests.fs" />
   </ItemGroup>

@@ -15,6 +15,17 @@
       "$comment": "The JSON message parser and authority-side Limen dispatcher are captured by Aegis. Programming defects still fail loudly under Aegis semantics."
     },
     {
+      "name": "Echelon followup.create provider boundary",
+      "kind": "integration",
+      "owner": "Vigila.Application",
+      "codes": [
+        "VIGILA.INTEGRATION.UNEXPECTED",
+        "VIGILA.INTEGRATION.<ledger failure code>"
+      ],
+      "guarded": true,
+      "$comment": "Integration.create captures unexpected ledger exceptions with Aegis and maps typed ledger failures (VIG-AGT-050 codes such as RepositoryUnavailable, RateLimited, StorageCorrupt, PersistenceFailed) to VIGILA.INTEGRATION.<CODE> faults. Validation refusals, unsupported contract versions and operation-id conflicts are typed outcomes, not faults. See ADR-0004."
+    },
+    {
       "name": "Browser HTTP and storage effects",
       "kind": "browser-capability",
       "owner": "Limen BrowserKernel",
@@ -23,12 +34,12 @@
       "$comment": "Execution occurs browser-side. Observed HTTP/storage outcomes cross the Limen protocol as explicit typed outcomes; this declaration does not pretend the .NET Aegis runtime guards JavaScript fetch/localStorage."
     },
     {
-      "name": "Future direct GitHub host",
+      "name": "GitHub repository transport",
       "kind": "external-service",
       "owner": "Vigila.Host.GitHub",
       "codes": [],
-      "guarded": false,
-      "$comment": "The host currently defines typed failure vocabulary but performs no direct GitHub call. A real host call must add Aegis capture and stable code mapping before this boundary can be marked guarded."
+      "guarded": true,
+      "$comment": "GitHubRepositoryFiles performs the remote contents-API calls and returns typed failures only. FollowUpLedger is invoked inside Integration.create\u0027s Aegis capture, which maps those failures to stable VIGILA.INTEGRATION.* faults; credentials and response bodies are not diagnostic context."
     }
   ],
   "persistence": {

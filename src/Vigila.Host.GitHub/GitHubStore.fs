@@ -65,3 +65,16 @@ let codeOf failure =
     | RateLimited _ -> "RateLimited"
     | RepositoryUnavailable -> "RepositoryUnavailable"
     | StorageCorrupt _ -> "StorageCorrupt"
+
+
+/// The outcome of a create-only repository write.
+type FileWrite =
+    | FileCreated
+    | FileAlreadyExists
+
+/// Minimal repository file port used by durable persistence. CreateNew is an
+/// atomic create-if-absent operation; repository identity, branch and
+/// credentials belong to the implementation.
+type RepositoryFiles =
+    abstract Read: path: string -> Result<string option, GitHubFailure>
+    abstract CreateNew: path: string * content: string -> Result<FileWrite, GitHubFailure>
