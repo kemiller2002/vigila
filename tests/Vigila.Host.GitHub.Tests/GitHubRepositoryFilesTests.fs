@@ -4,6 +4,7 @@ open System
 open System.Net
 open System.Net.Http
 open System.Text
+open System.Text.Json
 open System.Threading
 open System.Threading.Tasks
 open Xunit
@@ -71,6 +72,14 @@ let read_missing () =
     Assert.Equal(Ok None, files.Read "vigila/missing.json")
     Assert.Equal(2, handler.Requests.Length)
 
+[<Fact>]
+let read_inaccessible_repository () =
+    let handler = new FakeHandler(fun _ -> response HttpStatusCode.NotFound "{}")
+    let files = filesWith handler "secret-token"
+
+    Assert.Equal(Error RepositoryNotFound, files.Read "vigila/missing.json")
+    Assert.Equal(2, handler.Requests.Length)
+
 [<Theory>]
 [<InlineData(401, "Unauthorized")>]
 [<InlineData(403, "Forbidden")>]
@@ -85,7 +94,18 @@ let read_failures (status: int, expected: string) =
 
 [<Fact>]
 let create_without_read () =
-    let handler = new FakeHandler(fun _ -> response HttpStatusCode.Created "{}")
+    let handler =
+        new FakeHandler(fun request ->
+            let content =
+                request.Content
+                |> Option.ofObj
+                |> Option.defaultWith (fun () -> failwith "Create request content is required.")
+
+            let body = content.ReadAsStringAsync().GetAwaiter().GetResult()
+            use document = JsonDocument.Parse body
+            Assert.Equal("integration-data", document.RootElement.GetProperty("branch").GetString())
+            Assert.False(document.RootElement.TryGetProperty("sha") |> fst)
+            response HttpStatusCode.Created "{}")
     let files = filesWith handler "secret-token"
 
     Assert.Equal(Ok FileCreated, files.CreateNew("vigila/new.json", "{}"))

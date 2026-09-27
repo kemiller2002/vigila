@@ -89,27 +89,36 @@ let private invocation title =
     }
     """
 
-let private run handler input =
+let private defaultEnv (name: string) : string | null =
+    if name = "VIGILA_GITHUB_TOKEN" then "ghs_test_secret" else null
+
+let private runWithArguments handler getEnv input extraArguments =
     use http = new HttpClient(handler)
     use stdin = new StringReader(input)
     use stdout = new StringWriter()
-    let env (name: string) : string | null = if name = "VIGILA_GITHUB_TOKEN" then "ghs_test_secret" else null
+
+    let arguments =
+        [ "follow-up"; "add"
+          "--repository"; "acme/vigila"
+          "--branch"; "provider-data"
+          "--workspace"; workspace
+          "--storage-root"; "custom-vigila" ]
+        @ extraArguments
+        |> List.toArray
 
     let exitCode =
         Vigila.Cli.Program.runWith
             http
-            env
+            getEnv
             clock
             stdin
             stdout
-            [| "follow-up"; "add"
-               "--repository"; "acme/vigila"
-               "--branch"; "provider-data"
-               "--workspace"; workspace
-               "--storage-root"; "custom-vigila"
-               "--stdin" |]
+            arguments
 
     exitCode, stdout.ToString()
+
+let private run handler input =
+    runWithArguments handler defaultEnv input [ "--stdin" ]
 
 [<Fact>]
 let cli_end_to_end_created () =
@@ -134,6 +143,64 @@ let cli_end_to_end_created () =
     Assert.All(putBodies, fun (uri, body) ->
         Assert.Contains("/repos/acme/vigila/", uri)
         Assert.Contains("\"branch\":\"provider-data\"", body))
+
+[<Fact>]
+let cli_stdin_and_input_are_equivalent () =
+    let json = invocation "Equivalent input"
+    let stdinHandler = new RepositoryHandler()
+    let inputHandler = new RepositoryHandler()
+    let stdinExit, stdinOutput = run stdinHandler json
+    let path = Path.GetTempFileName()
+
+    try
+        File.WriteAllText(path, json)
+
+        let inputExit, inputOutput =
+            runWithArguments inputHandler defaultEnv "" [ "--input"; path ]
+
+        use stdinReceipt = JsonDocument.Parse stdinOutput
+        use inputReceipt = JsonDocument.Parse inputOutput
+        Assert.Equal(stdinExit, inputExit)
+        Assert.Equal("created", stdinReceipt.RootElement.GetProperty("status").GetString())
+        Assert.Equal("created", inputReceipt.RootElement.GetProperty("status").GetString())
+        Assert.Equal(
+            stdinReceipt.RootElement.GetProperty("code").GetString(),
+            inputReceipt.RootElement.GetProperty("code").GetString()
+        )
+        Assert.Equal(stdinHandler.Files.Count, inputHandler.Files.Count)
+        Assert.Equal<string list>(
+            stdinHandler.Requests |> List.map (fun (methodName, _, _) -> methodName),
+            inputHandler.Requests |> List.map (fun (methodName, _, _) -> methodName)
+        )
+    finally
+        File.Delete path
+
+[<Fact>]
+let cli_uses_configured_token_environment () =
+    let handler = new RepositoryHandler()
+    let getEnv (name: string) : string | null = if name = "CUSTOM_VIGILA_TOKEN" then "custom-secret" else null
+
+    let exitCode, output =
+        runWithArguments
+            handler
+            getEnv
+            (invocation "Configured credential")
+            [ "--token-env"; "CUSTOM_VIGILA_TOKEN"; "--stdin" ]
+
+    Assert.Equal(0, exitCode)
+    Assert.DoesNotContain("custom-secret", output)
+
+[<Theory>]
+[<InlineData("VIGILA_GITHUB_TOKEN")>]
+[<InlineData("GITHUB_TOKEN")>]
+[<InlineData("GH_TOKEN")>]
+let cli_uses_documented_default_token_environments (configuredName: string) =
+    let handler = new RepositoryHandler()
+    let getEnv (name: string) : string | null = if name = configuredName then "default-secret" else null
+    let exitCode, output = runWithArguments handler getEnv (invocation "Default credential") [ "--stdin" ]
+
+    Assert.Equal(0, exitCode)
+    Assert.DoesNotContain("default-secret", output)
 
 [<Fact>]
 let cli_replay_and_conflict () =
