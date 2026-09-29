@@ -8,7 +8,15 @@ permissions:
   contents: read
 
 jobs:
+  debounce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Wait for commit batch
+        run: sleep 600
+
   foundations:
+    needs: debounce
     uses: kemiller2002/praxis/.github/workflows/foundations-verify.yml@bd3d1469a56efaa59afefa4d4df7b898c80c2ec4
     with:
       praxis_ref: bd3d1469a56efaa59afefa4d4df7b898c80c2ec4
