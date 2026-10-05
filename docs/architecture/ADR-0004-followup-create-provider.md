@@ -144,6 +144,46 @@ Registry discovery is intentionally absent. A caller may discover a Vigila
 installation however it chooses, but the receiving executable never contacts
 `echelon-registry`.
 
+### D8 — Failure classification, bounded retry and typed exit codes (2026-10-05)
+
+Amends D6/D7 after the Echelon quality inventory (VIG-F2, VIG-F3, VIG-F6;
+work item WI-0029, building on #25).
+
+- **Explicit status classes.** `GitHubStore.classifyStatus` is a pure, total
+  function. 429 (or 403 with an exhausted rate limit) is `RateLimited`. 401,
+  403, 404 and 409/422 keep their specific cases. 408 and every 5xx are
+  `RepositoryUnavailable`, which is retryable. Every other 4xx is
+  `RequestRejected status`, and any other status is `UnexpectedStatus
+  status`; both are terminal. Before this change, every unlisted status
+  (400, 410, …) fell into the retryable `RepositoryUnavailable`, so a
+  permanent client error invited endless retries.
+- **Bounded retry.** `RetryingRepositoryFiles.wrap` retries only retryable
+  failures, under a `RetryPolicy` (standard: 3 attempts, 500 ms doubling,
+  capped at 10 s, honouring `Retry-After`). When the budget runs out, the
+  result is `RetriesExhausted(attempts, last)`, which is terminal. Retrying
+  `CreateNew` is safe because it is create-only: a retried claim that had in
+  fact succeeded observes `FileAlreadyExists` and is reported as `existing`.
+  The decision (`decide`) is pure, and waiting is injected.
+- **Receipt retryability is typed.** `CreateOutcome.Failed` carries a
+  `FailureDisposition` (`RetrySafe` | `Terminal`). The receipt's `retryable`
+  is derived from it, and is no longer always `true`. Replay with the same
+  operation id stays *safe*; `retryable` now states whether it is *useful*.
+  The receipt `code` remains `PersistenceFailed`. The new ledger codes
+  (`RequestRejected`, `UnexpectedStatus`, `RetriesExhausted`) surface in the
+  Aegis fault code (`VIGILA.INTEGRATION.<CODE>`).
+- **Exit codes from the typed outcome.** `IntegrationWire.execute` returns the
+  typed `CreateOutcome`. The CLI maps it with the exhaustive
+  `Program.exitCodeOf` and encodes the receipt separately. It no longer
+  re-parses its own JSON. The exit-code values above are unchanged.
+- **Injected identity.** Tier 1 no longer calls `Guid.NewGuid`. `ItemId`,
+  `NoteId` and `WorkspaceId` are drawn from an injected `IdSource` port, the
+  same way time comes from `Clock`. The composition roots (`Vigila.Cli`,
+  `Dispatch`) supply random GUIDs. Persisted forms (GUID `D`/`N`, `VIG-xxxxxxxx`
+  display) are unchanged.
+- **Ratchet.** `scripts/check-architecture.sh` now fails on ambient
+  nondeterminism (`Guid.NewGuid`, `DateTime*.Now`, `Random`, …) in Tier 1/2,
+  and on a host reading a receipt `status` back out of JSON.
+
 ## Consequences
 
 - Durable, concurrency-safe idempotency holds for any `RepositoryFiles`

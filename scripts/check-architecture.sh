@@ -58,6 +58,25 @@ for tier in src/Vigila.Semantic src/Vigila.Transition; do
              | sed 's|$| references a forbidden dependency (one of: Aegis, System.Net, System.IO, HttpClient, Octokit, localStorage, System.Text.Json).|')
 done
 
+# Tier 1 and Tier 2 must be deterministic for given inputs: identities and
+# time arrive through the injected IdSource and Clock ports, never from
+# ambient randomness or the wall clock (Echelon VIG-F6, VIG-TIME-023).
+nondeterministic='Guid\.NewGuid|DateTime(Offset)?\.(Utc)?Now|Random\(|Random\.Shared|Environment\.TickCount|Stopwatch'
+for tier in src/Vigila.Semantic src/Vigila.Transition; do
+  while IFS= read -r hit; do
+    [ -n "$hit" ] && report "$hit uses ambient nondeterminism; take an IdSource or Clock instead."
+  done < <(grep -rnE "$nondeterministic" "$tier" --include='*.fs' \
+             | grep -vE '^[^:]*:[0-9]+:\s*///' | sed 's/:\([0-9]*\):.*/:\1/' | sort -u)
+done
+
+# Hosts derive decisions from typed outcomes, never by re-parsing their own
+# receipt text (Echelon VIG-F2). A host that reads a receipt's `status` back
+# out of JSON is choosing behaviour from a string.
+while IFS= read -r hit; do
+  [ -n "$hit" ] && report "$hit reads a receipt status from JSON; branch on the typed outcome instead."
+done < <(grep -rnE 'GetProperty\("status"\)' src/Vigila.Cli src/Vigila.Host.GitHub --include='*.fs' \
+           | sed 's/:\([0-9]*\):.*/:\1/' | sort -u)
+
 # Tier 3 and 4 must not be referenced by anything below them.
 for lower in "$semantic" "$trans"; do
   if grep -qE 'Vigila\.(Application|Host)' "$lower"; then
@@ -66,6 +85,6 @@ for lower in "$semantic" "$trans"; do
 done
 
 if [ "$fail" -eq 0 ]; then
-  echo "  OK    dependencies point downward only; Tier 1 and Tier 2 are clean."
+  echo "  OK    dependencies point downward only; Tier 1 and Tier 2 are clean and deterministic; hosts branch on typed outcomes."
 fi
 exit "$fail"
