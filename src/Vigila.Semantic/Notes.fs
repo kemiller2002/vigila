@@ -29,7 +29,7 @@ module Note =
     [<Literal>]
     let MaxLength = 10000
 
-    let create clock author itemId (text: string | null) =
+    let create clock ids author itemId (text: string | null) =
         match text with
         | Null -> Error "Note text is required."
         | NonNull supplied ->
@@ -41,7 +41,7 @@ module Note =
                 Error $"A note may be at most %d{MaxLength} characters; got %d{trimmed.Length}."
             else
                 Ok
-                    { Id = NoteId.create ()
+                    { Id = NoteId.create ids
                       ItemId = itemId
                       Text = trimmed
                       CreatedAt = Clock.now clock

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 29,
+  "nextSeq": 31,
   "items": [
     {
       "id": "WI-0001",
@@ -439,6 +439,36 @@
       "attachments": [],
       "createdAt": "2026-09-25T17:46:22.904Z",
       "updatedAt": "2026-09-25T17:46:22.904Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0029",
+      "title": "Failure semantics: explicit HTTP classification with bounded retry, typed CLI exit codes, injected id source (Echelon VIG-F2, VIG-F3, VIG-F6; builds on #25)",
+      "description": null,
+      "tags": [
+        "quality"
+      ],
+      "priority": "high",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-10-05T09:28:02.000Z",
+      "updatedAt": "2026-10-05T09:46:48.000Z",
+      "createdBy": "unknown",
+      "source": "github",
+      "sourceReference": "kemiller2002/vigila#25"
+    },
+    {
+      "id": "WI-0030",
+      "title": "Time-capability ownership debt: Vigila.Semantic.Time duplicates a portfolio time capability that no repository owns (Chrona is a time-tracking app). Next: when Echelon names an owner, seed it from Time.fs and migrate behind the Clock port; do not depend on Chrona.",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-05T09:46:47.879Z",
+      "updatedAt": "2026-10-05T09:46:47.879Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

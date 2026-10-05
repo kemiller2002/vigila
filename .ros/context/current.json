@@ -4,7 +4,7 @@
   "repository": "vigila",
   "actor": "agent:chatgpt",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-09-26T07:48:04.000Z",
+  "updatedAt": "2026-10-05T09:46:48.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -478,6 +478,27 @@
         "EXE-20260926T073234182Z-59ab623a"
       ],
       "completedAt": "2026-09-26T07:48:04.000Z"
+    },
+    {
+      "id": "WI-0029",
+      "type": "default",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "src/Vigila.Host.GitHub/RetryingRepositoryFiles.fs"
+        },
+        {
+          "type": "tests",
+          "path": "tests/Vigila.Host.GitHub.Tests/RetryTests.fs"
+        }
+      ],
+      "updatedAt": "2026-10-05T09:46:48.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261005T092807568Z-23669523"
+      ],
+      "completedAt": "2026-10-05T09:46:48.000Z"
     }
   ]
 }

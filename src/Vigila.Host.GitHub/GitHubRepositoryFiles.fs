@@ -46,23 +46,13 @@ let private retryAfter (response: HttpResponseMessage) =
     | value when value.Delta.HasValue -> Some(int value.Delta.Value.TotalSeconds)
     | _ -> None
 
-let private isRateLimited (response: HttpResponseMessage) =
-    response.StatusCode = HttpStatusCode.TooManyRequests
-    || (response.StatusCode = HttpStatusCode.Forbidden
-        && response.Headers.Contains("X-RateLimit-Remaining")
-        && (response.Headers.GetValues("X-RateLimit-Remaining") |> Seq.exists ((=) "0")))
+let private rateLimitExhausted (response: HttpResponseMessage) =
+    response.Headers.Contains("X-RateLimit-Remaining")
+    && (response.Headers.GetValues("X-RateLimit-Remaining") |> Seq.exists ((=) "0"))
 
+/// Reads the response facts the pure `GitHubStore.classifyStatus` needs.
 let private classify (response: HttpResponseMessage) =
-    if isRateLimited response then
-        RateLimited(retryAfter response)
-    else
-        match response.StatusCode with
-        | HttpStatusCode.Unauthorized -> Unauthorized
-        | HttpStatusCode.Forbidden -> Forbidden
-        | HttpStatusCode.NotFound -> RepositoryNotFound
-        | HttpStatusCode.Conflict
-        | HttpStatusCode.UnprocessableEntity -> BranchUnavailable
-        | _ -> RepositoryUnavailable
+    classifyStatus (int response.StatusCode) (rateLimitExhausted response) (retryAfter response)
 
 let private send (http: HttpClient) credential (request: HttpRequestMessage) =
     try

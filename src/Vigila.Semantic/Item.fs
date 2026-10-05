@@ -118,11 +118,13 @@ module Item =
     /// This is the shape VIG-DOM-004 and VIG-UI-010 require: everything except
     /// the title, the actor and the channel is optional, so capture is one
     /// field. Timestamps come from the supplied clock rather than ambient time
-    /// (VIG-TIME-023), which is what lets a test assert exact values.
-    let create clock author via title =
+    /// (VIG-TIME-023), and the identity comes from the supplied id source
+    /// rather than ambient randomness, which is what lets a test assert exact
+    /// values and makes creation deterministic for given inputs.
+    let create clock ids author via title =
         let now = Clock.now clock
 
-        { Id = ItemId.create ()
+        { Id = ItemId.create ids
           Title = title
           Kind = Task
           Status = Open

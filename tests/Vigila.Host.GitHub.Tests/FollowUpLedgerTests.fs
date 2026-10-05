@@ -91,7 +91,9 @@ let private request operationId =
 let private ledgerOver files =
     Vigila.Host.GitHub.FollowUpLedger.create files root workspace
 
-let private run files r = Vigila.Application.Integration.create aegis clock (ledgerOver files) r
+let private ids = IdSource.create Guid.NewGuid
+
+let private run files r = Vigila.Application.Integration.create aegis clock ids (ledgerOver files) r
 
 let private itemFiles (files: MemoryFiles) =
     files.Paths |> List.filter (fun p -> p.StartsWith(itemsPath root workspace + "/", StringComparison.Ordinal))
@@ -157,7 +159,7 @@ let ``a replay after a restart finds the original item`` () =
     let files = MemoryFiles()
     let original = run files (request "op-restart") |> created
 
-    match Vigila.Application.Integration.create aegis clock (ledgerOver files) (request "op-restart") with
+    match Vigila.Application.Integration.create aegis clock ids (ledgerOver files) (request "op-restart") with
     | Replayed replayed ->
         Assert.Equal(original.Item.Id, replayed.Item.Id)
         Assert.Single(itemFiles files) |> ignore
@@ -227,7 +229,7 @@ let ``a failed claim reports failure and writes nothing`` () =
     let files = MemoryFiles(FailCreatesUnder = Some "/operations/")
 
     match run files (request "op-down") with
-    | Failed fault ->
+    | Failed(fault, _) ->
         Assert.Equal(FaultCode "VIGILA.INTEGRATION.REPOSITORYUNAVAILABLE", fault.Code)
         Assert.Empty(files.Paths)
     | other -> failwith $"Expected Failed, got %A{other}"
@@ -269,7 +271,7 @@ let ``a corrupt operation record is reported, not repaired or replaced`` () =
     files.Put(path, "{ not json")
 
     match run files (request "op-corrupt") with
-    | Failed fault ->
+    | Failed(fault, _) ->
         Assert.Equal(FaultCode "VIGILA.INTEGRATION.STORAGECORRUPT", fault.Code)
         Assert.Equal(Some "{ not json", files.Get path)
         Assert.Empty(itemFiles files)

@@ -135,3 +135,70 @@ let token_is_not_returned () =
     Assert.Equal(Error Unauthorized, result)
     Assert.DoesNotContain(token, sprintf "%A" result)
     Assert.All(handler.Requests, fun (_, _, seen) -> Assert.Equal(Some token, seen))
+
+// ---------------------------------------------------------------------------
+// Explicit status classification (Echelon VIG-F3). Every status class has a
+// stated, tested disposition; nothing falls through to "retryable".
+// ---------------------------------------------------------------------------
+
+[<Theory>]
+[<InlineData(400, "RequestRejected", false)>]
+[<InlineData(405, "RequestRejected", false)>]
+[<InlineData(410, "RequestRejected", false)>]
+[<InlineData(413, "RequestRejected", false)>]
+[<InlineData(451, "RequestRejected", false)>]
+[<InlineData(401, "Unauthorized", false)>]
+[<InlineData(403, "Forbidden", false)>]
+[<InlineData(404, "RepositoryNotFound", false)>]
+[<InlineData(409, "BranchUnavailable", false)>]
+[<InlineData(422, "BranchUnavailable", false)>]
+[<InlineData(408, "RepositoryUnavailable", true)>]
+[<InlineData(429, "RateLimited", true)>]
+[<InlineData(500, "RepositoryUnavailable", true)>]
+[<InlineData(502, "RepositoryUnavailable", true)>]
+[<InlineData(503, "RepositoryUnavailable", true)>]
+[<InlineData(504, "RepositoryUnavailable", true)>]
+[<InlineData(302, "UnexpectedStatus", false)>]
+let ``every status class has an explicit disposition`` (status: int, code: string, retryable: bool) =
+    let failure = classifyStatus status false None
+    Assert.Equal(code, codeOf failure)
+    Assert.Equal(retryable, failure.IsRetryable)
+
+[<Fact>]
+let ``no 4xx other than 408 and 429 is retryable, and every 5xx is`` () =
+    for status in 400..499 do
+        let expected = status = 408 || status = 429
+        Assert.True((classifyStatus status false None).IsRetryable = expected, $"status %d{status}")
+
+    for status in 500..599 do
+        Assert.True((classifyStatus status false None).IsRetryable, $"status %d{status}")
+
+[<Fact>]
+let ``a 403 with an exhausted rate limit is RateLimited, not Forbidden`` () =
+    Assert.Equal(RateLimited(Some 7), classifyStatus 403 true (Some 7))
+    Assert.Equal(Forbidden, classifyStatus 403 false None)
+
+[<Theory>]
+[<InlineData(400)>]
+[<InlineData(410)>]
+let ``a permanent client error over HTTP is terminal`` (status: int) =
+    let handler = new FakeHandler(fun _ -> response (enum<HttpStatusCode> status) "{}")
+    let files = filesWith handler "secret-token"
+
+    match files.Read "vigila/x.json" with
+    | Error failure ->
+        Assert.Equal(RequestRejected status, failure)
+        Assert.False(failure.IsRetryable)
+    | Ok value -> failwith $"Expected failure, got %A{value}"
+
+[<Fact>]
+let ``a terminal create failure is not presented as retryable to the ledger`` () =
+    let handler = new FakeHandler(fun _ -> response HttpStatusCode.BadRequest "{}")
+    let files = filesWith handler "secret-token"
+
+    match files.CreateNew("vigila/new.json", "{}") with
+    | Error failure ->
+        let ledgerFailure = failureOf failure
+        Assert.Equal("RequestRejected", ledgerFailure.Code)
+        Assert.False(ledgerFailure.Retryable)
+    | Ok value -> failwith $"Expected failure, got %A{value}"

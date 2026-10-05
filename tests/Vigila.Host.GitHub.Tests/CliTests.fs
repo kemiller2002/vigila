@@ -108,11 +108,14 @@ let private runWithArguments handler getEnv input extraArguments =
 
     let exitCode =
         Vigila.Cli.Program.runWith
-            http
-            getEnv
-            clock
-            stdin
-            stdout
+            { Http = http
+              GetEnv = getEnv
+              Clock = clock
+              Ids = Vigila.Semantic.Identifiers.IdSource.create Guid.NewGuid
+              RetryPolicy = Vigila.Host.GitHub.RetryingRepositoryFiles.RetryPolicy.standard
+              Wait = ignore
+              Stdin = stdin
+              Stdout = stdout }
             arguments
 
     exitCode, stdout.ToString()
@@ -243,3 +246,81 @@ let cli_operational_failure () =
     use receipt = JsonDocument.Parse output
     Assert.Equal("failed", receipt.RootElement.GetProperty("status").GetString())
     Assert.DoesNotContain("ghs_test_secret", output)
+
+// ---------------------------------------------------------------------------
+// Typed exit codes (Echelon VIG-F2) and terminal failures (VIG-F3).
+// ---------------------------------------------------------------------------
+
+type private StatusHandler(status: HttpStatusCode) =
+    inherit HttpMessageHandler()
+    let mutable puts = 0
+    member _.Puts = puts
+
+    override _.SendAsync(request, _) =
+        if request.Method = HttpMethod.Put then
+            Threading.Interlocked.Increment(&puts) |> ignore
+
+        Task.FromResult(new HttpResponseMessage(status))
+
+[<Theory>]
+[<InlineData(400)>]
+[<InlineData(410)>]
+let cli_permanent_client_error_is_terminal_and_sent_once (status: int) =
+    let handler = new StatusHandler(enum<HttpStatusCode> status)
+    let exitCode, output = run handler (invocation "Review provider")
+
+    Assert.Equal(4, exitCode)
+    use receipt = JsonDocument.Parse output
+    Assert.Equal("failed", receipt.RootElement.GetProperty("status").GetString())
+    Assert.False(receipt.RootElement.GetProperty("retryable").GetBoolean())
+    Assert.Equal(1, handler.Puts)
+
+[<Fact>]
+let cli_persistent_server_error_exhausts_retries_then_is_terminal () =
+    let handler = new StatusHandler(HttpStatusCode.ServiceUnavailable)
+    let exitCode, output = run handler (invocation "Review provider")
+
+    Assert.Equal(4, exitCode)
+    use receipt = JsonDocument.Parse output
+    Assert.False(receipt.RootElement.GetProperty("retryable").GetBoolean())
+    Assert.Equal(Vigila.Host.GitHub.RetryingRepositoryFiles.RetryPolicy.standard.Attempts, handler.Puts)
+
+/// An atomic in-memory ledger, so every CreateOutcome case can be produced
+/// without HTTP and the exit-code mapping checked against typed values.
+type private MemoryLedger() =
+    let records = ConcurrentDictionary<string, Vigila.Application.Integration.FollowUpRecord>()
+
+    interface Vigila.Application.Integration.FollowUpLedger with
+        member _.Record record =
+            let winner = records.GetOrAdd(record.Envelope.OperationId, record)
+
+            if obj.ReferenceEquals(winner, record) then
+                Ok Vigila.Application.Integration.Recorded
+            else
+                Ok(Vigila.Application.Integration.AlreadyRecorded winner)
+
+[<Fact>]
+let cli_exit_code_is_derived_from_the_typed_outcome () =
+    let aegis =
+        match Aegis.Bootstrap.validate None (Aegis.Aegis.configure "Vigila" None [ Aegis.Sinks.standardError ]) with
+        | Ok valid -> valid
+        | Result.Error problems -> failwith $"%A{problems}"
+
+    let ids = Vigila.Semantic.Identifiers.IdSource.create Guid.NewGuid
+    let execute ledger json = Vigila.Application.IntegrationWire.execute aegis clock ids ledger json
+    let ledger = MemoryLedger()
+
+    let failing =
+        { new Vigila.Application.Integration.FollowUpLedger with
+            member _.Record _ =
+                Error
+                    { Code = "RequestRejected"
+                      Retryable = false
+                      Detail = "RequestRejected" } }
+
+    let exitOf = Vigila.Cli.Program.exitCodeOf
+    Assert.Equal(0, exitOf (execute ledger (invocation "Typed")))
+    Assert.Equal(0, exitOf (execute ledger (invocation "Typed")))
+    Assert.Equal(3, exitOf (execute ledger (invocation "Different")))
+    Assert.Equal(2, exitOf (execute ledger "{ not json"))
+    Assert.Equal(4, exitOf (execute failing (invocation "Typed")))

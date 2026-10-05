@@ -4,6 +4,7 @@
 |---|---|---|---|---|
 | ECHELON-UPGRADE-2026-09-21 | Reconcile current Echelon engineering capabilities | complete | tooling, ordo, limen | high |
 | ROS-INSTALL-3-0-3 | ROS-INSTALL-3-0-3 | complete |  |  |
+| VIG-15 | VIG-15 | complete |  |  |
 | WI-0001 | Consolidate readme.md into ROS-generated README.md | complete | docs | medium |
 | WI-0002 | Install SDE, Visual Engineering, and typescript-wasm-kernel toolchain | complete | tooling | medium |
 | WI-0003 | Derive consolidated requirements specification from input-documents | complete | requirements,docs | high |
@@ -32,3 +33,5 @@
 | WI-0026 | Route the Dispatch boundary Aegis scope through Ports.scopeFor or remove scopeFor (SDE conformance G-2) | captured |  | medium |
 | WI-0027 | Attribute or declare the 22 unattributed commits on main since 2026-09-23 and restore PR-only path to main (SDE conformance G-3) | captured |  | medium |
 | WI-0028 | Bring VIG-SHR requirements into the traceability count and heading convention (SDE conformance G-4) | captured |  | medium |
+| WI-0029 | Failure semantics: explicit HTTP classification with bounded retry, typed CLI exit codes, injected id source (Echelon VIG-F2, VIG-F3, VIG-F6; builds on #25) | complete | quality | high |
+| WI-0030 | Time-capability ownership debt: Vigila.Semantic.Time duplicates a portfolio time capability that no repository owns (Chrona is a time-tracking app). Next: when Echelon names an owner, seed it from Time.fs and migrate behind the Clock port; do not depend on Chrona. | captured |  | medium |
