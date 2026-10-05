@@ -79,3 +79,14 @@ let ``there are exactly five workflow states`` () =
     // VIG-DOM-008.
     let states = [ Open; ItemStatus.Waiting; Deferred; Completed; Cancelled ]
     Assert.Equal(5, states |> List.distinct |> List.length)
+
+// Characterization (Echelon VIG-F6): Tier 1 draws ids from ambient randomness,
+// so identical inputs and an identical clock still give different items.
+[<Fact>]
+let ``characterization: Item.create is not deterministic for identical inputs`` () =
+    let clock = Vigila.Semantic.Time.Clock.fixedAt (Vigila.Semantic.Time.Instant.ofDateTimeOffset (System.DateTimeOffset(2026, 10, 5, 0, 0, 0, System.TimeSpan.Zero)))
+    let author : Vigila.Semantic.Actors.Actor = { Type = Vigila.Semantic.Actors.ActorType.Human; Name = "k" }
+    let title = match Title.create "Same" with Ok t -> t | Error e -> failwith e
+    let a = Vigila.Semantic.Item.Item.create clock author Vigila.Semantic.Actors.CreatedVia.UI title
+    let b = Vigila.Semantic.Item.Item.create clock author Vigila.Semantic.Actors.CreatedVia.UI title
+    Assert.NotEqual<System.Guid>(ItemId.toGuid a.Id, ItemId.toGuid b.Id)

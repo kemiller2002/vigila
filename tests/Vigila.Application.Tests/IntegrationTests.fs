@@ -741,3 +741,20 @@ let ``the provider boundary needs only its own ledger, never a registry`` () =
         Integration.create
 
     boundary aegis clock (AtomicLedger()) (request "op-standalone") |> created |> ignore
+
+// ---------------------------------------------------------------------------
+// Characterization (Echelon VIG-F3): every failure receipt says retryable.
+// ---------------------------------------------------------------------------
+
+[<Fact>]
+let ``characterization: a non-retryable ledger failure receipt currently claims retryable`` () =
+    let r =
+        invoke
+            (failingLedger
+                { Code = "Forbidden"
+                  Retryable = false
+                  Detail = "Forbidden" })
+            (invocation "1" "" "")
+
+    Assert.Equal("failed", text r "status")
+    Assert.True(r.GetProperty("retryable").GetBoolean())

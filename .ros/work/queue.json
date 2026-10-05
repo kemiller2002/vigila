@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 29,
+  "nextSeq": 30,
   "items": [
     {
       "id": "WI-0001",
@@ -442,6 +442,22 @@
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
+    },
+    {
+      "id": "WI-0029",
+      "title": "Failure semantics: explicit HTTP classification with bounded retry, typed CLI exit codes, injected id source (Echelon VIG-F2, VIG-F3, VIG-F6; builds on #25)",
+      "description": null,
+      "tags": [
+        "quality"
+      ],
+      "priority": "high",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-10-05T09:28:02.000Z",
+      "updatedAt": "2026-10-05T09:28:06.000Z",
+      "createdBy": "unknown",
+      "source": "github",
+      "sourceReference": "kemiller2002/vigila#25"
     }
   ]
 }

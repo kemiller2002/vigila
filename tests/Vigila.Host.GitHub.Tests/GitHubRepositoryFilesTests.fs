@@ -135,3 +135,21 @@ let token_is_not_returned () =
     Assert.Equal(Error Unauthorized, result)
     Assert.DoesNotContain(token, sprintf "%A" result)
     Assert.All(handler.Requests, fun (_, _, seen) -> Assert.Equal(Some token, seen))
+
+// ---------------------------------------------------------------------------
+// Characterization (Echelon VIG-F3): the catch-all classification today.
+// These pin the current behaviour before it is corrected.
+// ---------------------------------------------------------------------------
+
+[<Theory>]
+[<InlineData(400)>]
+[<InlineData(410)>]
+let ``characterization: a permanent client error is currently classified as retryable`` (status: int) =
+    let handler = new FakeHandler(fun _ -> response (enum<HttpStatusCode> status) "{}")
+    let files = filesWith handler "secret-token"
+
+    match files.Read "vigila/x.json" with
+    | Error failure ->
+        Assert.Equal("RepositoryUnavailable", codeOf failure)
+        Assert.True(failure.IsRetryable)
+    | Ok value -> failwith $"Expected failure, got %A{value}"
