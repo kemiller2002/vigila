@@ -4,8 +4,7 @@
     "engine": [
       "src/Vigila.Semantic",
       "src/Vigila.Transition",
-      "src/Vigila.Application",
-      "src/Vigila.Host.GitHub"
+      "src/Vigila.Application"
     ],
     "kernel": [
       "src/Vigila.Wasm",

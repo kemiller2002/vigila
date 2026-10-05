@@ -22,8 +22,8 @@
 module Vigila.Application.IntegrationWire
 
 open System
+open System.Buffers
 open System.Globalization
-open System.IO
 open System.Text
 open System.Text.Json
 open System.Text.RegularExpressions
@@ -398,9 +398,11 @@ let private writeRecord (w: Utf8JsonWriter) (record: FollowUpRecord) =
 
 /// Encodes an outcome as a receipt.
 let encode (outcome: CreateOutcome) =
-    use stream = new MemoryStream()
+    // ArrayBufferWriter, not MemoryStream: engine code takes no System.IO
+    // dependency (Limen boundary rule).
+    let buffer = ArrayBufferWriter<byte>()
 
-    (use w = new Utf8JsonWriter(stream)
+    (use w = new Utf8JsonWriter(buffer)
      w.WriteStartObject()
      w.WriteString("capability", Capability)
      w.WriteNumber("contractVersion", ContractVersion)
@@ -444,7 +446,7 @@ let encode (outcome: CreateOutcome) =
 
      w.WriteEndObject())
 
-    Encoding.UTF8.GetString(stream.ToArray())
+    Encoding.UTF8.GetString(buffer.WrittenSpan)
 
 /// Decode and create. A total function from request text to a typed outcome;
 /// hosts derive exit codes and other decisions from this, never from text.

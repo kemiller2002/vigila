@@ -34,7 +34,7 @@ else
 fi
 
 # --- npm ------------------------------------------------------------------
-# @echelon-foundry/typescript-wasm-kernel is Limen, the browser/application
+# @echelon-foundry/limen is Limen, the browser/application
 # boundary required by VIG-GOV-008.
 if [ -f package.json ]; then
   log "installing npm dependencies"

@@ -35,3 +35,4 @@
 | WI-0028 | Bring VIG-SHR requirements into the traceability count and heading convention (SDE conformance G-4) | captured |  | medium |
 | WI-0029 | Failure semantics: explicit HTTP classification with bounded retry, typed CLI exit codes, injected id source (Echelon VIG-F2, VIG-F3, VIG-F6; builds on #25) | complete | quality | high |
 | WI-0030 | Time-capability ownership debt: Vigila.Semantic.Time duplicates a portfolio time capability that no repository owns (Chrona is a time-tracking app). Next: when Echelon names an owner, seed it from Time.fs and migrate behind the Clock port; do not depend on Chrona. | captured |  | medium |
+| WI-0031 | Upgrade Limen to 0.7.0 (@echelon-foundry/limen): pinned verify workflow; fix LIMEN009 findings (Host.GitHub is a host, not engine; IntegrationWire System.IO MemoryStream) | complete |  | medium |

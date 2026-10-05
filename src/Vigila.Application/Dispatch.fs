@@ -15,7 +15,7 @@
 ///     browser type into itself (VIG-GOV-015).
 ///
 /// The protocol is Limen's, version 1. See the `protocol` export of
-/// `@echelon-foundry/typescript-wasm-kernel`.
+/// `@echelon-foundry/limen`.
 module Vigila.Application.Dispatch
 
 open System
