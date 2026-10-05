@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="Tests.fs" />
     <Compile Include="GitHubRepositoryFilesTests.fs" />
+    <Compile Include="RetryTests.fs" />
     <Compile Include="CliTests.fs" />
     <Compile Include="FollowUpLedgerTests.fs" />
   </ItemGroup>

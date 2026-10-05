@@ -97,7 +97,9 @@ let private request operationId =
 let private withFollowUp f (r: CreateRequest) = { r with FollowUp = f r.FollowUp }
 let private withEnvelope f (r: CreateRequest) = { r with Envelope = f r.Envelope }
 
-let private create ledger r = Integration.create aegis clock ledger r
+let private ids = IdSource.create Guid.NewGuid
+
+let private create ledger r = Integration.create aegis clock ids ledger r
 
 let private created outcome =
     match outcome with
@@ -518,7 +520,7 @@ let ``a ledger failure is reported as failure, not success`` () =
             (request "op-fail")
 
     match outcome with
-    | Failed fault ->
+    | Failed(fault, _) ->
         Assert.Equal(FaultCode "VIGILA.INTEGRATION.REPOSITORYUNAVAILABLE", fault.Code)
         Assert.Equal("PersistenceFailed", CreateOutcome.code outcome)
         Assert.False(CreateOutcome.isSuccess outcome)
@@ -527,7 +529,7 @@ let ``a ledger failure is reported as failure, not success`` () =
 [<Fact>]
 let ``an unexpected ledger exception is captured by Aegis as a failure`` () =
     match create throwingLedger (request "op-throw") with
-    | Failed fault -> Assert.Equal(FaultCode "VIGILA.INTEGRATION.UNEXPECTED", fault.Code)
+    | Failed(fault, _) -> Assert.Equal(FaultCode "VIGILA.INTEGRATION.UNEXPECTED", fault.Code)
     | other -> failwith $"Expected Failed, got %A{other}"
 
 // ---------------------------------------------------------------------------
@@ -580,7 +582,7 @@ let private errorFields (el: JsonElement) =
     el.GetProperty("errors").EnumerateArray() |> Seq.map (fun e -> text e "field") |> Seq.toList
 
 let private invoke ledger json =
-    IntegrationWire.invoke aegis clock ledger json |> receipt
+    IntegrationWire.invoke aegis clock ids ledger json |> receipt
 
 [<Fact>]
 let ``a valid invocation decodes every contract field`` () =
@@ -737,24 +739,73 @@ let ``the provider boundary needs only its own ledger, never a registry`` () =
     // ledger port, so an absent registry cannot make it fail.
     // The signature is the proof: it is checked by the compiler, and it
     // names no registry, resolver or network collaborator.
-    let boundary: AegisConfig -> Clock -> FollowUpLedger -> CreateRequest -> CreateOutcome =
+    let boundary: AegisConfig -> Clock -> IdSource -> FollowUpLedger -> CreateRequest -> CreateOutcome =
         Integration.create
 
-    boundary aegis clock (AtomicLedger()) (request "op-standalone") |> created |> ignore
+    boundary aegis clock ids (AtomicLedger()) (request "op-standalone") |> created |> ignore
 
 // ---------------------------------------------------------------------------
-// Characterization (Echelon VIG-F3): every failure receipt says retryable.
+// Failure disposition (Echelon VIG-F3): the receipt's `retryable` follows the
+// typed failure, so a terminal failure never invites a retry loop.
 // ---------------------------------------------------------------------------
+
+[<Theory>]
+[<InlineData("RequestRejected", false)>]
+[<InlineData("RetriesExhausted", false)>]
+[<InlineData("Forbidden", false)>]
+[<InlineData("RepositoryUnavailable", true)>]
+[<InlineData("RateLimited", true)>]
+let ``a failure receipt's retryable follows the ledger failure`` (code: string, retryable: bool) =
+    let ledger =
+        failingLedger
+            { Code = code
+              Retryable = retryable
+              Detail = code }
+
+    let outcome = create ledger (request "op-disposition")
+
+    match outcome with
+    | Failed(_, disposition) -> Assert.Equal((if retryable then RetrySafe else Terminal), disposition)
+    | other -> failwith $"Expected Failed, got %A{other}"
+
+    Assert.Equal(retryable, CreateOutcome.isRetryable outcome)
+
+    let r = invoke ledger (invocation "1" "" "")
+    Assert.Equal("failed", text r "status")
+    Assert.Equal("PersistenceFailed", text r "code")
+    Assert.Equal(retryable, r.GetProperty("retryable").GetBoolean())
 
 [<Fact>]
-let ``characterization: a non-retryable ledger failure receipt currently claims retryable`` () =
-    let r =
-        invoke
-            (failingLedger
-                { Code = "Forbidden"
-                  Retryable = false
-                  Detail = "Forbidden" })
-            (invocation "1" "" "")
+let ``an unexpected exception leaves the effect unknown and is retry-safe`` () =
+    let outcome = create throwingLedger (request "op-unknown")
+    Assert.True(CreateOutcome.isRetryable outcome)
 
-    Assert.Equal("failed", text r "status")
-    Assert.True(r.GetProperty("retryable").GetBoolean())
+[<Fact>]
+let ``success, conflict and rejection are never retryable`` () =
+    let ledger = AtomicLedger()
+    Assert.False(CreateOutcome.isRetryable (create ledger (request "op-r")))
+    Assert.False(CreateOutcome.isRetryable (Rejected []))
+
+// ---------------------------------------------------------------------------
+// Deterministic identity (Echelon VIG-F6): ids come from an injected source.
+// ---------------------------------------------------------------------------
+
+let private fixedId = Guid.Parse "0f8fad5b-d9cb-469f-a165-70867728950e"
+
+[<Fact>]
+let ``creation is deterministic for a fixed clock and id source`` () =
+    let ids = IdSource.fixedAt fixedId
+    let first = IntegrationWire.invoke aegis clock ids (AtomicLedger()) (invocation "1" "" "")
+    let second = IntegrationWire.invoke aegis clock ids (AtomicLedger()) (invocation "1" "" "")
+    Assert.Equal(first, second)
+
+[<Fact>]
+let ``the item id is drawn from the injected source in the persisted GUID form`` () =
+    match Integration.create aegis clock (IdSource.fixedAt fixedId) (AtomicLedger()) (request "op-id") with
+    | Created record ->
+        Assert.Equal(fixedId, ItemId.toGuid record.Item.Id)
+        Assert.Equal("VIG-0f8fad5b", ItemId.display record.Item.Id)
+    | other -> failwith $"Expected Created, got %A{other}"
+
+    let r = IntegrationWire.invoke aegis clock (IdSource.fixedAt fixedId) (AtomicLedger()) (invocation "1" "" "") |> receipt
+    Assert.Equal("0f8fad5b-d9cb-469f-a165-70867728950e", text r "itemId")

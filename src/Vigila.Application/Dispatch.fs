@@ -94,6 +94,11 @@ let initial =
 let private clock =
     Clock.create (fun () -> Instant.ofDateTimeOffset DateTimeOffset.UtcNow)
 
+/// The id source the engine hands to the domain, for the same reason as the
+/// clock: randomness is an effect, so it is drawn at the composition root and
+/// Tier 1 stays deterministic for given inputs (Echelon VIG-F6).
+let private ids = IdSource.create Guid.NewGuid
+
 
 /// Unexpected operational failure is classified once at the outer Limen/JSON
 /// boundary. Expected domain refusals remain ordinary typed outcomes and never
@@ -267,7 +272,7 @@ let apply command state =
         match Title.create state.Draft with
         | Error message -> { state with Error = message }
         | Ok title ->
-            let item = Item.create clock localUser CreatedVia.UI title
+            let item = Item.create clock ids localUser CreatedVia.UI title
 
             { state with
                 Items = item :: state.Items

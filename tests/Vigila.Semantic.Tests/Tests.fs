@@ -50,20 +50,20 @@ let ``a title beyond the documented limit is rejected`` () =
 [<Fact>]
 let ``identifiers are unique across creations`` () =
     // VIG-PER-042: concurrent creators must not collide.
-    let ids = List.init 1000 (fun _ -> ItemId.create ())
+    let ids = List.init 1000 (fun _ -> ItemId.create (IdSource.create System.Guid.NewGuid))
     Assert.Equal(1000, ids |> List.distinct |> List.length)
 
 [<Fact>]
 let ``an identifier round-trips through its guid`` () =
-    let id = ItemId.create ()
+    let id = ItemId.create (IdSource.create System.Guid.NewGuid)
     Assert.Equal(id, ItemId.ofGuid (ItemId.toGuid id))
 
 [<Fact>]
 let ``item and note identifiers are distinct types`` () =
     // VIG-GOV-012: the two cannot be passed interchangeably. This test exists
     // to fail at compile time if the types are ever collapsed into one.
-    let item = ItemId.create ()
-    let note = NoteId.create ()
+    let item = ItemId.create (IdSource.create System.Guid.NewGuid)
+    let note = NoteId.create (IdSource.create System.Guid.NewGuid)
     Assert.NotEqual<System.Guid>(ItemId.toGuid item, NoteId.toGuid note)
 
 [<Fact>]
@@ -80,13 +80,60 @@ let ``there are exactly five workflow states`` () =
     let states = [ Open; ItemStatus.Waiting; Deferred; Completed; Cancelled ]
     Assert.Equal(5, states |> List.distinct |> List.length)
 
-// Characterization (Echelon VIG-F6): Tier 1 draws ids from ambient randomness,
-// so identical inputs and an identical clock still give different items.
+// Deterministic identity (Echelon VIG-F6): Tier 1 draws ids only from the
+// injected IdSource, so identical inputs give identical items.
+
+let private fixedClock =
+    Vigila.Semantic.Time.Clock.fixedAt (Vigila.Semantic.Time.Instant.ofDateTimeOffset (System.DateTimeOffset(2026, 10, 5, 0, 0, 0, System.TimeSpan.Zero)))
+
+let private author : Vigila.Semantic.Actors.Actor = { Type = Vigila.Semantic.Actors.ActorType.Human; Name = "k" }
+
+let private sameTitle = match Title.create "Same" with Ok t -> t | Error e -> failwith e
+
+/// A source that yields the given GUIDs in order.
+let private sequence (values: System.Guid list) =
+    let remaining = ref values
+    IdSource.create (fun () ->
+        match remaining.Value with
+        | head :: tail ->
+            remaining.Value <- tail
+            head
+        | [] -> failwith "id sequence exhausted")
+
+let private g n = System.Guid.Parse(sprintf "00000000-0000-4000-8000-%012d" n)
+
 [<Fact>]
-let ``characterization: Item.create is not deterministic for identical inputs`` () =
-    let clock = Vigila.Semantic.Time.Clock.fixedAt (Vigila.Semantic.Time.Instant.ofDateTimeOffset (System.DateTimeOffset(2026, 10, 5, 0, 0, 0, System.TimeSpan.Zero)))
-    let author : Vigila.Semantic.Actors.Actor = { Type = Vigila.Semantic.Actors.ActorType.Human; Name = "k" }
-    let title = match Title.create "Same" with Ok t -> t | Error e -> failwith e
-    let a = Vigila.Semantic.Item.Item.create clock author Vigila.Semantic.Actors.CreatedVia.UI title
-    let b = Vigila.Semantic.Item.Item.create clock author Vigila.Semantic.Actors.CreatedVia.UI title
-    Assert.NotEqual<System.Guid>(ItemId.toGuid a.Id, ItemId.toGuid b.Id)
+let ``Item.create is deterministic for identical inputs`` () =
+    let create () =
+        Vigila.Semantic.Item.Item.create fixedClock (IdSource.fixedAt (g 1)) author Vigila.Semantic.Actors.CreatedVia.UI sameTitle
+
+    let a = create ()
+    let b = create ()
+    Assert.Equal(ItemId.toGuid a.Id, ItemId.toGuid b.Id)
+    Assert.Equal(g 1, ItemId.toGuid a.Id)
+    Assert.Equal(a.CreatedAt, b.CreatedAt)
+
+[<Fact>]
+let ``identities are drawn from the source in order`` () =
+    let ids = sequence [ g 1; g 2; g 3 ]
+    let item = ItemId.create ids
+    let note = NoteId.create ids
+    let workspace = WorkspaceId.create ids
+    Assert.Equal(g 1, ItemId.toGuid item)
+    Assert.Equal(g 2, NoteId.toGuid note)
+    Assert.Equal(g 3, WorkspaceId.toGuid workspace)
+
+[<Fact>]
+let ``a note's identity comes from the injected source`` () =
+    let item = ItemId.create (IdSource.fixedAt (g 1))
+
+    match Vigila.Semantic.Notes.Note.create fixedClock (IdSource.fixedAt (g 9)) author item "text" with
+    | Ok note -> Assert.Equal(g 9, NoteId.toGuid note.Id)
+    | Error e -> failwith e
+
+[<Fact>]
+let ``the persisted id forms are unchanged`` () =
+    // Segment (file name) and display forms are what storage and receipts use.
+    let id = ItemId.create (IdSource.fixedAt (System.Guid.Parse "0f8fad5b-d9cb-469f-a165-70867728950e"))
+    Assert.Equal("0f8fad5bd9cb469fa16570867728950e", id.Segment)
+    Assert.Equal("VIG-0f8fad5b", ItemId.display id)

@@ -5,6 +5,30 @@ module Vigila.Semantic.Identifiers
 
 open System
 
+/// The port through which new identities enter the domain.
+///
+/// Like `Time.Clock`, the domain never reaches for ambient nondeterminism
+/// itself: the composition root supplies a source (random GUIDs in
+/// production, a fixed sequence in tests), so domain decisions are
+/// deterministic for given inputs. The persisted form is unchanged: every
+/// identity is still a GUID.
+[<NoEquality; NoComparison>]
+type IdSource =
+    private
+    | IdSource of (unit -> Guid)
+
+[<RequireQualifiedAccess>]
+module IdSource =
+
+    /// A source that calls `next` for each new identity.
+    let create (next: unit -> Guid) = IdSource next
+
+    /// A source that always yields `value`, for tests that assert one id.
+    let fixedAt (value: Guid) = IdSource(fun () -> value)
+
+    /// Draws the next identity.
+    let next (IdSource read) = read ()
+
 /// A Vigila item's identity. Immutable once created (VIG-PER-040) and never
 /// derived from list position, file order or title text (VIG-PER-041), so a
 /// title edit cannot change identity (VIG-DOM-015).
@@ -40,9 +64,10 @@ type ItemId =
 [<RequireQualifiedAccess>]
 module ItemId =
 
-    /// Generates a fresh identity. Uses a GUID so that concurrent creators in
-    /// separate browser sessions or agents cannot collide (VIG-PER-042).
-    let create () = ItemId(Guid.NewGuid())
+    /// Draws a fresh identity from `ids`. Production sources are random GUIDs,
+    /// so concurrent creators in separate browser sessions or agents cannot
+    /// collide (VIG-PER-042).
+    let create (ids: IdSource) = ItemId(IdSource.next ids)
 
     let ofGuid (value: Guid) = ItemId value
 
@@ -82,7 +107,7 @@ type NoteId =
 [<RequireQualifiedAccess>]
 module NoteId =
 
-    let create () = NoteId(Guid.NewGuid())
+    let create (ids: IdSource) = NoteId(IdSource.next ids)
 
     let ofGuid (value: Guid) = NoteId value
 
@@ -126,7 +151,7 @@ type WorkspaceId =
 [<RequireQualifiedAccess>]
 module WorkspaceId =
 
-    let create () = WorkspaceId(Guid.NewGuid())
+    let create (ids: IdSource) = WorkspaceId(IdSource.next ids)
 
     let ofGuid (value: Guid) = WorkspaceId value
 

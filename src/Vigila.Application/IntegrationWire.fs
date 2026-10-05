@@ -434,19 +434,25 @@ let encode (outcome: CreateOutcome) =
              w.WriteEndObject())
 
          w.WriteEndArray()
-     | Failed fault ->
+     | Failed(fault, _) ->
          w.WriteString("reference", Presentation.reference fault)
          w.WriteString("message", fault.UserMessage)
-         // Replaying the same operation id is always safe after an operational
-         // failure, even when the underlying condition itself is persistent.
-         w.WriteBoolean("retryable", true)
+         // Replay is always safe; `retryable` says whether it is useful. A
+         // terminal failure (permanent client error, exhausted retries) is
+         // false so callers do not loop on it (VIG-AGT-051).
+         w.WriteBoolean("retryable", CreateOutcome.isRetryable outcome)
 
      w.WriteEndObject())
 
     Encoding.UTF8.GetString(stream.ToArray())
 
-/// Decode, create, encode. A total function from request text to receipt text.
-let invoke aegis clock ledger (json: string) =
+/// Decode and create. A total function from request text to a typed outcome;
+/// hosts derive exit codes and other decisions from this, never from text.
+let execute aegis clock ids ledger (json: string) : CreateOutcome =
     match decode json with
-    | Error refusals -> encode (Rejected refusals)
-    | Ok request -> encode (Integration.create aegis clock ledger request)
+    | Error refusals -> Rejected refusals
+    | Ok request -> Integration.create aegis clock ids ledger request
+
+/// Decode, create, encode. A total function from request text to receipt text.
+let invoke aegis clock ids ledger (json: string) =
+    execute aegis clock ids ledger json |> encode

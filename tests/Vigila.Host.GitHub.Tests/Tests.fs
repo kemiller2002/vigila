@@ -111,7 +111,7 @@ let ``the manifest sits at the storage root, not inside a workspace`` () =
 let ``a workspace is keyed on its id, never its display name`` () =
     // VIG-PER-007: identity survives a rename, so no human-readable name may
     // appear in the path.
-    let workspace = WorkspaceId.create ()
+    let workspace = WorkspaceId.create (IdSource.create System.Guid.NewGuid)
     let path = workspacePath root workspace
 
     Assert.Equal($"vigila/workspaces/%s{workspace.Segment}", path)
@@ -119,14 +119,14 @@ let ``a workspace is keyed on its id, never its display name`` () =
 
 [<Fact>]
 let ``workspace metadata is a separate file from the application manifest`` () =
-    let workspace = WorkspaceId.create ()
+    let workspace = WorkspaceId.create (IdSource.create System.Guid.NewGuid)
     Assert.NotEqual<string>(manifestPath root, workspaceMetadataPath root workspace)
 
 [<Fact>]
 let ``an item is one file named by its immutable id`` () =
     // VIG-PER-041, VIG-PER-043, VIG-PER-044.
-    let workspace = WorkspaceId.create ()
-    let item = ItemId.create ()
+    let workspace = WorkspaceId.create (IdSource.create System.Guid.NewGuid)
+    let item = ItemId.create (IdSource.create System.Guid.NewGuid)
 
     Assert.Equal(
         $"vigila/workspaces/%s{workspace.Segment}/items/%s{item.Segment}.json",
@@ -135,24 +135,24 @@ let ``an item is one file named by its immutable id`` () =
 
 [<Fact>]
 let ``item paths are stable across repeated computation`` () =
-    let workspace = WorkspaceId.create ()
-    let item = ItemId.create ()
+    let workspace = WorkspaceId.create (IdSource.create System.Guid.NewGuid)
+    let item = ItemId.create (IdSource.create System.Guid.NewGuid)
     Assert.Equal(itemPath root workspace item, itemPath root workspace item)
 
 [<Fact>]
 let ``distinct items never share a path`` () =
-    let workspace = WorkspaceId.create ()
+    let workspace = WorkspaceId.create (IdSource.create System.Guid.NewGuid)
 
     let paths =
-        List.init 500 (fun _ -> itemPath root workspace (ItemId.create ()))
+        List.init 500 (fun _ -> itemPath root workspace (ItemId.create (IdSource.create System.Guid.NewGuid)))
 
     Assert.Equal(500, paths |> List.distinct |> List.length)
 
 [<Fact>]
 let ``workspaces do not collide with each other`` () =
-    let item = ItemId.create ()
-    let a = WorkspaceId.create ()
-    let b = WorkspaceId.create ()
+    let item = ItemId.create (IdSource.create System.Guid.NewGuid)
+    let a = WorkspaceId.create (IdSource.create System.Guid.NewGuid)
+    let b = WorkspaceId.create (IdSource.create System.Guid.NewGuid)
     Assert.NotEqual<string>(itemPath root a item, itemPath root b item)
 
 // ---------------------------------------------------------------------------
@@ -164,8 +164,8 @@ let ``every path this module produces is inside the storage area`` () =
     // The property that matters: no computed path can escape the configured
     // area, whatever the ids happen to be.
     for _ in 1..200 do
-        let workspace = WorkspaceId.create ()
-        let item = ItemId.create ()
+        let workspace = WorkspaceId.create (IdSource.create System.Guid.NewGuid)
+        let item = ItemId.create (IdSource.create System.Guid.NewGuid)
 
         for path in
             [ manifestPath root
@@ -196,8 +196,8 @@ let ``the storage root itself counts as inside`` () =
 [<Fact>]
 let ``a deeper storage path still contains its own paths`` () =
     let nested = ok (StoragePath.create "teams/echelon/vigila")
-    let workspace = WorkspaceId.create ()
-    let item = ItemId.create ()
+    let workspace = WorkspaceId.create (IdSource.create System.Guid.NewGuid)
+    let item = ItemId.create (IdSource.create System.Guid.NewGuid)
     let path = itemPath nested workspace item
 
     Assert.StartsWith("teams/echelon/vigila/", path)
@@ -239,7 +239,7 @@ module ItemSerialization =
         | Error e -> failwith e
 
     let private newItem () =
-        Item.create clock author CreatedVia.UI (titled "Call accountant about generator")
+        Item.create clock (IdSource.create System.Guid.NewGuid) author CreatedVia.UI (titled "Call accountant about generator")
 
     let private roundTrip item =
         match toJson item |> fromJson with
@@ -265,7 +265,7 @@ module ItemSerialization =
         let baseItem = newItem ()
 
         let note =
-            match Note.create clock author baseItem.Id "He asked for the cancelled check." with
+            match Note.create clock (IdSource.create System.Guid.NewGuid) author baseItem.Id "He asked for the cancelled check." with
             | Ok n -> n
             | Error e -> failwith e
 
@@ -458,7 +458,7 @@ module ItemSerialization =
     let ``timestamps come from the supplied clock`` () =
         // VIG-TIME-023: no ambient time, which is what makes this assertable.
         let moment = at "2026-01-02T03:04:05.0000000Z"
-        let item = Item.create (Clock.fixedAt moment) author CreatedVia.Agent (titled "x")
+        let item = Item.create (Clock.fixedAt moment) (IdSource.create System.Guid.NewGuid) author CreatedVia.Agent (titled "x")
 
         Assert.Equal(moment, item.CreatedAt)
         Assert.Equal(moment, item.UpdatedAt)

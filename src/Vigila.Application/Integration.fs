@@ -46,6 +46,7 @@ module Vigila.Application.Integration
 open System
 open Aegis
 open Vigila.Semantic.Actors
+open Vigila.Semantic.Identifiers
 open Vigila.Semantic.Item
 open Vigila.Semantic.Items
 open Vigila.Semantic.Time
@@ -193,6 +194,16 @@ exception LedgerFailed of LedgerFailure
 type FollowUpLedger =
     abstract Record: FollowUpRecord -> Result<LedgerOutcome, LedgerFailure>
 
+/// Whether replaying the same operation id can be expected to help.
+///
+/// Replay is always *safe* (the ledger is idempotent); this states whether it
+/// is *useful*. A terminal failure (a permanent client error, missing
+/// authorization, corruption, or an exhausted retry budget) does not clear by
+/// itself, so callers must not loop on it (VIG-AGT-051).
+type FailureDisposition =
+    | RetrySafe
+    | Terminal
+
 /// The structured result of one invocation.
 [<NoComparison>]
 type CreateOutcome =
@@ -206,8 +217,9 @@ type CreateOutcome =
     /// The request was invalid or unsupported; nothing was written.
     | Rejected of Refusal list
     /// The outcome is not known to be successful. Never reported as success
-    /// (VIG-AGT-015); replaying the same operation id is safe.
-    | Failed of Fault
+    /// (VIG-AGT-015); replaying the same operation id is safe, and the
+    /// disposition says whether it is worth doing.
+    | Failed of fault: Fault * disposition: FailureDisposition
 
 [<RequireQualifiedAccess>]
 module KnownValue =
@@ -231,6 +243,16 @@ module CreateOutcome =
             "SchemaUnsupported"
         | Rejected _ -> "ValidationFailed"
         | Failed _ -> "PersistenceFailed"
+
+    /// Whether a caller may usefully replay the same operation id.
+    let isRetryable =
+        function
+        | Failed(_, RetrySafe) -> true
+        | Failed(_, Terminal)
+        | Created _
+        | Replayed _
+        | Conflicted _
+        | Rejected _ -> false
 
     /// Whether the logical follow-up is known to exist durably.
     let isSuccess =
@@ -347,8 +369,8 @@ let validate (request: CreateRequest) : Result<NormalisedFollowUp, Refusal list>
     | envelope, _, _, _ -> Error(envelope @ errors title @ errors reason @ errors tags)
 
 // ---------------------------------------------------------------------------
-// Translation into Vigila semantics. Pure apart from the clock and the fresh
-// ItemId that Item.create already owns.
+// Translation into Vigila semantics. Pure given the clock and id source the
+// composition root supplies.
 // ---------------------------------------------------------------------------
 
 let private actorKindName =
@@ -428,9 +450,9 @@ let isImportant =
     | Low
     | Normal -> false
 
-let private itemFor clock (envelope: ExecutionEnvelope) (followUp: NormalisedFollowUp) =
+let private itemFor clock ids (envelope: ExecutionEnvelope) (followUp: NormalisedFollowUp) =
     let initial =
-        Item.create clock (actorOf envelope.Actor) CreatedVia.Integration followUp.Title
+        Item.create clock ids (actorOf envelope.Actor) CreatedVia.Integration followUp.Title
 
     { initial with
         Kind = ItemKind.FollowUp
@@ -447,6 +469,12 @@ let private itemFor clock (envelope: ExecutionEnvelope) (followUp: NormalisedFol
 // The boundary.
 // ---------------------------------------------------------------------------
 
+let private retrySafeMessage =
+    "Vigila could not confirm the follow-up was saved. Retrying with the same operation id is safe."
+
+let private terminalMessage =
+    "Vigila could not save the follow-up, and retrying will not help until the request, credentials or configuration change."
+
 let private ledgerFault aegis scope (failure: LedgerFailure) =
     Aegis.faultOf
         aegis
@@ -457,7 +485,7 @@ let private ledgerFault aegis scope (failure: LedgerFailure) =
         OperationOnly
         (if failure.Retryable then Transient else Persistent)
         Continue
-        "Vigila could not confirm the follow-up was saved. Retrying with the same operation id is safe."
+        (if failure.Retryable then retrySafeMessage else terminalMessage)
         (LedgerFailed failure)
 
 let private unexpectedFault aegis scope (ex: exn) =
@@ -470,7 +498,7 @@ let private unexpectedFault aegis scope (ex: exn) =
         OperationOnly
         UnknownPersistence
         Continue
-        "Vigila could not confirm the follow-up was saved. Retrying with the same operation id is safe."
+        retrySafeMessage
         ex
 
 /// Accepts one `followup.create` request.
@@ -480,14 +508,14 @@ let private unexpectedFault aegis scope (ex: exn) =
 /// and replayed; a replay whose request differs from the recorded one is a
 /// conflict rather than a silent success. Unexpected operational failure is
 /// captured by Aegis and reported as `Failed`, never as success.
-let create (aegis: AegisConfig) (clock: Clock) (ledger: FollowUpLedger) (request: CreateRequest) =
+let create (aegis: AegisConfig) (clock: Clock) (ids: IdSource) (ledger: FollowUpLedger) (request: CreateRequest) =
     match validate request with
     | Error refusals -> Rejected refusals
     | Ok followUp ->
         let record =
             { Envelope = request.Envelope
               FollowUp = followUp
-              Item = itemFor clock request.Envelope followUp }
+              Item = itemFor clock ids request.Envelope followUp }
 
         let scope =
             Aegis.scope
@@ -502,5 +530,8 @@ let create (aegis: AegisConfig) (clock: Clock) (ledger: FollowUpLedger) (request
         | Ok(Ok Recorded) -> Created record
         | Ok(Ok(AlreadyRecorded existing)) when existing.FollowUp = followUp -> Replayed existing
         | Ok(Ok(AlreadyRecorded existing)) -> Conflicted existing
-        | Ok(Error failure) -> Failed(ledgerFault aegis scope failure)
-        | Error fault -> Failed fault
+        | Ok(Error failure) ->
+            Failed(ledgerFault aegis scope failure, (if failure.Retryable then RetrySafe else Terminal))
+        // An unexpected exception leaves the effect unknown; replay is the
+        // idempotent way to learn it, so it is retry-safe.
+        | Error fault -> Failed(fault, RetrySafe)

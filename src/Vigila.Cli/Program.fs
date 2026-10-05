@@ -10,6 +10,7 @@ open Vigila.Semantic.Time
 open Vigila.Application
 open Vigila.Host.GitHub
 open Vigila.Host.GitHub.StorageLayout
+open Vigila.Host.GitHub.RetryingRepositoryFiles
 
 type private Options =
     { Repository: string option
@@ -84,18 +85,35 @@ let private aegis () =
     | Ok valid -> Ok valid
     | Result.Error _ -> Error "Vigila diagnostics could not be initialized."
 
+/// The ADR-0004 D7 exit-code contract, derived from the typed outcome rather
+/// than from the receipt text. The match is exhaustive, so a new outcome case
+/// cannot be added without the compiler demanding its exit code.
+let exitCodeOf (outcome: Integration.CreateOutcome) =
+    match outcome with
+    | Integration.Created _
+    | Integration.Replayed _ -> 0
+    | Integration.Rejected _ -> 2
+    | Integration.Conflicted _ -> 3
+    | Integration.Failed _ -> 4
+
+/// The effects and nondeterminism the CLI composes. Production values are
+/// built in `main`; tests supply controlled ones.
+[<NoEquality; NoComparison>]
+type CliDependencies =
+    { Http: HttpClient
+      GetEnv: string -> string | null
+      Clock: Clock
+      Ids: IdSource
+      RetryPolicy: RetryPolicy
+      Wait: TimeSpan -> unit
+      Stdin: TextReader
+      Stdout: TextWriter }
+
 /// Injectable composition root used by tests. Semantic parsing and validation
-/// remain exclusively in IntegrationWire.invoke.
-let runWith
-    (http: HttpClient)
-    (getEnv: string -> string | null)
-    (clock: Clock)
-    (stdin: TextReader)
-    (stdout: TextWriter)
-    (args: string array)
-    =
+/// remain exclusively in IntegrationWire.
+let runWith (deps: CliDependencies) (args: string array) =
     let fail exitCode (json: string) =
-        stdout.WriteLine json
+        deps.Stdout.WriteLine json
         exitCode
 
     match parse args with
@@ -105,38 +123,41 @@ let runWith
         | None, _ -> fail 2 (rejected "CliArgumentsInvalid" "--repository is required.")
         | _, None -> fail 2 (rejected "CliArgumentsInvalid" "--workspace is required.")
         | Some repository, Some workspaceText ->
-            match WorkspaceId.parse workspaceText, StoragePath.create options.StorageRoot, readInput stdin options, aegis () with
+            match WorkspaceId.parse workspaceText, StoragePath.create options.StorageRoot, readInput deps.Stdin options, aegis () with
             | Error message, _, _, _ -> fail 2 (rejected "WorkspaceInvalid" message)
             | _, Error refusal, _, _ -> fail 2 (rejected "StorageRootInvalid" refusal.Describe)
             | _, _, Error message, _ -> fail 2 (rejected "InputInvalid" message)
             | _, _, _, Error message -> fail 4 (machineError "DiagnosticsUnavailable" message false)
             | Ok workspace, Ok root, Ok json, Ok diagnostics ->
-                let credential = tokenProvider getEnv options.TokenEnvironment
+                let credential = tokenProvider deps.GetEnv options.TokenEnvironment
 
                 match credential () with
                 | None -> fail 4 (machineError "MissingCredential" "No GitHub credential is configured." false)
                 | Some _ ->
                     let files =
                         GitHubRepositoryFiles.create
-                            http
+                            deps.Http
                             { Repository = repository
                               Branch = options.Branch }
                             credential
+                        |> RetryingRepositoryFiles.wrap deps.RetryPolicy deps.Wait
 
                     let ledger = FollowUpLedger.create files root workspace
-                    let receipt = IntegrationWire.invoke diagnostics clock ledger json
-                    stdout.WriteLine receipt
-
-                    use document = JsonDocument.Parse receipt
-                    match document.RootElement.GetProperty("status").GetString() with
-                    | "created"
-                    | "existing" -> 0
-                    | "rejected" -> 2
-                    | "conflict" -> 3
-                    | _ -> 4
+                    let outcome = IntegrationWire.execute diagnostics deps.Clock deps.Ids ledger json
+                    deps.Stdout.WriteLine(IntegrationWire.encode outcome)
+                    exitCodeOf outcome
 
 [<EntryPoint>]
 let main args =
     use http = new HttpClient()
-    let clock = Clock.create (fun () -> Instant.ofDateTimeOffset DateTimeOffset.UtcNow)
-    runWith http Environment.GetEnvironmentVariable clock Console.In Console.Out args
+
+    runWith
+        { Http = http
+          GetEnv = Environment.GetEnvironmentVariable
+          Clock = Clock.create (fun () -> Instant.ofDateTimeOffset DateTimeOffset.UtcNow)
+          Ids = IdSource.create Guid.NewGuid
+          RetryPolicy = RetryPolicy.standard
+          Wait = fun delay -> Threading.Thread.Sleep delay
+          Stdin = Console.In
+          Stdout = Console.Out }
+        args
