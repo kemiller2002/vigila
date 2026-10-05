@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 32,
+  "nextSeq": 33,
   "items": [
     {
       "id": "WI-0001",
@@ -483,6 +483,20 @@
       "attachments": [],
       "createdAt": "2026-10-05T17:02:23.363Z",
       "updatedAt": "2026-10-05T17:10:16.000Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0032",
+      "title": "Repin echelon-foundations workflow to praxis a95dbf2 (Limen 0.7.0-aware foundations verifier)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-10-05T18:00:11.087Z",
+      "updatedAt": "2026-10-05T18:00:13.000Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
