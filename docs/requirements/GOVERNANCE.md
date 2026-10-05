@@ -58,7 +58,9 @@ Vigila MUST follow SDE principles.
 
 Vigila MUST use Limen for the browser/application boundary.
 
-> **Limen is `@echelon-foundry/typescript-wasm-kernel`** (confirmed 2026-09-18).
+> **Limen is `@echelon-foundry/limen`** from Limen 0.7.0 (2026-10-05); up to
+> 0.6.2 it was published as `@echelon-foundry/typescript-wasm-kernel`, which
+> was confirmed as Limen on 2026-09-18 and is now deprecated.
 > The source documents name Limen without identifying it, and no package or
 > repository carries that name — the `Limen` on NuGet is an unrelated
 > validation library. The dependency is already installed

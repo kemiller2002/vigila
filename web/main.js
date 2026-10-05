@@ -10,7 +10,7 @@
 // the engine went unnoticed until a browser test caught it. See
 // docs/architecture/SDE-CONFORMANCE-2026-09-18.md, F-5.
 import "../node_modules/@echelon-foundry/print-components/src/components/register.js";
-import { BrowserKernel } from "../node_modules/@echelon-foundry/typescript-wasm-kernel/dist/kernel/browser-kernel.js";
+import { BrowserKernel } from "../node_modules/@echelon-foundry/limen/dist/kernel/browser-kernel.js";
 import { WasmEngineTransport } from "./wasm-engine-transport.js";
 import { TokenStore, bindCredential } from "./connection.js";
 
