@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "executionId": "EXE-20261005T092807568Z-23669523",
   "workItemId": "WI-0029",
-  "status": "active",
+  "status": "finalized",
   "startedAt": "2026-10-05T09:28:07.568Z",
-  "finalizedAt": null,
+  "finalizedAt": "2026-10-05T09:46:48.513Z",
   "identity": {
     "provider": "anthropic",
     "model": null,
@@ -301,13 +301,29 @@
     {
       "metricId": "time.wall_ms",
       "status": "derived",
-      "reason": "ROS can derive this metric when its preconditions hold",
-      "discoveredAt": "2026-10-05T09:28:07.568Z",
+      "reason": "normalized measurement recorded",
+      "discoveredAt": "2026-10-05T09:46:48.513Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "calculated",
+        "name": "ros",
+        "mechanism": "timestamp-difference"
+      },
+      "lastAssessedAt": "2026-10-05T09:46:48.513Z",
+      "recordedAt": "2026-10-05T09:46:48.513Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-05T09:28:07.568Z",
+          "lastAssessedAt": "2026-10-05T09:28:07.568Z",
+          "recordedAt": "2026-10-05T09:28:07.568Z"
+        }
+      ]
     },
     {
       "metricId": "time.active_ms",
@@ -356,13 +372,29 @@
     {
       "metricId": "time.blocked_ms",
       "status": "derived",
-      "reason": "ROS can derive this metric when its preconditions hold",
-      "discoveredAt": "2026-10-05T09:28:07.568Z",
+      "reason": "normalized measurement recorded",
+      "discoveredAt": "2026-10-05T09:46:48.513Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "calculated",
+        "name": "ros-work-lifecycle",
+        "mechanism": "block-resume-intervals"
+      },
+      "lastAssessedAt": "2026-10-05T09:46:48.513Z",
+      "recordedAt": "2026-10-05T09:46:48.513Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-05T09:28:07.568Z",
+          "lastAssessedAt": "2026-10-05T09:28:07.568Z",
+          "recordedAt": "2026-10-05T09:28:07.568Z"
+        }
+      ]
     },
     {
       "metricId": "time.human_interruption_ms",
@@ -823,134 +855,326 @@
     {
       "metricId": "git.ending_dirty_files",
       "status": "derived",
-      "reason": "ROS can derive this metric when its preconditions hold",
-      "discoveredAt": "2026-10-05T09:28:07.568Z",
+      "reason": "normalized measurement recorded",
+      "discoveredAt": "2026-10-05T09:46:48.513Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "ros-git",
+        "name": "git-status",
+        "mechanism": "porcelain-v1"
+      },
+      "lastAssessedAt": "2026-10-05T09:46:48.513Z",
+      "recordedAt": "2026-10-05T09:46:48.513Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-05T09:28:07.568Z",
+          "lastAssessedAt": "2026-10-05T09:28:07.568Z",
+          "recordedAt": "2026-10-05T09:28:07.568Z"
+        }
+      ]
     },
     {
       "metricId": "git.commits_created",
-      "status": "derived",
-      "reason": "ROS can derive this metric when its preconditions hold",
-      "discoveredAt": "2026-10-05T09:28:07.568Z",
+      "status": "supported-unavailable",
+      "reason": "execution attribution unavailable: preexisting-dirty-worktree",
+      "discoveredAt": "2026-10-05T09:46:48.513Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "ros-git",
+        "name": "git-diff",
+        "mechanism": "precondition-check"
+      },
+      "lastAssessedAt": "2026-10-05T09:46:48.513Z",
+      "recordedAt": "2026-10-05T09:46:48.513Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-05T09:28:07.568Z",
+          "lastAssessedAt": "2026-10-05T09:28:07.568Z",
+          "recordedAt": "2026-10-05T09:28:07.568Z"
+        }
+      ]
     },
     {
       "metricId": "git.files_added",
-      "status": "derived",
-      "reason": "ROS can derive this metric when its preconditions hold",
-      "discoveredAt": "2026-10-05T09:28:07.568Z",
+      "status": "supported-unavailable",
+      "reason": "execution attribution unavailable: preexisting-dirty-worktree",
+      "discoveredAt": "2026-10-05T09:46:48.513Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "ros-git",
+        "name": "git-diff",
+        "mechanism": "precondition-check"
+      },
+      "lastAssessedAt": "2026-10-05T09:46:48.513Z",
+      "recordedAt": "2026-10-05T09:46:48.513Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-05T09:28:07.568Z",
+          "lastAssessedAt": "2026-10-05T09:28:07.568Z",
+          "recordedAt": "2026-10-05T09:28:07.568Z"
+        }
+      ]
     },
     {
       "metricId": "git.files_modified",
-      "status": "derived",
-      "reason": "ROS can derive this metric when its preconditions hold",
-      "discoveredAt": "2026-10-05T09:28:07.568Z",
+      "status": "supported-unavailable",
+      "reason": "execution attribution unavailable: preexisting-dirty-worktree",
+      "discoveredAt": "2026-10-05T09:46:48.513Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "ros-git",
+        "name": "git-diff",
+        "mechanism": "precondition-check"
+      },
+      "lastAssessedAt": "2026-10-05T09:46:48.513Z",
+      "recordedAt": "2026-10-05T09:46:48.513Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-05T09:28:07.568Z",
+          "lastAssessedAt": "2026-10-05T09:28:07.568Z",
+          "recordedAt": "2026-10-05T09:28:07.568Z"
+        }
+      ]
     },
     {
       "metricId": "git.files_deleted",
-      "status": "derived",
-      "reason": "ROS can derive this metric when its preconditions hold",
-      "discoveredAt": "2026-10-05T09:28:07.568Z",
+      "status": "supported-unavailable",
+      "reason": "execution attribution unavailable: preexisting-dirty-worktree",
+      "discoveredAt": "2026-10-05T09:46:48.513Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "ros-git",
+        "name": "git-diff",
+        "mechanism": "precondition-check"
+      },
+      "lastAssessedAt": "2026-10-05T09:46:48.513Z",
+      "recordedAt": "2026-10-05T09:46:48.513Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-05T09:28:07.568Z",
+          "lastAssessedAt": "2026-10-05T09:28:07.568Z",
+          "recordedAt": "2026-10-05T09:28:07.568Z"
+        }
+      ]
     },
     {
       "metricId": "git.files_renamed",
-      "status": "derived",
-      "reason": "ROS can derive this metric when its preconditions hold",
-      "discoveredAt": "2026-10-05T09:28:07.568Z",
+      "status": "supported-unavailable",
+      "reason": "execution attribution unavailable: preexisting-dirty-worktree",
+      "discoveredAt": "2026-10-05T09:46:48.513Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "ros-git",
+        "name": "git-diff",
+        "mechanism": "precondition-check"
+      },
+      "lastAssessedAt": "2026-10-05T09:46:48.513Z",
+      "recordedAt": "2026-10-05T09:46:48.513Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-05T09:28:07.568Z",
+          "lastAssessedAt": "2026-10-05T09:28:07.568Z",
+          "recordedAt": "2026-10-05T09:28:07.568Z"
+        }
+      ]
     },
     {
       "metricId": "git.binary_files_changed",
-      "status": "derived",
-      "reason": "ROS can derive this metric when its preconditions hold",
-      "discoveredAt": "2026-10-05T09:28:07.568Z",
+      "status": "supported-unavailable",
+      "reason": "execution attribution unavailable: preexisting-dirty-worktree",
+      "discoveredAt": "2026-10-05T09:46:48.513Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "ros-git",
+        "name": "git-diff",
+        "mechanism": "precondition-check"
+      },
+      "lastAssessedAt": "2026-10-05T09:46:48.513Z",
+      "recordedAt": "2026-10-05T09:46:48.513Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-05T09:28:07.568Z",
+          "lastAssessedAt": "2026-10-05T09:28:07.568Z",
+          "recordedAt": "2026-10-05T09:28:07.568Z"
+        }
+      ]
     },
     {
       "metricId": "git.lines_added",
-      "status": "derived",
-      "reason": "ROS can derive this metric when its preconditions hold",
-      "discoveredAt": "2026-10-05T09:28:07.568Z",
+      "status": "supported-unavailable",
+      "reason": "execution attribution unavailable: preexisting-dirty-worktree",
+      "discoveredAt": "2026-10-05T09:46:48.513Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "ros-git",
+        "name": "git-diff",
+        "mechanism": "precondition-check"
+      },
+      "lastAssessedAt": "2026-10-05T09:46:48.513Z",
+      "recordedAt": "2026-10-05T09:46:48.513Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-05T09:28:07.568Z",
+          "lastAssessedAt": "2026-10-05T09:28:07.568Z",
+          "recordedAt": "2026-10-05T09:28:07.568Z"
+        }
+      ]
     },
     {
       "metricId": "git.lines_deleted",
-      "status": "derived",
-      "reason": "ROS can derive this metric when its preconditions hold",
-      "discoveredAt": "2026-10-05T09:28:07.568Z",
+      "status": "supported-unavailable",
+      "reason": "execution attribution unavailable: preexisting-dirty-worktree",
+      "discoveredAt": "2026-10-05T09:46:48.513Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "ros-git",
+        "name": "git-diff",
+        "mechanism": "precondition-check"
+      },
+      "lastAssessedAt": "2026-10-05T09:46:48.513Z",
+      "recordedAt": "2026-10-05T09:46:48.513Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-05T09:28:07.568Z",
+          "lastAssessedAt": "2026-10-05T09:28:07.568Z",
+          "recordedAt": "2026-10-05T09:28:07.568Z"
+        }
+      ]
     },
     {
       "metricId": "tests.added",
-      "status": "derived",
-      "reason": "ROS can derive this metric when its preconditions hold",
-      "discoveredAt": "2026-10-05T09:28:07.568Z",
+      "status": "supported-unavailable",
+      "reason": "execution attribution unavailable: preexisting-dirty-worktree",
+      "discoveredAt": "2026-10-05T09:46:48.513Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "ros-git",
+        "name": "git-diff",
+        "mechanism": "precondition-check"
+      },
+      "lastAssessedAt": "2026-10-05T09:46:48.513Z",
+      "recordedAt": "2026-10-05T09:46:48.513Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-05T09:28:07.568Z",
+          "lastAssessedAt": "2026-10-05T09:28:07.568Z",
+          "recordedAt": "2026-10-05T09:28:07.568Z"
+        }
+      ]
     },
     {
       "metricId": "tests.modified",
-      "status": "derived",
-      "reason": "ROS can derive this metric when its preconditions hold",
-      "discoveredAt": "2026-10-05T09:28:07.568Z",
+      "status": "supported-unavailable",
+      "reason": "execution attribution unavailable: preexisting-dirty-worktree",
+      "discoveredAt": "2026-10-05T09:46:48.513Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "ros-git",
+        "name": "git-diff",
+        "mechanism": "precondition-check"
+      },
+      "lastAssessedAt": "2026-10-05T09:46:48.513Z",
+      "recordedAt": "2026-10-05T09:46:48.513Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-05T09:28:07.568Z",
+          "lastAssessedAt": "2026-10-05T09:28:07.568Z",
+          "recordedAt": "2026-10-05T09:28:07.568Z"
+        }
+      ]
     },
     {
       "metricId": "tests.removed",
-      "status": "derived",
-      "reason": "ROS can derive this metric when its preconditions hold",
-      "discoveredAt": "2026-10-05T09:28:07.568Z",
+      "status": "supported-unavailable",
+      "reason": "execution attribution unavailable: preexisting-dirty-worktree",
+      "discoveredAt": "2026-10-05T09:46:48.513Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "ros-git",
+        "name": "git-diff",
+        "mechanism": "precondition-check"
+      },
+      "lastAssessedAt": "2026-10-05T09:46:48.513Z",
+      "recordedAt": "2026-10-05T09:46:48.513Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-05T09:28:07.568Z",
+          "lastAssessedAt": "2026-10-05T09:28:07.568Z",
+          "recordedAt": "2026-10-05T09:28:07.568Z"
+        }
+      ]
     },
     {
       "metricId": "tests.count_before",
@@ -1218,14 +1442,30 @@
     },
     {
       "metricId": "documentation.files_changed",
-      "status": "derived",
-      "reason": "ROS can derive this metric when its preconditions hold",
-      "discoveredAt": "2026-10-05T09:28:07.568Z",
+      "status": "supported-unavailable",
+      "reason": "execution attribution unavailable: preexisting-dirty-worktree",
+      "discoveredAt": "2026-10-05T09:46:48.513Z",
       "source": {
-        "type": "environment",
-        "name": "runtime-identity",
-        "mechanism": "whitelisted-claude-environment"
-      }
+        "type": "ros-git",
+        "name": "git-diff",
+        "mechanism": "precondition-check"
+      },
+      "lastAssessedAt": "2026-10-05T09:46:48.513Z",
+      "recordedAt": "2026-10-05T09:46:48.513Z",
+      "history": [
+        {
+          "status": "derived",
+          "reason": "ROS can derive this metric when its preconditions hold",
+          "source": {
+            "type": "environment",
+            "name": "runtime-identity",
+            "mechanism": "whitelisted-claude-environment"
+          },
+          "discoveredAt": "2026-10-05T09:28:07.568Z",
+          "lastAssessedAt": "2026-10-05T09:28:07.568Z",
+          "recordedAt": "2026-10-05T09:28:07.568Z"
+        }
+      ]
     },
     {
       "metricId": "quality.false_leads",
@@ -1347,6 +1587,66 @@
       },
       "collectedAt": "2026-10-05T09:28:07.568Z",
       "schemaVersion": "1.0.0"
+    },
+    {
+      "measurementId": "MEAS-4fd80e816652ab653a43d6b7",
+      "id": "time.wall_ms",
+      "value": 1120945,
+      "unit": "milliseconds",
+      "currency": null,
+      "quality": "derived",
+      "confidence": null,
+      "scope": "execution",
+      "aggregation": "sum",
+      "dimensions": {},
+      "pricing": null,
+      "source": {
+        "type": "calculated",
+        "name": "ros",
+        "mechanism": "timestamp-difference"
+      },
+      "collectedAt": "2026-10-05T09:46:48.513Z",
+      "schemaVersion": "1.0.0"
+    },
+    {
+      "measurementId": "MEAS-2516e74a0c5864465b8e50bd",
+      "id": "time.blocked_ms",
+      "value": 0,
+      "unit": "milliseconds",
+      "currency": null,
+      "quality": "derived",
+      "confidence": null,
+      "scope": "execution",
+      "aggregation": "sum",
+      "dimensions": {},
+      "pricing": null,
+      "source": {
+        "type": "calculated",
+        "name": "ros-work-lifecycle",
+        "mechanism": "block-resume-intervals"
+      },
+      "collectedAt": "2026-10-05T09:46:48.513Z",
+      "schemaVersion": "1.0.0"
+    },
+    {
+      "measurementId": "MEAS-244fddbd849a7cd601388762",
+      "id": "git.ending_dirty_files",
+      "value": 22,
+      "unit": "count",
+      "currency": null,
+      "quality": "derived",
+      "confidence": null,
+      "scope": "execution",
+      "aggregation": "maximum",
+      "dimensions": {},
+      "pricing": null,
+      "source": {
+        "type": "ros-git",
+        "name": "git-status",
+        "mechanism": "porcelain-v1"
+      },
+      "collectedAt": "2026-10-05T09:46:48.513Z",
+      "schemaVersion": "1.0.0"
     }
   ],
   "rawTelemetry": [],
@@ -1359,6 +1659,16 @@
         "name": "ros",
         "mechanism": "work-lifecycle"
       }
+    },
+    {
+      "type": "execution.finalized",
+      "occurredAt": "2026-10-05T09:46:48.513Z",
+      "source": {
+        "type": "ros-clock",
+        "name": "ros",
+        "mechanism": "work-lifecycle"
+      },
+      "eventId": "TEVT-dc9458cf781994b53850199e"
     }
   ],
   "repository": {
@@ -1374,8 +1684,41 @@
         "tests/Vigila.Semantic.Tests/Tests.fs"
       ]
     },
-    "end": null,
-    "changeSummary": null
+    "end": {
+      "available": true,
+      "repository": "vigila",
+      "branch": "quality/failure-semantics",
+      "commit": "14c2103d72f5cc4169a87ee59e22bbb4607761e5",
+      "dirty": true,
+      "dirtyPaths": [
+        "context/KNOWN-RISKS.md",
+        "docs/architecture/ADR-0004-followup-create-provider.md",
+        "scripts/check-architecture.sh",
+        "src/Vigila.Application/Dispatch.fs",
+        "src/Vigila.Application/Integration.fs",
+        "src/Vigila.Application/IntegrationWire.fs",
+        "src/Vigila.Cli/Program.fs",
+        "src/Vigila.Host.GitHub/GitHubRepositoryFiles.fs",
+        "src/Vigila.Host.GitHub/GitHubStore.fs",
+        "src/Vigila.Host.GitHub/RetryingRepositoryFiles.fs",
+        "src/Vigila.Host.GitHub/Vigila.Host.GitHub.fsproj",
+        "src/Vigila.Semantic/Identifiers.fs",
+        "src/Vigila.Semantic/Item.fs",
+        "src/Vigila.Semantic/Notes.fs",
+        "tests/Vigila.Application.Tests/IntegrationTests.fs",
+        "tests/Vigila.Host.GitHub.Tests/CliTests.fs",
+        "tests/Vigila.Host.GitHub.Tests/FollowUpLedgerTests.fs",
+        "tests/Vigila.Host.GitHub.Tests/GitHubRepositoryFilesTests.fs",
+        "tests/Vigila.Host.GitHub.Tests/RetryTests.fs",
+        "tests/Vigila.Host.GitHub.Tests/Tests.fs",
+        "tests/Vigila.Host.GitHub.Tests/Vigila.Host.GitHub.Tests.fsproj",
+        "tests/Vigila.Semantic.Tests/Tests.fs"
+      ]
+    },
+    "changeSummary": {
+      "available": false,
+      "reason": "preexisting-dirty-worktree"
+    }
   },
   "scope": {
     "initial": {},

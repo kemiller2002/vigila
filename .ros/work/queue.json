@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 30,
+  "nextSeq": 31,
   "items": [
     {
       "id": "WI-0001",
@@ -451,13 +451,27 @@
         "quality"
       ],
       "priority": "high",
-      "status": "ready",
+      "status": "complete",
       "attachments": [],
       "createdAt": "2026-10-05T09:28:02.000Z",
-      "updatedAt": "2026-10-05T09:28:06.000Z",
+      "updatedAt": "2026-10-05T09:46:48.000Z",
       "createdBy": "unknown",
       "source": "github",
       "sourceReference": "kemiller2002/vigila#25"
+    },
+    {
+      "id": "WI-0030",
+      "title": "Time-capability ownership debt: Vigila.Semantic.Time duplicates a portfolio time capability that no repository owns (Chrona is a time-tracking app). Next: when Echelon names an owner, seed it from Time.fs and migrate behind the Clock port; do not depend on Chrona.",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "captured",
+      "attachments": [],
+      "createdAt": "2026-10-05T09:46:47.879Z",
+      "updatedAt": "2026-10-05T09:46:47.879Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
     }
   ]
 }

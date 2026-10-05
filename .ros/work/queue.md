@@ -33,4 +33,5 @@
 | WI-0026 | Route the Dispatch boundary Aegis scope through Ports.scopeFor or remove scopeFor (SDE conformance G-2) | captured |  | medium |
 | WI-0027 | Attribute or declare the 22 unattributed commits on main since 2026-09-23 and restore PR-only path to main (SDE conformance G-3) | captured |  | medium |
 | WI-0028 | Bring VIG-SHR requirements into the traceability count and heading convention (SDE conformance G-4) | captured |  | medium |
-| WI-0029 | Failure semantics: explicit HTTP classification with bounded retry, typed CLI exit codes, injected id source (Echelon VIG-F2, VIG-F3, VIG-F6; builds on #25) | ready | quality | high |
+| WI-0029 | Failure semantics: explicit HTTP classification with bounded retry, typed CLI exit codes, injected id source (Echelon VIG-F2, VIG-F3, VIG-F6; builds on #25) | complete | quality | high |
+| WI-0030 | Time-capability ownership debt: Vigila.Semantic.Time duplicates a portfolio time capability that no repository owns (Chrona is a time-tracking app). Next: when Echelon names an owner, seed it from Time.fs and migrate behind the Clock port; do not depend on Chrona. | captured |  | medium |
