@@ -152,8 +152,8 @@ into Aegis faults.
 **Level:** MUST · **Release:** v1 · **Source:** v0.5 §147
 
 Vigila MUST consume Forma through the `@echelon-foundry/design-system`
-package contract. The current application baseline is Forma `0.3.0`. Until a
-published npm package is the chosen canonical source, the immutable v0.3.0
+package contract. The current application baseline is Forma `0.4.1`. Until a
+published npm package is the chosen canonical source, the immutable v0.4.1
 release artifact is the dependency source. Vigila MUST NOT copy Forma CSS into
 its own source tree.
 

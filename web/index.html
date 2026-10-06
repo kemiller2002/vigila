@@ -101,13 +101,13 @@
 
           <template data-if="hasSetupError">
             <ef-alert class="ef-component-tag">
-              <aside class="ef-alert setup__error" role="alert" data-tone="attention">
+              <div class="ef-alert setup__error" role="alert" data-tone="attention">
                 <div class="ef-alert__icon" aria-hidden="true">!</div>
                 <div>
                   <strong>Connection needs attention</strong>
                   <p data-text="setupError"></p>
                 </div>
-              </aside>
+              </div>
             </ef-alert>
           </template>
         </form>
@@ -136,10 +136,10 @@
 
           <template data-if="hasError">
             <ef-alert class="ef-component-tag">
-              <aside id="capture-error" class="ef-alert error" role="alert" data-tone="attention">
+              <div id="capture-error" class="ef-alert error" role="alert" data-tone="attention">
                 <div class="ef-alert__icon" aria-hidden="true">!</div>
                 <p data-text="error"></p>
-              </aside>
+              </div>
             </ef-alert>
           </template>
 
