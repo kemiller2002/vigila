@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "protocolVersion": "1.0.0",
   "repository": "vigila",
-  "actor": "agent:chatgpt",
+  "actor": "anthropic/claude-code",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-10-06T09:48:43.000Z",
+  "updatedAt": "2026-10-06T12:22:14.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -631,6 +631,17 @@
         "EXE-20261006T093614049Z-9f2fccb7"
       ],
       "completedAt": "2026-10-06T09:48:43.000Z"
+    },
+    {
+      "id": "WI-0035",
+      "type": "mechanical",
+      "state": "active",
+      "semanticState": "active",
+      "evidence": [],
+      "updatedAt": "2026-10-06T12:22:14.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261006T122215062Z-040431dc"
+      ]
     }
   ]
 }
