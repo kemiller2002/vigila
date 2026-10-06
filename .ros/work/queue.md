@@ -41,3 +41,4 @@
 | WI-0034 | Upgrade Forma to 0.4.1 and Limen to 0.7.1 (echelon-current); remove the inline-fault contrast workaround; re-evaluate ef-stack spacing override | complete |  | medium |
 | WI-0035 | Move vigila to Praxis 3.7.1 (ROS -> Praxis rename) and Ordo 1.4.0 | complete | praxis, ordo, toolchain | medium |
 | WI-0036 | Move vigila to Ordo 1.4.1 | complete | ordo, toolchain | medium |
+| WI-0037 | Move vigila to Praxis 3.7.2, Ordo 1.4.2, Visual Engineering 1.0.1 and adopt Conditor | complete |  | medium |
