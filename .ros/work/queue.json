@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 34,
+  "nextSeq": 35,
   "items": [
     {
       "id": "WI-0001",
@@ -511,6 +511,20 @@
       "attachments": [],
       "createdAt": "2026-10-06T00:38:31.140Z",
       "updatedAt": "2026-10-06T00:45:53.000Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0034",
+      "title": "Upgrade Forma to 0.4.1 and Limen to 0.7.1 (echelon-current); remove the inline-fault contrast workaround; re-evaluate ef-stack spacing override",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-10-06T09:36:07.677Z",
+      "updatedAt": "2026-10-06T09:36:13.000Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null
