@@ -50,6 +50,16 @@
   gap: 1.25rem;
 }
 
+/* Forma 0.3.0 gives .ef-stack a second spacing mechanism: owl margins sized by
+   --ef-stack-space, on top of the foundation `gap` it already had. Applied
+   together they double every space in these forms. `gap` stays the single
+   mechanism here because it also spaces children wrapped in Forma's
+   display:contents component tags (ef-alert), where margins are ignored. */
+.setup,
+.capture {
+  --ef-stack-space: 0;
+}
+
 .capture {
   gap: 0.75rem;
 }
@@ -80,6 +90,17 @@
 
 .operational-fault {
   margin-block-end: 1.25rem;
+}
+
+/* Forma 0.3.0 is the first release to style the inline fault, and in its
+   default theme the paragraphs inside it render text-secondary (#686d68) on
+   the fault's surface-secondary (#e3e0d7) background: 4.0:1, below WCAG AA.
+   Vigila's markup is Forma's fault-inline pattern verbatim, so this is a Forma
+   token pairing, not a Vigila markup error. Until Forma fixes it, the fault's
+   own text colour (text-primary) is inherited instead. Remove once Forma's
+   fault-inline passes contrast on its own. */
+.operational-fault p {
+  color: inherit;
 }
 
 /* Folio is present in the DOM as a projection of the same engine state, but

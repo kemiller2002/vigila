@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 33,
+  "nextSeq": 34,
   "items": [
     {
       "id": "WI-0001",
@@ -497,6 +497,20 @@
       "attachments": [],
       "createdAt": "2026-10-05T18:00:11.087Z",
       "updatedAt": "2026-10-05T18:00:13.000Z",
+      "createdBy": "unknown",
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0033",
+      "title": "Upgrade Forma to 0.3.0 and Folio to the v0.3.0 release (echelon-current channel); migrate ef-stack spacing; confirm Aegis 1.0.0 and Limen 0.7.0",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-10-06T00:38:31.140Z",
+      "updatedAt": "2026-10-06T00:45:53.000Z",
       "createdBy": "unknown",
       "source": "manual",
       "sourceReference": null

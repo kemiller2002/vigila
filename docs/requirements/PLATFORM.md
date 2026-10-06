@@ -152,8 +152,8 @@ into Aegis faults.
 **Level:** MUST · **Release:** v1 · **Source:** v0.5 §147
 
 Vigila MUST consume Forma through the `@echelon-foundry/design-system`
-package contract. The current application baseline is Forma `0.2.0`. Until a
-published npm package is the chosen canonical source, the immutable v0.2.0
+package contract. The current application baseline is Forma `0.3.0`. Until a
+published npm package is the chosen canonical source, the immutable v0.3.0
 release artifact is the dependency source. Vigila MUST NOT copy Forma CSS into
 its own source tree.
 
@@ -224,10 +224,10 @@ Vigila consumes. Material migration decisions MUST be recorded through ROS.
 **Level:** MUST · **Release:** v1 · **Source:** v0.5 §149
 
 Vigila MUST consume `@echelon-foundry/print-components` for printable,
-PDF, and document-style output. The current source baseline is Folio `0.3.0`.
-Until a v0.3.0 package/release artifact is published, Vigila MUST pin an
-immutable Folio commit containing that baseline rather than track `main`.
-Once a package/release is canonical, Vigila MUST pin the exact version.
+PDF, and document-style output. The current baseline is Folio `0.3.0`, pinned
+to the immutable v0.3.0 GitHub release artifact (the authoritative Folio
+release). Vigila MUST pin an exact released version or immutable artifact
+rather than track `main`.
 
 #### VIG-PLAT-041 — Folio registration and print CSS are consumed from the package
 **Level:** MUST · **Release:** v1 · **Source:** v0.5 §149
