@@ -39,3 +39,4 @@
 | WI-0032 | Repin echelon-foundations workflow to praxis a95dbf2 (Limen 0.7.0-aware foundations verifier) | complete |  | medium |
 | WI-0033 | Upgrade Forma to 0.3.0 and Folio to the v0.3.0 release (echelon-current channel); migrate ef-stack spacing; confirm Aegis 1.0.0 and Limen 0.7.0 | complete |  | medium |
 | WI-0034 | Upgrade Forma to 0.4.1 and Limen to 0.7.1 (echelon-current); remove the inline-fault contrast workaround; re-evaluate ef-stack spacing override | complete |  | medium |
+| WI-0035 | Move vigila to Praxis 3.7.1 (ROS -> Praxis rename) and Ordo 1.4.0 | complete | praxis, ordo, toolchain | medium |
