@@ -4,7 +4,7 @@
   "repository": "vigila",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-10-06T13:53:29.000Z",
+  "updatedAt": "2026-10-06T13:54:57.000Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -684,13 +684,47 @@
     {
       "id": "WI-0036",
       "type": "mechanical",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-10-06T13:53:29.000Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": ".echelon/toolchain.json"
+        },
+        {
+          "type": "implementation",
+          "path": ".echelon/sde.json"
+        },
+        {
+          "type": "tests",
+          "path": ".github/workflows/praxis-validation.yml"
+        }
+      ],
+      "updatedAt": "2026-10-06T13:54:57.000Z",
       "telemetryExecutionIds": [
         "EXE-20261006T135329520Z-827dae0b"
-      ]
+      ],
+      "latestCheckpoint": {
+        "id": "0a53b08b20c66d8c53e3649a",
+        "recordedAt": "2026-10-06T13:54:55.000Z",
+        "executionId": "EXE-20261006T135329520Z-827dae0b",
+        "repository": "vigila",
+        "branch": "chore/ordo-1.4.1",
+        "commit": "36f9728a7d47f248b254678d3dd4d159de25c16c",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/vigila"
+        },
+        "remoteBranch": "chore/ordo-1.4.1",
+        "remoteCommit": "36f9728a7d47f248b254678d3dd4d159de25c16c",
+        "summary": "Ordo 1.4.1 applied, verified, pushed",
+        "nextAction": "complete, PR",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-06T13:54:57.000Z"
     }
   ]
 }
