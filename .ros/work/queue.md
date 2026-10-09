@@ -43,3 +43,4 @@
 | WI-0036 | Move vigila to Ordo 1.4.1 | complete | ordo, toolchain | medium |
 | WI-0037 | Move vigila to Praxis 3.7.2, Ordo 1.4.2, Visual Engineering 1.0.1 and adopt Conditor | complete |  | medium |
 | WI-0038 | Move vigila to Ordo 1.5.0 via echelon-current 1.2.0 (conditor upgrade --current) | complete |  | medium |
+| WI-0039 | Upgrade Limen from 0.7.1 to 0.9.0 (echelon-current) | complete |  | medium |
