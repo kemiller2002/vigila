@@ -1,7 +1,7 @@
 {
   "standardVersion": "1.0.0",
   "repository": "kemiller2002/vigila",
-  "revision": "974f61ca0344cc865b6433e197392577e8d2aaee",
+  "revision": "4e444f3994bd47ab179b7541b07159fb03b1ae26",
   "classification": "app-ui",
   "surfaces": [
     {
@@ -129,17 +129,25 @@
       "evidence": [
         "tests/conformance/app.spec.js › every enabled action, in setup and connected with items, is declared (ULI-A01, ULI-A09, ULI-A10): ULI-A10 PASS — every enabled, visible action is declared in vigila.contract.mjs",
         "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @320px — document scrollWidth 320 vs clientWidth 320; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @320px — every part inside the workspace",
         "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L04 PASS @320px — end edges differ by 0.0 CSS px",
         "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @390px — document scrollWidth 390 vs clientWidth 390; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @390px — every part inside the workspace",
         "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L04 PASS @390px — end edges differ by 0.0 CSS px",
         "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @768px — document scrollWidth 768 vs clientWidth 768; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @768px — every part inside the workspace",
         "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L04 PASS @768px — end edges differ by 0.0 CSS px",
         "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @1280px — document scrollWidth 1280 vs clientWidth 1280; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @1280px — every part inside the workspace",
         "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L04 PASS @1280px — end edges differ by 0.0 CSS px",
         "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @320px x2 text — document scrollWidth 320 vs clientWidth 320; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @320px x2 text — every part inside the workspace",
         "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @390px x2 text — document scrollWidth 390 vs clientWidth 390; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @390px x2 text — every part inside the workspace",
         "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @768px x2 text — document scrollWidth 768 vs clientWidth 768; 0 text run(s) escaping the viewport or a clipping container",
-        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @1280px x2 text — document scrollWidth 1280 vs clientWidth 1280; 0 text run(s) escaping the viewport or a clipping container"
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @768px x2 text — every part inside the workspace",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @1280px x2 text — document scrollWidth 1280 vs clientWidth 1280; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @1280px x2 text — every part inside the workspace"
       ],
       "unknownScope": [
         "right-to-left and translated text: not exercised (Vigila ships English, left-to-right only)"
@@ -154,7 +162,7 @@
       "alignmentGroups": [],
       "actions": [],
       "evidence": [
-        "tests/conformance/app.spec.js › print: the open items print as Folio's document, and a PDF renders (ULI-L12): ULI-L12 PASS — print surface shown with 2 items; screen controls hidden; horizontal overflow 0px; Letter PDF 71423 bytes"
+        "tests/conformance/app.spec.js › print: the open items print as Folio's document, and a PDF renders (ULI-L12): ULI-L12 PASS — print surface shown with 2 items; screen controls hidden; horizontal overflow 0px; Letter PDF 71171 bytes"
       ],
       "unknownScope": [
         "right-to-left and translated text: not exercised (Vigila ships English, left-to-right only)"
