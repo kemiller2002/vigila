@@ -934,7 +934,27 @@
       "updatedAt": "2026-10-14T00:15:45.926Z",
       "telemetryExecutionIds": [
         "EXE-20261014T001546261Z-89a000a5"
-      ]
+      ],
+      "latestCheckpoint": {
+        "id": "682e93c7b16f2c2bbe08057f",
+        "recordedAt": "2026-10-14T00:17:29.640Z",
+        "executionId": "EXE-20261014T001546261Z-89a000a5",
+        "repository": "vigila",
+        "branch": "feat/ui-conformance-2026-10",
+        "commit": "4a4751f66bc216ad659b379053db15050465e69c",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/vigila"
+        },
+        "remoteBranch": "feat/ui-conformance-2026-10",
+        "remoteCommit": "4a4751f66bc216ad659b379053db15050465e69c",
+        "summary": "Workspace kept inside 320px at 200% text; containment asserted; evidence regenerated",
+        "nextAction": "Watch vigila#37 CI; complete when green",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      }
     }
   ]
 }
