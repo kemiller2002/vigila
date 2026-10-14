@@ -4,7 +4,7 @@
   "repository": "vigila",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-10-13T23:33:55.764Z",
+  "updatedAt": "2026-10-14T00:08:53.673Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -887,13 +887,43 @@
     {
       "id": "GH-36",
       "type": "implementation",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-10-13T23:33:55.764Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "tests/conformance/app.spec.js"
+        },
+        {
+          "type": "tests",
+          "path": "docs/ui-conformance/vigila.ui-conformance.json"
+        }
+      ],
+      "updatedAt": "2026-10-14T00:08:53.673Z",
       "telemetryExecutionIds": [
         "EXE-20261013T233357059Z-5152f5bb"
-      ]
+      ],
+      "latestCheckpoint": {
+        "id": "4c2ad0b1aa2e2a52847322f3",
+        "recordedAt": "2026-10-14T00:08:48.782Z",
+        "executionId": "EXE-20261013T233357059Z-5152f5bb",
+        "repository": "vigila",
+        "branch": "feat/ui-conformance-2026-10",
+        "commit": "e963873200736a43336cae2fd65fd08eafa0a3c8",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/vigila"
+        },
+        "remoteBranch": "feat/ui-conformance-2026-10",
+        "remoteCommit": "e963873200736a43336cae2fd65fd08eafa0a3c8",
+        "summary": "UI conformance adopted: contract, 9 conformance tests, evidence (3 surfaces pass), CI job; 3 baseline defects fixed at source",
+        "nextAction": "Open draft PR, watch CI, mark ready",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-14T00:08:53.673Z"
     }
   ]
 }
