@@ -28,9 +28,13 @@
   margin: 0;
 }
 
+/* The forms are flex columns (Forma's .ef-stack), where justify-self does
+   nothing: align-self is what keeps each submit at its natural size on the
+   start edge instead of stretched across the form (ULI-L03, ULI-L10). Below
+   30rem the media rule makes them full width on purpose. */
 .setup__submit,
 .capture__submit {
-  justify-self: start;
+  align-self: flex-start;
 }
 
 .setup__status,
@@ -81,6 +85,10 @@
 }
 
 .connected {
+  /* A row of status and action, not prose: it spans the workspace like the
+     queue above it rather than stopping at Forma's paragraph measure
+     (ULI-L04, ULI-L10). */
+  max-inline-size: none;
   padding-block-start: 0.75rem;
   border-block-start: 1px solid var(--ef-color-border-subtle, currentColor);
 }

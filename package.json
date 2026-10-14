@@ -15,9 +15,11 @@
     "test": "npm run check:architecture && npm run check:limen && npm run test:dotnet && npm run test:browser",
     "serve": "python3 -m http.server 4321",
     "start": "npm run build:wasm && npm run serve",
-    "test:browser": "npm run build:wasm && npx playwright test"
+    "test:browser": "npm run build:wasm && npx playwright test",
+    "ui:conformance": "npm run build:wasm && node --test tools/ui-conformance/evidence.test.mjs && node tools/ui-conformance/run.mjs"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0"
+    "@playwright/test": "^1.63.0",
+    "ajv": "8.17.1"
   }
 }
