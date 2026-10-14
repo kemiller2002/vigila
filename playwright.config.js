@@ -38,6 +38,14 @@ export default defineConfig({
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"], launchOptions: launch } },
+    // UI-LAYOUT-INTERACTION@1.0.0 conformance (GH-36): the same page and
+    // browser, its declared actions and alignment groups. `npm run
+    // ui:conformance` runs it and turns its reports into the evidence.
+    {
+      name: "ui-conformance",
+      testDir: "./tests/conformance",
+      use: { ...devices["Desktop Chrome"], launchOptions: launch },
+    },
   ],
   // Served from the repository root, not from web/: index.html reaches up into
   // node_modules/ for Limen's kernel and into src/ for the published engine.

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 40,
+  "nextSeq": 41,
   "items": [
     {
       "id": "WI-0001",
@@ -630,6 +630,27 @@
       "attachments": [],
       "createdAt": "2026-10-09T00:13:56.410Z",
       "updatedAt": "2026-10-09T00:19:15.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0040",
+      "title": "GH-36 follow-up: CI found the workspace pushed past a 320px screen at 200% text (input intrinsic width); fix and re-evidence for vigila#37",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-10-14T00:15:36.910Z",
+      "updatedAt": "2026-10-14T00:29:00.535Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",

@@ -4,7 +4,7 @@
   "repository": "vigila",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-10-09T00:19:15.000Z",
+  "updatedAt": "2026-10-14T00:29:00.535Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -883,6 +883,88 @@
       },
       "completedAt": "2026-10-09T00:19:15.000Z",
       "conclusion": "Limen upgraded 0.7.1 -> 0.9.0; limen verify --strict and the repository checks pass locally"
+    },
+    {
+      "id": "GH-36",
+      "type": "implementation",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "tests/conformance/app.spec.js"
+        },
+        {
+          "type": "tests",
+          "path": "docs/ui-conformance/vigila.ui-conformance.json"
+        }
+      ],
+      "updatedAt": "2026-10-14T00:08:53.673Z",
+      "telemetryExecutionIds": [
+        "EXE-20261013T233357059Z-5152f5bb"
+      ],
+      "latestCheckpoint": {
+        "id": "4c2ad0b1aa2e2a52847322f3",
+        "recordedAt": "2026-10-14T00:08:48.782Z",
+        "executionId": "EXE-20261013T233357059Z-5152f5bb",
+        "repository": "vigila",
+        "branch": "feat/ui-conformance-2026-10",
+        "commit": "e963873200736a43336cae2fd65fd08eafa0a3c8",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/vigila"
+        },
+        "remoteBranch": "feat/ui-conformance-2026-10",
+        "remoteCommit": "e963873200736a43336cae2fd65fd08eafa0a3c8",
+        "summary": "UI conformance adopted: contract, 9 conformance tests, evidence (3 surfaces pass), CI job; 3 baseline defects fixed at source",
+        "nextAction": "Open draft PR, watch CI, mark ready",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-14T00:08:53.673Z"
+    },
+    {
+      "id": "WI-0040",
+      "type": "implementation",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "web/styles.css"
+        },
+        {
+          "type": "tests",
+          "path": "docs/ui-conformance/vigila.ui-conformance.json"
+        }
+      ],
+      "updatedAt": "2026-10-14T00:29:00.535Z",
+      "telemetryExecutionIds": [
+        "EXE-20261014T001546261Z-89a000a5"
+      ],
+      "latestCheckpoint": {
+        "id": "682e93c7b16f2c2bbe08057f",
+        "recordedAt": "2026-10-14T00:17:29.640Z",
+        "executionId": "EXE-20261014T001546261Z-89a000a5",
+        "repository": "vigila",
+        "branch": "feat/ui-conformance-2026-10",
+        "commit": "4a4751f66bc216ad659b379053db15050465e69c",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/vigila"
+        },
+        "remoteBranch": "feat/ui-conformance-2026-10",
+        "remoteCommit": "4a4751f66bc216ad659b379053db15050465e69c",
+        "summary": "Workspace kept inside 320px at 200% text; containment asserted; evidence regenerated",
+        "nextAction": "Watch vigila#37 CI; complete when green",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-10-14T00:29:00.535Z"
     }
   ]
 }

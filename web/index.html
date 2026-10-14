@@ -58,7 +58,7 @@
             />
             <input id="token-present" type="hidden" data-event="tokenEntered" data-on="input" />
             <p id="token-note" class="ef-field__description setup__note">
-              Stored locally in this browser only, and never written to your repository.
+              Required to connect. Stored locally in this browser only, and never written to your repository.
             </p>
           </div>
 
@@ -91,7 +91,7 @@
             />
           </div>
 
-          <button class="setup__submit" type="submit" data-bind-disabled="connectDisabled">
+          <button class="setup__submit" type="submit" aria-describedby="token-note" data-bind-disabled="connectDisabled">
             Connect
           </button>
 
