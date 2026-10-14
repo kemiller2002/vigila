@@ -1,0 +1,166 @@
+{
+  "standardVersion": "1.0.0",
+  "repository": "kemiller2002/vigila",
+  "revision": "974f61ca0344cc865b6433e197392577e8d2aaee",
+  "classification": "app-ui",
+  "surfaces": [
+    {
+      "id": "setup",
+      "path": "web/index.html (not connected: Connect to a repository)",
+      "kind": "product",
+      "status": "pass",
+      "viewportWidths": [
+        320,
+        390,
+        768,
+        1280
+      ],
+      "alignmentGroups": [],
+      "actions": [
+        {
+          "id": "setup.connect",
+          "control": {
+            "role": "button",
+            "name": "Connect"
+          },
+          "intent": "Validate the token, repository and branch against GitHub and open the application",
+          "expectedOutcome": "The capture form (\"What is open?\") replaces setup; a refused token, repository or branch is reported in an alert and setup stays [owner: engine: connect (Vigila.Application Dispatch); state: not connected, a token entered]",
+          "status": "pass",
+          "evidence": [
+            "tests/conformance/app.spec.js › Connect is refused with the reason for a rejected token, then connects once the token is right (ULI-A02, ULI-A04, ULI-A07): ULI-A07 PASS — observed by the test: pre-state, invocation and post-state asserted",
+            "tests/conformance/app.spec.js › Connect opens the application (ULI-A02): ULI-A02 PASS — expected post-state observed after activation"
+          ],
+          "resetStrategy": "fresh page per test"
+        }
+      ],
+      "evidence": [
+        "tests/conformance/app.spec.js › every enabled action, in setup and connected with items, is declared (ULI-A01, ULI-A09, ULI-A10): ULI-A10 PASS — every enabled, visible action is declared in vigila.contract.mjs",
+        "tests/conformance/app.spec.js › the keyboard reaches every setup field and Connect (ULI-A08): ULI-A08 PASS — each reached by Tab",
+        "tests/conformance/app.spec.js › submit buttons keep their natural size on the form's start edge, full width only on narrow screens (ULI-L03, ULI-L10): ULI-L10 PASS @320px (full) — Connect x=37.0 w=246.0; field x=37.0 w=246.0",
+        "tests/conformance/app.spec.js › submit buttons keep their natural size on the form's start edge, full width only on narrow screens (ULI-L03, ULI-L10): ULI-L10 PASS @390px (full) — Connect x=37.0 w=316.0; field x=37.0 w=316.0",
+        "tests/conformance/app.spec.js › submit buttons keep their natural size on the form's start edge, full width only on narrow screens (ULI-L03, ULI-L10): ULI-L10 PASS @768px (start) — Connect x=41.0 w=100.4; field x=41.0 w=462.0",
+        "tests/conformance/app.spec.js › submit buttons keep their natural size on the form's start edge, full width only on narrow screens (ULI-L03, ULI-L10): ULI-L10 PASS @1280px (start) — Connect x=297.0 w=100.4; field x=297.0 w=462.0",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @320px — document scrollWidth 320 vs clientWidth 320; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @320px — document scrollWidth 320 vs clientWidth 320; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @390px — document scrollWidth 390 vs clientWidth 390; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @390px — document scrollWidth 390 vs clientWidth 390; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @768px — document scrollWidth 768 vs clientWidth 768; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @768px — document scrollWidth 768 vs clientWidth 768; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @1280px — document scrollWidth 1280 vs clientWidth 1280; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @1280px — document scrollWidth 1280 vs clientWidth 1280; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @320px x2 text — document scrollWidth 320 vs clientWidth 320; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @320px x2 text — document scrollWidth 320 vs clientWidth 320; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @390px x2 text — document scrollWidth 390 vs clientWidth 390; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @390px x2 text — document scrollWidth 390 vs clientWidth 390; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @768px x2 text — document scrollWidth 768 vs clientWidth 768; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @768px x2 text — document scrollWidth 768 vs clientWidth 768; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @1280px x2 text — document scrollWidth 1280 vs clientWidth 1280; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › setup: no overflow or clipping at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L09): ULI-L05 PASS @1280px x2 text — document scrollWidth 1280 vs clientWidth 1280; 0 text run(s) escaping the viewport or a clipping container"
+      ],
+      "unknownScope": [
+        "right-to-left and translated text: not exercised (Vigila ships English, left-to-right only)"
+      ]
+    },
+    {
+      "id": "workspace",
+      "path": "web/index.html (connected: capture, open items, connection)",
+      "kind": "product",
+      "status": "pass",
+      "viewportWidths": [
+        320,
+        390,
+        768,
+        1280
+      ],
+      "alignmentGroups": [
+        {
+          "id": "connection-row",
+          "relation": "centerline",
+          "toleranceCssPx": 1,
+          "targets": [
+            {
+              "role": "text",
+              "name": "Connected"
+            },
+            {
+              "role": "button",
+              "name": "Forget token / Disconnect"
+            }
+          ],
+          "rationale": "The connection's status and its action share a centre line (ULI-L07, ULI-L10), or wrap in order.",
+          "evidence": [
+            "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L09 PASS @320px (stacked) — wrapped or stacked in source order without overlap",
+            "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L09 PASS @390px (stacked) — wrapped or stacked in source order without overlap",
+            "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L01 PASS @768px (row) — center-edge delta 0.00 CSS px <= tolerance 1 CSS px",
+            "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L01 PASS @1280px (row) — center-edge delta 0.00 CSS px <= tolerance 1 CSS px"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "id": "workspace.capture",
+          "control": {
+            "role": "button",
+            "name": "Capture"
+          },
+          "intent": "Capture an open item",
+          "expectedOutcome": "The item is listed under \"Needs your attention\" and the draft clears [owner: engine: capture; state: connected, a legal title typed]",
+          "status": "pass",
+          "evidence": [
+            "tests/conformance/app.spec.js › Capture lists the item and clears the draft; Disconnect returns to setup and forgets the token (ULI-A02, ULI-A05): ULI-A02 PASS — expected post-state observed after activation"
+          ],
+          "resetStrategy": "fresh page per test"
+        },
+        {
+          "id": "workspace.disconnect",
+          "control": {
+            "role": "button",
+            "name": "Forget token / Disconnect"
+          },
+          "intent": "Forget the token and leave the repository",
+          "expectedOutcome": "Setup (\"Connect to a repository\") replaces the application; the token is removed from storage [owner: engine: disconnect, connection.js token store; state: connected]",
+          "status": "pass",
+          "evidence": [
+            "tests/conformance/app.spec.js › Capture lists the item and clears the draft; Disconnect returns to setup and forgets the token (ULI-A02, ULI-A05): ULI-A02 PASS — expected post-state observed after activation"
+          ],
+          "resetStrategy": "fresh page per test"
+        }
+      ],
+      "evidence": [
+        "tests/conformance/app.spec.js › every enabled action, in setup and connected with items, is declared (ULI-A01, ULI-A09, ULI-A10): ULI-A10 PASS — every enabled, visible action is declared in vigila.contract.mjs",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @320px — document scrollWidth 320 vs clientWidth 320; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L04 PASS @320px — end edges differ by 0.0 CSS px",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @390px — document scrollWidth 390 vs clientWidth 390; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L04 PASS @390px — end edges differ by 0.0 CSS px",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @768px — document scrollWidth 768 vs clientWidth 768; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L04 PASS @768px — end edges differ by 0.0 CSS px",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @1280px — document scrollWidth 1280 vs clientWidth 1280; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L04 PASS @1280px — end edges differ by 0.0 CSS px",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @320px x2 text — document scrollWidth 320 vs clientWidth 320; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @390px x2 text — document scrollWidth 390 vs clientWidth 390; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @768px x2 text — document scrollWidth 768 vs clientWidth 768; 0 text run(s) escaping the viewport or a clipping container",
+        "tests/conformance/app.spec.js › workspace: a long title, the queue and the connection row fit at 320/390/768/1280, at 100% and 200% text (ULI-L05, ULI-L07, ULI-L09, ULI-L10): ULI-L05 PASS @1280px x2 text — document scrollWidth 1280 vs clientWidth 1280; 0 text run(s) escaping the viewport or a clipping container"
+      ],
+      "unknownScope": [
+        "right-to-left and translated text: not exercised (Vigila ships English, left-to-right only)"
+      ]
+    },
+    {
+      "id": "print",
+      "path": "web/index.html (print media: Folio open-items document)",
+      "kind": "print",
+      "status": "pass",
+      "viewportWidths": [],
+      "alignmentGroups": [],
+      "actions": [],
+      "evidence": [
+        "tests/conformance/app.spec.js › print: the open items print as Folio's document, and a PDF renders (ULI-L12): ULI-L12 PASS — print surface shown with 2 items; screen controls hidden; horizontal overflow 0px; Letter PDF 71423 bytes"
+      ],
+      "unknownScope": [
+        "right-to-left and translated text: not exercised (Vigila ships English, left-to-right only)"
+      ]
+    }
+  ],
+  "exceptions": [],
+  "notes": "Contract: visual-engineering/UI-LAYOUT-INTERACTION@1.0.0 (visual-engineering 8da8fbc); helpers: @echelon-foundry/forma-conformance 0.1.0, vendored from Forma PR #158 (tests/conformance/forma-conformance). Generated by tools/ui-conformance/evidence.mjs from one Playwright run of every project in playwright.config.js; statuses are only what that run observed. Vigila has no deployment configuration (no Pages or deploy workflow): the page is assessed as shipped in the repository, served locally. Known debt WI-0021: the engine's capture-refusal message (hasError) is bound but unreachable, because Capture is disabled for exactly the drafts it would refuse; it is not a control and is not counted as an action."
+}
