@@ -3,6 +3,7 @@
 | ID | Work | Status | Tags | Priority |
 |---|---|---|---|---|
 | ECHELON-UPGRADE-2026-09-21 | Reconcile current Echelon engineering capabilities | complete | tooling, ordo, limen | high |
+| GH-36 | GH-36 | complete |  |  |
 | ROS-INSTALL-3-0-3 | ROS-INSTALL-3-0-3 | complete |  |  |
 | VIG-15 | VIG-15 | complete |  |  |
 | WI-0001 | Consolidate readme.md into ROS-generated README.md | complete | docs | medium |
@@ -44,3 +45,4 @@
 | WI-0037 | Move vigila to Praxis 3.7.2, Ordo 1.4.2, Visual Engineering 1.0.1 and adopt Conditor | complete |  | medium |
 | WI-0038 | Move vigila to Ordo 1.5.0 via echelon-current 1.2.0 (conditor upgrade --current) | complete |  | medium |
 | WI-0039 | Upgrade Limen from 0.7.1 to 0.9.0 (echelon-current) | complete |  | medium |
+| WI-0040 | GH-36 follow-up: CI found the workspace pushed past a 320px screen at 200% text (input intrinsic width); fix and re-evidence for vigila#37 | ready |  | medium |

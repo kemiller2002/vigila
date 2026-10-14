@@ -189,6 +189,16 @@ test("workspace: a long title, the queue and the connection row fit at 320/390/7
         await openConnected(page, [LONG, "Call the accountant"]);
         if (scale === 2) await scaleDefaultText(page, 2);
         await expectNoOverflowRecorded(page, "workspace", width, scale);
+        // Every part of the workspace stays inside it, whatever the fonts:
+        // page-level overflow alone depends on how much margin is left.
+        const escaping = await page.evaluate(() => {
+          const workspace = document.querySelector(".workspace").getBoundingClientRect();
+          return [...document.querySelectorAll(".workspace > *, .workspace > * > *")]
+            .filter((element) => element.checkVisibility() && element.getBoundingClientRect().right > workspace.right + 1)
+            .map((element) => `${element.tagName.toLowerCase()}.${element.className} right=${element.getBoundingClientRect().right.toFixed(1)} > ${workspace.right.toFixed(1)}`);
+        });
+        await record({ kind: "surface", id: "workspace", check: "contained in the workspace", width, textScale: scale }, { ruleId: "ULI-L05", status: escaping.length ? STATUS.FAIL : STATUS.PASS, reason: escaping.length ? escaping.join("; ") : "every part inside the workspace" });
+        expect(escaping, `workspace@${width}x${scale}`).toEqual([]);
         if (scale === 1) {
           await expectRowOrStack(page, "connection-row", width);
           // The connection row spans the workspace like the queue above it.

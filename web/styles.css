@@ -52,6 +52,15 @@
 .workspace {
   display: grid;
   gap: 1.25rem;
+  /* One column no wider than the page: an implicit auto track grows to its
+     items' min-content, and a text input's intrinsic size grows with the
+     text size, so at 200% text on a 320px screen it pushed the page
+     sideways (ULI-L05). */
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.capture__input {
+  min-inline-size: 0;
 }
 
 /* Since 0.3.0 Forma gives .ef-stack a second spacing mechanism: owl margins
