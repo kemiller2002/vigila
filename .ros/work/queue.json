@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 41,
+  "nextSeq": 44,
   "items": [
     {
       "id": "WI-0001",
@@ -651,6 +651,69 @@
       "attachments": [],
       "createdAt": "2026-10-14T00:15:36.910Z",
       "updatedAt": "2026-10-14T00:29:00.535Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0041",
+      "title": "Upgrade Aegis 1.0.0 -> 2.0.0 (echelon-current 1.40.0)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-11-25T12:17:13.214Z",
+      "updatedAt": "2026-11-25T12:23:08.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0042",
+      "title": "Retarget Aegis pin from 2.0.0 to 2.0.1 (FSharp.Core 10.1.400 floor; 2.0.0 declares FSharp.Core >= 11.0.101)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-11-25T12:54:14.215Z",
+      "updatedAt": "2026-11-25T12:54:38.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0043",
+      "title": "Upgrade Aegis 2.0.1 -> 2.0.2 (detached capture no longer blocks)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "complete",
+      "attachments": [],
+      "createdAt": "2026-11-25T15:59:14.963Z",
+      "updatedAt": "2026-11-25T16:23:39Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",

@@ -4,7 +4,7 @@
   "repository": "vigila",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-10-14T00:29:00.535Z",
+  "updatedAt": "2026-11-25T16:23:39Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -965,6 +965,130 @@
         }
       },
       "completedAt": "2026-10-14T00:29:00.535Z"
+    },
+    {
+      "id": "WI-0041",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "Directory.Packages.props"
+        },
+        {
+          "type": "tests",
+          "path": ".github/workflows/build.yml"
+        }
+      ],
+      "updatedAt": "2026-11-25T12:23:08.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261125T121721465Z-67352666"
+      ],
+      "latestCheckpoint": {
+        "id": "fb68b962c9e6a46d412e685b",
+        "recordedAt": "2026-11-25T12:23:07.000Z",
+        "executionId": "EXE-20261125T121721465Z-67352666",
+        "repository": "vigila",
+        "branch": "claude/vigila-implementation-jdeps1",
+        "commit": "de11f95980dd237e33a61b40a680d163c1b5d62b",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/vigila"
+        },
+        "remoteBranch": "claude/vigila-implementation-jdeps1",
+        "remoteCommit": "de11f95980dd237e33a61b40a680d163c1b5d62b",
+        "summary": "Aegis.Core pin bumped 1.0.0 -> 2.0.0; restore/build/test/wasm/playwright/ui-conformance/validate all pass on SDK 10.0.404",
+        "nextAction": "Complete WI-0041 and open draft PR",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-11-25T12:23:08.000Z"
+    },
+    {
+      "id": "WI-0042",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "Directory.Packages.props"
+        },
+        {
+          "type": "tests",
+          "path": ".github/workflows/build.yml"
+        }
+      ],
+      "updatedAt": "2026-11-25T12:54:38.000Z",
+      "telemetryExecutionIds": [
+        "EXE-20261125T125423468Z-26f55e37"
+      ],
+      "latestCheckpoint": {
+        "id": "35c5e508fd55930229ba5bfa",
+        "recordedAt": "2026-11-25T12:54:36.000Z",
+        "executionId": "EXE-20261125T125423468Z-26f55e37",
+        "repository": "vigila",
+        "branch": "claude/vigila-implementation-jdeps1",
+        "commit": "fed20ac86f335c934035d08436e7f0070c39ceaf",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/vigila"
+        },
+        "remoteBranch": "claude/vigila-implementation-jdeps1",
+        "remoteCommit": "fed20ac86f335c934035d08436e7f0070c39ceaf",
+        "summary": "Aegis pin retargeted 2.0.0 -> 2.0.1 and pushed; restore/build/test green on SDK 10.0.404 (285 tests passed)",
+        "nextAction": "Complete WI-0042, rebuild registry, validate, push Praxis state",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-11-25T12:54:38.000Z",
+      "conclusion": "Aegis.Core pinned at 2.0.1; restore resolves FSharp.Core 10.1.400; build clean and 285 tests pass"
+    },
+    {
+      "id": "WI-0043",
+      "type": "task",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "Directory.Packages.props"
+        },
+        {
+          "type": "tests",
+          "path": "tests/browser/operational-fault.spec.js"
+        }
+      ],
+      "updatedAt": "2026-11-25T16:23:39Z",
+      "telemetryExecutionIds": [
+        "EXE-20261125T155920470Z-9a048fe5"
+      ],
+      "latestCheckpoint": {
+        "id": "ebae7e0d88c83a169e6a2601",
+        "recordedAt": "2026-11-25T16:23:38Z",
+        "executionId": "EXE-20261125T155920470Z-9a048fe5",
+        "repository": "vigila",
+        "branch": "claude/vigila-implementation-jdeps1",
+        "commit": "b032bf25f382b286564636ddcc8ad58fb4b3d3f5",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/vigila"
+        },
+        "remoteBranch": "claude/vigila-implementation-jdeps1",
+        "remoteCommit": "b032bf25f382b286564636ddcc8ad58fb4b3d3f5",
+        "summary": "Aegis pinned to 2.0.2; browser test proves a fault is shown and the page stays responsive (fails on 2.0.1, passes on 2.0.2)",
+        "nextAction": "Complete WI-0043, rebuild registry, validate, push Praxis state",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-11-25T16:23:39Z"
     }
   ]
 }
