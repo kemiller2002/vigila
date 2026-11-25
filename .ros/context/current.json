@@ -4,7 +4,7 @@
   "repository": "vigila",
   "actor": "anthropic/claude-code",
   "startedAt": "2026-09-17T23:34:36.199Z",
-  "updatedAt": "2026-11-25T15:59:20Z",
+  "updatedAt": "2026-11-25T16:23:39Z",
   "baselineDirtyPaths": [],
   "workItems": [
     {
@@ -1052,13 +1052,43 @@
     {
       "id": "WI-0043",
       "type": "task",
-      "state": "active",
-      "semanticState": "active",
-      "evidence": [],
-      "updatedAt": "2026-11-25T15:59:20Z",
+      "state": "complete",
+      "semanticState": "complete",
+      "evidence": [
+        {
+          "type": "implementation",
+          "path": "Directory.Packages.props"
+        },
+        {
+          "type": "tests",
+          "path": "tests/browser/operational-fault.spec.js"
+        }
+      ],
+      "updatedAt": "2026-11-25T16:23:39Z",
       "telemetryExecutionIds": [
         "EXE-20261125T155920470Z-9a048fe5"
-      ]
+      ],
+      "latestCheckpoint": {
+        "id": "ebae7e0d88c83a169e6a2601",
+        "recordedAt": "2026-11-25T16:23:38Z",
+        "executionId": "EXE-20261125T155920470Z-9a048fe5",
+        "repository": "vigila",
+        "branch": "claude/vigila-implementation-jdeps1",
+        "commit": "b032bf25f382b286564636ddcc8ad58fb4b3d3f5",
+        "remote": {
+          "name": "origin",
+          "url": "https://github.com/kemiller2002/vigila"
+        },
+        "remoteBranch": "claude/vigila-implementation-jdeps1",
+        "remoteCommit": "b032bf25f382b286564636ddcc8ad58fb4b3d3f5",
+        "summary": "Aegis pinned to 2.0.2; browser test proves a fault is shown and the page stays responsive (fails on 2.0.1, passes on 2.0.2)",
+        "nextAction": "Complete WI-0043, rebuild registry, validate, push Praxis state",
+        "verification": {
+          "status": "verified",
+          "mechanism": "git-remote-observation"
+        }
+      },
+      "completedAt": "2026-11-25T16:23:39Z"
     }
   ]
 }
