@@ -45,7 +45,7 @@ test("an operational fault is shown, and the page keeps responding", async ({ pa
   await expect(fault).toBeVisible();
   await expect(fault).toHaveAttribute("role", "alert");
   await expect(page.locator("#operational-fault-title")).toHaveText("Vigila could not complete that operation");
-  await expect(fault.locator(".ef-fault__message")).toHaveText(
+  await expect(fault.locator(".forma-fault__message")).toHaveText(
     "Vigila could not process an application message. The rest of the application is still available.",
   );
   await expect(fault.locator("code")).toHaveText(/^AG-/);

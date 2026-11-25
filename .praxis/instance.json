@@ -1,0 +1,12 @@
+{
+  "schema": "praxis.instance/1",
+  "instanceId": "pxi-b609ccba1d7d48f692c60a0e4b8ecfea",
+  "createdAt": "2026-11-25T18:11:20.880Z",
+  "createdWith": "3.25.0",
+  "repository": {
+    "provider": "github",
+    "repositoryId": null,
+    "repository": "kemiller2002/vigila"
+  },
+  "predecessors": []
+}

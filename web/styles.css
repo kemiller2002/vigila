@@ -1,4 +1,10 @@
 @import "../node_modules/@echelon-foundry/design-system/dist/all.css";
+/* Echelon brand for Forma 1.x (@echelon-foundry/echelon-theme), in the theme's
+   documented order after Forma: echelon.css, echelon-fonts.css, echelon-app.css.
+   index.html sets data-forma-brand="echelon" on <html>. */
+@import "../node_modules/@echelon-foundry/echelon-theme/dist/echelon.css";
+@import "../node_modules/@echelon-foundry/echelon-theme/dist/echelon-fonts.css";
+@import "../node_modules/@echelon-foundry/echelon-theme/dist/echelon-app.css";
 @import "../node_modules/@echelon-foundry/print-components/src/styles/print.css" print;
 
 /* Vigila owns page composition only. Shared controls, colors, focus,
@@ -24,11 +30,11 @@
 }
 
 .setup__heading,
-.ef-work-queue__header h2 {
+.forma-work-queue__header h2 {
   margin: 0;
 }
 
-/* The forms are flex columns (Forma's .ef-stack), where justify-self does
+/* The forms are flex columns (Forma's .forma-stack), where justify-self does
    nothing: align-self is what keeps each submit at its natural size on the
    start edge instead of stretched across the form (ULI-L03, ULI-L10). Below
    30rem the media rule makes them full width on purpose. */
@@ -63,15 +69,15 @@
   min-inline-size: 0;
 }
 
-/* Since 0.3.0 Forma gives .ef-stack a second spacing mechanism: owl margins
-   sized by --ef-stack-space, on top of the foundation `gap` it already had.
+/* Since 0.3.0 Forma gives .forma-stack a second spacing mechanism: owl margins
+   sized by --forma-stack-space, on top of the foundation `gap` it already had.
    Applied together they double every space in these forms; re-checked against
-   Forma 0.4.1, which still ships both. `gap` stays the single mechanism here
+   Forma 1.0.1, which still ships both. `gap` stays the single mechanism here
    because it also spaces children wrapped in Forma's display:contents
-   component tags (ef-alert), where margins are ignored. */
+   component tags (forma-alert), where margins are ignored. */
 .setup,
 .capture {
-  --ef-stack-space: 0;
+  --forma-stack-space: 0;
 }
 
 .capture {
@@ -89,7 +95,7 @@
 }
 
 .item__id {
-  font-family: var(--ef-primitive-font-family-mono, ui-monospace, monospace);
+  font-family: var(--forma-primitive-font-family-mono, ui-monospace, monospace);
   overflow-wrap: anywhere;
 }
 
@@ -99,7 +105,7 @@
      (ULI-L04, ULI-L10). */
   max-inline-size: none;
   padding-block-start: 0.75rem;
-  border-block-start: 1px solid var(--ef-color-border-subtle, currentColor);
+  border-block-start: 1px solid var(--forma-color-border-subtle, currentColor);
 }
 
 .disconnect {
@@ -142,8 +148,8 @@
   .capture,
   .connected,
   .empty,
-  ef-work-queue,
-  ef-fault-inline {
+  forma-work-queue,
+  forma-fault-inline {
     display: none !important;
   }
 
