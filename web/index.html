@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-forma-brand="echelon">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -17,37 +17,37 @@
            Expected connection/capture refusals remain ordinary application
            outcomes below and are never converted into Aegis faults. -->
       <template data-if="hasOperationalFault">
-        <ef-fault-inline class="ef-component-tag">
+        <forma-fault-inline class="forma-component-tag">
           <div
-            class="ef-fault ef-fault--inline operational-fault"
+            class="forma-fault forma-fault--inline operational-fault"
             id="operational-fault"
-            data-ef-intent="inline"
-            data-ef-severity="error"
+            data-forma-intent="inline"
+            data-forma-severity="error"
             role="alert"
             aria-labelledby="operational-fault-title">
-            <div class="ef-fault__marker" aria-hidden="true">!</div>
-            <div class="ef-fault__body">
-              <p class="ef-fault__severity">Operational error</p>
-              <p class="ef-fault__title" id="operational-fault-title">
+            <div class="forma-fault__marker" aria-hidden="true">!</div>
+            <div class="forma-fault__body">
+              <p class="forma-fault__severity">Operational error</p>
+              <p class="forma-fault__title" id="operational-fault-title">
                 <strong data-text="operationalFaultTitle"></strong>
               </p>
-              <p class="ef-fault__message" data-text="operationalFaultMessage"></p>
-              <p class="ef-fault-reference">
+              <p class="forma-fault__message" data-text="operationalFaultMessage"></p>
+              <p class="forma-fault-reference">
                 Reference <code data-text="operationalFaultReference"></code>
               </p>
             </div>
           </div>
-        </ef-fault-inline>
+        </forma-fault-inline>
       </template>
 
       <!-- The credential itself remains browser-side. Only the presence flag
            crosses Limen into the engine. -->
       <template data-if="needsSetup">
-        <form class="setup ef-stack ef-surface" data-event="connect">
+        <form class="setup forma-stack forma-surface" data-event="connect">
           <h2 class="setup__heading">Connect to a repository</h2>
 
-          <div class="ef-field">
-            <label class="ef-field__label setup__label" for="token">GitHub token</label>
+          <div class="forma-field">
+            <label class="forma-field__label setup__label" for="token">GitHub token</label>
             <input
               id="token"
               class="setup__input"
@@ -57,13 +57,13 @@
               aria-describedby="token-note"
             />
             <input id="token-present" type="hidden" data-event="tokenEntered" data-on="input" />
-            <p id="token-note" class="ef-field__description setup__note">
+            <p id="token-note" class="forma-field__description setup__note">
               Required to connect. Stored locally in this browser only, and never written to your repository.
             </p>
           </div>
 
-          <div class="ef-field">
-            <label class="ef-field__label setup__label" for="repository">Repository</label>
+          <div class="forma-field">
+            <label class="forma-field__label setup__label" for="repository">Repository</label>
             <input
               id="repository"
               class="setup__input"
@@ -77,8 +77,8 @@
             />
           </div>
 
-          <div class="ef-field">
-            <label class="ef-field__label setup__label" for="branch">Branch</label>
+          <div class="forma-field">
+            <label class="forma-field__label setup__label" for="branch">Branch</label>
             <input
               id="branch"
               class="setup__input"
@@ -100,24 +100,24 @@
           </template>
 
           <template data-if="hasSetupError">
-            <ef-alert class="ef-component-tag">
-              <div class="ef-alert setup__error" role="alert" data-tone="attention">
-                <div class="ef-alert__icon" aria-hidden="true">!</div>
+            <forma-alert class="forma-component-tag">
+              <div class="forma-alert setup__error" role="alert" data-tone="attention">
+                <div class="forma-alert__icon" aria-hidden="true">!</div>
                 <div>
                   <strong>Connection needs attention</strong>
                   <p data-text="setupError"></p>
                 </div>
               </div>
-            </ef-alert>
+            </forma-alert>
           </template>
         </form>
       </template>
 
       <template data-if="isConnected">
         <section class="workspace">
-          <form class="capture ef-stack" data-event="capture">
-            <div class="ef-field">
-              <label class="ef-field__label capture__label" for="title">What is open?</label>
+          <form class="capture forma-stack" data-event="capture">
+            <div class="forma-field">
+              <label class="forma-field__label capture__label" for="title">What is open?</label>
               <input
                 id="title"
                 class="capture__input"
@@ -135,12 +135,12 @@
           </form>
 
           <template data-if="hasError">
-            <ef-alert class="ef-component-tag">
-              <div id="capture-error" class="ef-alert error" role="alert" data-tone="attention">
-                <div class="ef-alert__icon" aria-hidden="true">!</div>
+            <forma-alert class="forma-component-tag">
+              <div id="capture-error" class="forma-alert error" role="alert" data-tone="attention">
+                <div class="forma-alert__icon" aria-hidden="true">!</div>
                 <p data-text="error"></p>
               </div>
-            </ef-alert>
+            </forma-alert>
           </template>
 
           <template data-if="isEmpty">
@@ -148,20 +148,20 @@
           </template>
 
           <template data-if="hasItems">
-            <ef-work-queue class="ef-component-tag">
-              <section class="ef-work-queue" aria-labelledby="open-items-title">
-                <header class="ef-work-queue__header">
+            <forma-work-queue class="forma-component-tag">
+              <section class="forma-work-queue" aria-labelledby="open-items-title">
+                <header class="forma-work-queue__header">
                   <div>
-                    <span class="ef-component-kicker">Open work</span>
+                    <span class="forma-component-kicker">Open work</span>
                     <h2 id="open-items-title">Needs your attention</h2>
                   </div>
-                  <span class="ef-status-lozenge" data-state="attention">
+                  <span class="forma-status-lozenge" data-state="attention">
                     <span data-text="itemCount"></span> items
                   </span>
                 </header>
-                <ol class="ef-work-queue__list items">
+                <ol class="forma-work-queue__list items">
                   <template data-each="items" data-key="id">
-                    <li class="ef-work-queue__item item">
+                    <li class="forma-work-queue__item item">
                       <div>
                         <strong class="item__title" data-text="title"></strong>
                         <p class="item__meta">
@@ -174,11 +174,11 @@
                   </template>
                 </ol>
               </section>
-            </ef-work-queue>
+            </forma-work-queue>
           </template>
 
-          <p class="connected ef-cluster">
-            <span class="ef-status-lozenge" data-state="ok" data-text="connectionStatus"></span>
+          <p class="connected forma-cluster">
+            <span class="forma-status-lozenge" data-state="ok" data-text="connectionStatus"></span>
             <button class="disconnect" type="button" data-event="disconnect">
               Forget token / Disconnect
             </button>
