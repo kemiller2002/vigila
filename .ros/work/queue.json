@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "repository": "vigilia",
-  "nextSeq": 42,
+  "nextSeq": 43,
   "items": [
     {
       "id": "WI-0001",
@@ -672,6 +672,27 @@
       "attachments": [],
       "createdAt": "2026-11-25T12:17:13.214Z",
       "updatedAt": "2026-11-25T12:23:08.000Z",
+      "createdBy": "unknown",
+      "createdByActor": {
+        "kind": "agent",
+        "id": "anthropic/claude-code",
+        "provider": "anthropic",
+        "model": "unknown",
+        "runtime": "claude-code"
+      },
+      "source": "manual",
+      "sourceReference": null
+    },
+    {
+      "id": "WI-0042",
+      "title": "Retarget Aegis pin from 2.0.0 to 2.0.1 (FSharp.Core 10.1.400 floor; 2.0.0 declares FSharp.Core >= 11.0.101)",
+      "description": null,
+      "tags": [],
+      "priority": "medium",
+      "status": "ready",
+      "attachments": [],
+      "createdAt": "2026-11-25T12:54:14.215Z",
+      "updatedAt": "2026-11-25T12:54:22.000Z",
       "createdBy": "unknown",
       "createdByActor": {
         "kind": "agent",

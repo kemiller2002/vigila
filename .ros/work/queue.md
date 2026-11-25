@@ -47,3 +47,4 @@
 | WI-0039 | Upgrade Limen from 0.7.1 to 0.9.0 (echelon-current) | complete |  | medium |
 | WI-0040 | GH-36 follow-up: CI found the workspace pushed past a 320px screen at 200% text (input intrinsic width); fix and re-evidence for vigila#37 | complete |  | medium |
 | WI-0041 | Upgrade Aegis 1.0.0 -> 2.0.0 (echelon-current 1.40.0) | complete |  | medium |
+| WI-0042 | Retarget Aegis pin from 2.0.0 to 2.0.1 (FSharp.Core 10.1.400 floor; 2.0.0 declares FSharp.Core >= 11.0.101) | ready |  | medium |
