@@ -50,3 +50,4 @@
 | WI-0042 | Retarget Aegis pin from 2.0.0 to 2.0.1 (FSharp.Core 10.1.400 floor; 2.0.0 declares FSharp.Core >= 11.0.101) | complete |  | medium |
 | WI-0043 | Upgrade Aegis 2.0.1 -> 2.0.2 (detached capture no longer blocks) | complete |  | medium |
 | WI-0044 | Upgrade to echelon-current 1.42.0 (Praxis 3.25.0, Ordo 1.20.0, Forma 1.0.1 with the Echelon theme 1.1.0, Folio 0.4.1, Limen 0.9.1) | complete |  | medium |
+| WI-0045 | Upgrade to echelon-current 1.43.0 (Praxis 3.26.0) | complete |  | medium |
